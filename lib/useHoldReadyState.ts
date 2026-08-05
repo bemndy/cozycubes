@@ -57,9 +57,7 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
   const phaseRef = useRef<TimerPhase>("idle");
   const isHoldingRef = useRef(false);
   const inspectionStartRef = useRef<number | null>(null);
-  const inspectionRemainingRef = useRef<number | null>(null);
   const holdStartRef = useRef<number | null>(null);
-  const holdStartRemainingRef = useRef<number | null>(null);
   const solveStartRef = useRef<number | null>(null);
   const pendingPenaltyRef = useRef<Penalty>("none");
   const forcedStartFiredRef = useRef(false);
@@ -108,16 +106,29 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
     if (currentPhase === "inspecting") {
       const elapsed = now - (inspectionStartRef.current ?? now);
       const remaining = Math.max(0, inspectionDurationMs - elapsed);
-      inspectionRemainingRef.current = remaining;
       setInspectionRemainingMs(remaining);
 
+      // Whether this hold was already in progress before the 15s mark passed —
+      // only holds that started before expiry are eligible to auto force-start.
+      // A hold that begins during the 15-17s grace window should ramp toward
+      // the 17s DNF cutoff instead, and resolve normally via release (+2) or
+      // the DNF-cutoff branch below, not via an instant "none"-penalty start.
+      let holdStartedBeforeExpiry = false;
       if (isHoldingRef.current && holdStartRef.current !== null) {
         const holdElapsed = now - holdStartRef.current;
-        const basis = holdStartRemainingRef.current || inspectionDurationMs;
+        const holdStartElapsed = holdStartRef.current - (inspectionStartRef.current ?? holdStartRef.current);
+        holdStartedBeforeExpiry = holdStartElapsed < inspectionDurationMs;
+        const targetElapsed = holdStartedBeforeExpiry ? inspectionDurationMs : DNF_CUTOFF_MS;
+        const basis = Math.max(targetElapsed - holdStartElapsed, 1);
         setHoldIntensity(Math.min(1, holdElapsed / basis));
       }
 
-      if (!forcedStartFiredRef.current && isHoldingRef.current && elapsed >= inspectionDurationMs) {
+      if (
+        !forcedStartFiredRef.current &&
+        isHoldingRef.current &&
+        holdStartedBeforeExpiry &&
+        elapsed >= inspectionDurationMs
+      ) {
         forcedStartFiredRef.current = true;
         beginSolving("none");
         return;
@@ -158,7 +169,6 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
     stopRaf();
     isHoldingRef.current = false;
     holdStartRef.current = null;
-    holdStartRemainingRef.current = null;
     solveStartRef.current = null;
     forcedStartFiredRef.current = false;
     setIsHolding(false);
@@ -167,7 +177,6 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
 
     if (mode === "inspection") {
       inspectionStartRef.current = performance.now();
-      inspectionRemainingRef.current = inspectionDurationMs;
       setInspectionRemainingMs(inspectionDurationMs);
       setPhase("inspecting");
       runTick();
@@ -204,7 +213,6 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
       isHoldingRef.current = true;
       setIsHolding(true);
       holdStartRef.current = performance.now();
-      holdStartRemainingRef.current = inspectionRemainingRef.current;
     }
   }, [mode, onSolveComplete, runTick, stopRaf]);
 
