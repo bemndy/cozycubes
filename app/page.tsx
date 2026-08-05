@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatTimeMs } from "@/lib/format";
+import { generateScramble, scrambleToString, type SupportedCubeSize } from "@/lib/scramble-gen";
 import type { Penalty } from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 
 const TIMER_KEY = "Space";
+const NEW_SCRAMBLE_KEY = "Tab";
+const CUBE_SIZES: SupportedCubeSize[] = [2, 3, 4, 5, 6, 7];
 
 interface CompletedSolve {
   rawTimeMs: number;
@@ -27,11 +30,21 @@ function phaseColor(phase: string, holdIntensity: number, isHolding: boolean): s
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(true);
   const [lastSolve, setLastSolve] = useState<CompletedSolve | null>(null);
+  const [cubeSize, setCubeSize] = useState<SupportedCubeSize>(3);
+  const [scramble, setScramble] = useState<string[]>(() => generateScramble(3));
   const startedRef = useRef(false);
 
-  const onSolveComplete = useCallback((rawTimeMs: number, penalty: Penalty) => {
-    setLastSolve({ rawTimeMs, penalty });
+  const regenerateScramble = useCallback((size: SupportedCubeSize) => {
+    setScramble(generateScramble(size));
   }, []);
+
+  const onSolveComplete = useCallback(
+    (rawTimeMs: number, penalty: Penalty) => {
+      setLastSolve({ rawTimeMs, penalty });
+      regenerateScramble(cubeSize);
+    },
+    [regenerateScramble, cubeSize]
+  );
 
   const {
     phase,
@@ -47,6 +60,9 @@ export default function TimerPage() {
     onSolveComplete,
   });
 
+  const phaseRef = useRef(phase);
+  phaseRef.current = phase;
+
   // Arm the first attempt, and re-arm automatically after each completed solve.
   useEffect(() => {
     if (!startedRef.current) {
@@ -55,16 +71,29 @@ export default function TimerPage() {
     }
   }, [prepareNextSolve]);
 
+  function handleCubeSizeChange(size: SupportedCubeSize) {
+    setCubeSize(size);
+    regenerateScramble(size);
+  }
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.code !== TIMER_KEY) return;
-      if (e.repeat) return;
-      e.preventDefault();
-      if (phase === "stopped") {
-        prepareNextSolve();
+      if (e.code === TIMER_KEY) {
+        if (e.repeat) return;
+        e.preventDefault();
+        if (phase === "stopped") {
+          prepareNextSolve();
+          return;
+        }
+        keyDown();
         return;
       }
-      keyDown();
+      if (e.code === NEW_SCRAMBLE_KEY) {
+        // Guard against changing the scramble mid-inspection/solve, per spec §2.2.
+        if (phaseRef.current === "inspecting" || phaseRef.current === "solving") return;
+        e.preventDefault();
+        regenerateScramble(cubeSize);
+      }
     }
     function onKeyUp(e: KeyboardEvent) {
       if (e.code !== TIMER_KEY) return;
@@ -77,7 +106,7 @@ export default function TimerPage() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [keyDown, keyUp, phase, prepareNextSolve]);
+  }, [keyDown, keyUp, phase, prepareNextSolve, regenerateScramble, cubeSize]);
 
   const color = phaseColor(phase, holdIntensity, isHolding);
 
@@ -98,10 +127,35 @@ export default function TimerPage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen gap-8 bg-black text-white px-4">
-      <div className="text-center text-sm text-slate-400 tracking-wide">
-        scramble diagram + notation — coming in the next branch
+    <main className="flex flex-col items-center min-h-screen gap-8 bg-black text-white px-4 pt-8">
+      <div className="flex flex-col items-center gap-3 w-full max-w-3xl">
+        <div className="flex gap-1 rounded-full border border-slate-800 p-1">
+          {CUBE_SIZES.map((size) => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => handleCubeSizeChange(size)}
+              className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                size === cubeSize
+                  ? "bg-slate-100 text-black"
+                  : "text-slate-500 hover:text-slate-300"
+              }`}
+            >
+              {size}×{size}
+            </button>
+          ))}
+        </div>
+
+        <p className="font-mono text-center text-lg md:text-xl tracking-wide text-slate-100">
+          {scrambleToString(scramble)}
+        </p>
+        <p className="text-[11px] text-slate-600">
+          press <kbd className="px-1 border border-slate-700 rounded">tab</kbd> for a new scramble
+          {inspectionEnabled ? " (disabled during inspection/solve)" : " (disabled while solving)"}
+        </p>
       </div>
+
+      <div className="flex-1" />
 
       <div
         className="font-mono text-7xl md:text-8xl font-bold tabular-nums transition-colors duration-150"
