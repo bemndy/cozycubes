@@ -1,18 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { addSolve, getSolvesByCubeSize } from "@/lib/db";
 import { formatTimeMs } from "@/lib/format";
 import { generateScramble, scrambleToString, type SupportedCubeSize } from "@/lib/scramble-gen";
-import type { Penalty } from "@/lib/stats-engine";
+import {
+  allTimeMean,
+  ao12,
+  ao5,
+  bestSingle,
+  effectiveTimeMs,
+  type Penalty,
+  type Solve,
+} from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 
 const TIMER_KEY = "Space";
 const NEW_SCRAMBLE_KEY = "Tab";
 const CUBE_SIZES: SupportedCubeSize[] = [2, 3, 4, 5, 6, 7];
 
-interface CompletedSolve {
-  rawTimeMs: number;
-  penalty: Penalty;
+function formatStat(ms: number | null): string {
+  return ms === null ? "—" : formatTimeMs(ms);
 }
 
 function phaseColor(phase: string, holdIntensity: number, isHolding: boolean): string {
@@ -29,18 +37,39 @@ function phaseColor(phase: string, holdIntensity: number, isHolding: boolean): s
 
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(true);
-  const [lastSolve, setLastSolve] = useState<CompletedSolve | null>(null);
+  const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   const [cubeSize, setCubeSize] = useState<SupportedCubeSize>(3);
   const [scramble, setScramble] = useState<string[]>(() => generateScramble(3));
+  const [solves, setSolves] = useState<Solve[]>([]);
   const startedRef = useRef(false);
 
   const regenerateScramble = useCallback((size: SupportedCubeSize) => {
     setScramble(generateScramble(size));
   }, []);
 
+  // Reload the persisted solve history whenever the active cube size changes.
+  useEffect(() => {
+    let cancelled = false;
+    getSolvesByCubeSize(cubeSize).then((loaded) => {
+      if (!cancelled) setSolves(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cubeSize]);
+
   const onSolveComplete = useCallback(
     (rawTimeMs: number, penalty: Penalty) => {
-      setLastSolve({ rawTimeMs, penalty });
+      const solve: Solve = {
+        id: crypto.randomUUID(),
+        cubeSize,
+        timeMs: rawTimeMs,
+        penalty,
+        timestamp: Date.now(),
+      };
+      setLastSolve(solve);
+      setSolves((prev) => [...prev, solve]);
+      void addSolve(solve);
       regenerateScramble(cubeSize);
     },
     [regenerateScramble, cubeSize]
@@ -114,12 +143,9 @@ export default function TimerPage() {
   if (phase === "solving") {
     display = formatTimeMs(solvingElapsedMs);
   } else if (phase === "stopped" && lastSolve) {
+    const effective = effectiveTimeMs(lastSolve);
     display =
-      lastSolve.penalty === "DNF"
-        ? "DNF"
-        : `${formatTimeMs(
-            lastSolve.penalty === "+2" ? lastSolve.rawTimeMs + 2000 : lastSolve.rawTimeMs
-          )}${lastSolve.penalty === "+2" ? " +2" : ""}`;
+      effective === null ? "DNF" : `${formatTimeMs(effective)}${lastSolve.penalty === "+2" ? " +2" : ""}`;
   } else if (phase === "inspecting" && inspectionRemainingMs !== null) {
     display = String(Math.ceil(inspectionRemainingMs / 1000));
   } else {
@@ -177,6 +203,42 @@ export default function TimerPage() {
         {inspectionEnabled ? " ready up during inspection" : " ready up"}, release to start,
         press again to stop
       </p>
+
+      <div className="flex-1" />
+
+      <div className="w-full max-w-3xl border-t border-slate-900 pt-4 pb-8 flex flex-col gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+          <Stat label="best" value={formatStat(bestSingle(solves))} />
+          <Stat label="ao5" value={formatStat(ao5(solves))} />
+          <Stat label="ao12" value={formatStat(ao12(solves))} />
+          <Stat label="mean" value={formatStat(allTimeMean(solves))} />
+          <Stat label="solves" value={String(solves.length)} />
+        </div>
+
+        <div className="flex flex-col-reverse gap-1 max-h-40 overflow-y-auto text-xs font-mono text-slate-400">
+          {solves
+            .slice(-20)
+            .reverse()
+            .map((solve) => {
+              const effective = effectiveTimeMs(solve);
+              return (
+                <div key={solve.id} className="flex justify-between px-2 py-0.5 rounded hover:bg-slate-900">
+                  <span>{effective === null ? "DNF" : formatTimeMs(effective)}</span>
+                  <span className="text-slate-600">{solve.penalty === "+2" ? "+2" : ""}</span>
+                </div>
+              );
+            })}
+        </div>
+      </div>
     </main>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] uppercase tracking-wider text-slate-600">{label}</span>
+      <span className="font-mono text-sm text-slate-200">{value}</span>
+    </div>
   );
 }
