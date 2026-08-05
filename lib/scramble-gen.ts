@@ -1,15 +1,24 @@
 /**
- * Random-move scramble generator (not random-state). WCA's official
- * scrambler uses random-state generation with a full cube-state model,
- * which is significant extra work for marginal payoff in a scoped
- * session — random-move scrambles are what most non-WCA-affiliated
- * timers (and WCA scramblers historically) ship, and they're legal/fair
- * for practice as long as trivial redundancy is filtered out. Documented
- * here per the spec's ask to record which approach was used and why.
+ * Random-move scramble generator. WCA's official scrambler (TNoodle) uses
+ * true random-state generation (uniformly-random cube permutation, solved
+ * back to a move sequence) only for 2x2/3x3 — confirmed via TNoodle's own
+ * docs that big cubes (4x4-7x7) and Megaminx are random-move ("TNoodle
+ * directly generates a bunch of random moves" for these), same approach
+ * used here. 2x2/3x3 random-state would require porting a real solver
+ * (e.g. a two-phase/Kociemba-style algorithm) — a substantial undertaking
+ * flagged separately for a future session rather than done here; 2x2/3x3
+ * stay random-move for now, which is legal/fair for practice, just not
+ * bit-identical to official competition scrambles.
+ *
+ * Move notation matches WCA Regulation 12a2: a wide move's layer depth n
+ * must satisfy 1 < n < N (N = layers in the cube), e.g. 3Rw is valid
+ * notation for 4x4 and up. Depth 1 = plain face move (R), depth 2 = Rw,
+ * depth >=3 = "<depth>Rw" (e.g. 3Rw, 4Lw). Move counts (40/60/80/100 for
+ * 4x4-7x7) match TNoodle's published scramble lengths.
  *
  * Legality rules enforced:
- * - never repeat the same face as the immediately preceding move
- *   (e.g. "R R2" is redundant/illegal)
+ * - never repeat the same face as the immediately preceding move,
+ *   regardless of depth (e.g. "Rw R'" is redundant/illegal)
  * - never pick a move on the same axis as the two preceding moves
  *   (prevents "R L R" style sequences that only shuffle two faces)
  */
@@ -31,20 +40,22 @@ export type SupportedCubeSize = 2 | 3 | 4 | 5 | 6 | 7;
 interface CubeSizeConfig {
   /** number of moves in a generated scramble */
   length: number;
-  /** whether wide moves (e.g. "Rw") are used for inner-layer turns */
-  wide: boolean;
+  /** deepest legal wide-move depth for this size, per WCA Reg 12a2 (n < N) */
+  maxDepth: number;
 }
 
-// 2x2/3x3 have no meaningful wide moves; 4x4+ need them to reach inner
-// layers. Lengths are conservative random-move defaults, roughly in line
-// with common non-WCA timer scramble lengths for each size.
+// maxDepth = N-1 per WCA Regulation 12a2 (1 < n < N). 2x2 has no wide moves
+// (maxDepth 1 = plain face turns only). Lengths match TNoodle's published
+// scramble lengths for 4x4-7x7; 2x2/3x3 lengths are this project's own
+// random-move defaults (see file header — those two sizes aren't
+// random-state here yet).
 const CUBE_CONFIG: Record<SupportedCubeSize, CubeSizeConfig> = {
-  2: { length: 9, wide: false },
-  3: { length: 20, wide: false },
-  4: { length: 40, wide: true },
-  5: { length: 60, wide: true },
-  6: { length: 80, wide: true },
-  7: { length: 100, wide: true },
+  2: { length: 9, maxDepth: 1 },
+  3: { length: 20, maxDepth: 2 },
+  4: { length: 40, maxDepth: 3 },
+  5: { length: 60, maxDepth: 4 },
+  6: { length: 80, maxDepth: 5 },
+  7: { length: 100, maxDepth: 6 },
 };
 
 function randomInt(max: number): number {
@@ -55,13 +66,24 @@ function randomModifier(): string {
   return MODIFIERS[randomInt(MODIFIERS.length)];
 }
 
+/** depth 1 -> "R", depth 2 -> "Rw", depth >=3 -> "3Rw" etc, per Reg 12a2. */
+function formatDepth(face: Face, depth: number): string {
+  if (depth === 1) return face;
+  if (depth === 2) return `${face}w`;
+  return `${depth}${face}w`;
+}
+
+interface PickedMove {
+  notation: string;
+  face: Face;
+}
+
 /**
  * Picks the next face given the last two faces used, respecting both
- * legality rules above. `wide` scrambles roll a 50/50 chance per move of
- * using the wide-layer variant of the chosen face (only meaningful for
- * cubes 4x4 and up).
+ * legality rules above, then picks a depth uniformly at random from the
+ * full legal range for this cube size (1 through maxDepth).
  */
-function pickMove(lastFace: Face | null, lastTwoAxes: string[], wide: boolean): string {
+function pickMove(lastFace: Face | null, lastTwoAxes: string[], maxDepth: number): PickedMove {
   const candidates = FACES.filter((face) => {
     if (face === lastFace) return false;
     if (lastTwoAxes.length === 2 && lastTwoAxes.every((axis) => axis === AXIS[face])) {
@@ -70,9 +92,9 @@ function pickMove(lastFace: Face | null, lastTwoAxes: string[], wide: boolean): 
     return true;
   });
   const face = candidates[randomInt(candidates.length)];
-  const useWide = wide && Math.random() < 0.5;
-  const notation = useWide ? `${face}w` : face;
-  return `${notation}${randomModifier()}`;
+  const depth = 1 + randomInt(maxDepth);
+  const notation = `${formatDepth(face, depth)}${randomModifier()}`;
+  return { notation, face };
 }
 
 export function generateScramble(cubeSize: SupportedCubeSize): string[] {
@@ -82,10 +104,9 @@ export function generateScramble(cubeSize: SupportedCubeSize): string[] {
   const lastTwoAxes: string[] = [];
 
   for (let i = 0; i < config.length; i++) {
-    const move = pickMove(lastFace, lastTwoAxes, config.wide);
-    moves.push(move);
+    const { notation, face } = pickMove(lastFace, lastTwoAxes, config.maxDepth);
+    moves.push(notation);
 
-    const face = move[0] as Face;
     lastFace = face;
     lastTwoAxes.push(AXIS[face]);
     if (lastTwoAxes.length > 2) lastTwoAxes.shift();
