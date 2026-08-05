@@ -73,6 +73,34 @@ bands) was reasoned through carefully but **not visually browser-tested this ses
 — Chrome automation wasn't available. Please manually verify the hold/release timing
 feel once you're at your machine (`npm run dev`, http://localhost:3000).
 
+### Review pass (2026-08-05, same session)
+After the initial 7-branch build, did a fresh-eyes code review across all branches
+(user asked for it explicitly). Findings + fixes logged in `REVIEW_M1.md` at repo
+root — read that file for full detail. Two more branches came out of the review,
+stacked on top of the original 7 (same branch-per-unit-of-work convention):
+
+- [x] `feature/claude/scramble-depth-notation` — fixed a real gap: scramble-gen only
+  emitted depth-1/depth-2 wide moves regardless of cube size, so 5x5/6x6/7x7 scrambles
+  never reached inner layers. Verified against WCA Regulation 12a2 and real official
+  scramble examples that depth should range 1..N-1; also confirmed TNoodle's own
+  big-cube scrambler is random-move (same approach already in use here), so this was
+  purely a move-vocabulary fix, not an architecture change. 50 tests passing.
+- [x] `feature/claude/2x2-3x3-random-state-investigation` — 2x2/3x3 still use
+  random-move, not WCA's true random-state (confirmed this is a real, separate gap —
+  big cubes are legitimately random-move per WCA itself, but 2x2/3x3 are not).
+  Investigation-only branch, no code changes: documents what csTimer (random-state via
+  min2phase.js) and CubeDesk (random-move, deliberate choice) actually do, plus concrete
+  library options (`cubejs` MIT/sync/3x3-only vs `min2phase` GPL/used-by-TNoodle-itself
+  vs full `cubing` package w/ three.js vs hand-rolled 2x2) with tradeoffs. Full writeup:
+  `docs/investigations/2x2-3x3-random-state.md`. Decision deferred to a future session.
+
+Review also caught and fixed two logic bugs in the original 7 branches themselves
+(both already folded into this session, see REVIEW_M1.md for full detail): the
+inspection timer's force-start didn't check *when* a hold began, so a hold starting
+during the 15-17s grace window incorrectly force-started with a "none" penalty instead
+of "+2"; and the cube-size selector had no guard against switching mid-solve, which
+could silently record a completed solve under the wrong cube size's stats bucket.
+
 ### What's explicitly NOT built yet (still spec-only)
 - Unfolded net SVG scramble diagram (text notation is currently a stand-in)
 - Keybind remapping UI (Space/Tab are hardcoded)
@@ -83,5 +111,7 @@ feel once you're at your machine (`npm run dev`, http://localhost:3000).
 - pnpm workspaces / separate `packages/*` — still one Next.js app with `lib/` modules
 
 ### Next session should start by
-1. Reviewing/merging the 7 stacked branches above (in order) once you're satisfied.
-2. Re-reading this file + `initial_spec.md` before picking up M1 polish or starting M2.
+1. Reviewing/merging the 9 stacked branches above (in order) once you're satisfied —
+   `feature/claude/2x2-3x3-random-state-investigation` is the current tip.
+2. Re-reading this file + `initial_spec.md` + `REVIEW_M1.md` before picking up M1
+   polish, deciding the 2x2/3x3 scramble question, or starting M2.
