@@ -75,17 +75,17 @@ export default function TimerPage() {
     [regenerateScramble, cubeSize]
   );
 
-  const togglePenalty = useCallback((id: string, target: "+2" | "DNF") => {
-    setSolves((prev) =>
-      prev.map((s) => {
-        if (s.id !== id) return s;
-        const nextPenalty: Penalty = s.penalty === target ? "none" : target;
-        const updated: Solve = { ...s, penalty: nextPenalty };
-        void updateSolve(updated);
-        return updated;
-      })
-    );
-  }, []);
+  const togglePenalty = useCallback(
+    (id: string, target: "+2" | "DNF") => {
+      const current = solves.find((s) => s.id === id);
+      if (!current) return;
+      const nextPenalty: Penalty = current.penalty === target ? "none" : target;
+      const updated: Solve = { ...current, penalty: nextPenalty };
+      setSolves((prev) => prev.map((s) => (s.id === id ? updated : s)));
+      void updateSolve(updated);
+    },
+    [solves]
+  );
 
   const removeSolve = useCallback((id: string) => {
     setSolves((prev) => prev.filter((s) => s.id !== id));
@@ -123,6 +123,11 @@ export default function TimerPage() {
   }, [prepareNextSolve, regenerateScramble, cubeSize]);
 
   function handleCubeSizeChange(size: SupportedCubeSize) {
+    // Same guard as the Tab new-scramble keybind: switching cube size mid-solve
+    // would change what onSolveComplete records the in-flight solve as (it
+    // closes over cubeSize), silently corrupting which cube size's stats the
+    // solve lands in. Block it while a solve/inspection is in progress.
+    if (phaseRef.current === "inspecting" || phaseRef.current === "solving") return;
     setCubeSize(size);
     regenerateScramble(size);
   }
@@ -174,6 +179,8 @@ export default function TimerPage() {
     display = "0.00";
   }
 
+  const cubeSizeLocked = phase === "inspecting" || phase === "solving";
+
   return (
     <main className="flex flex-col items-center min-h-screen gap-8 bg-black text-white px-4 pt-8">
       <div className="flex flex-col items-center gap-3 w-full max-w-3xl">
@@ -182,8 +189,11 @@ export default function TimerPage() {
             <button
               key={size}
               type="button"
+              disabled={cubeSizeLocked}
               onClick={() => handleCubeSizeChange(size)}
               className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                cubeSizeLocked ? "cursor-not-allowed opacity-40" : ""
+              } ${
                 size === cubeSize
                   ? "bg-slate-100 text-black"
                   : "text-slate-500 hover:text-slate-300"
