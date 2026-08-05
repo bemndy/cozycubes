@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { addSolve, getSolvesByCubeSize } from "@/lib/db";
+import { addSolve, deleteSolve, getSolvesByCubeSize, updateSolve } from "@/lib/db";
 import { formatTimeMs } from "@/lib/format";
 import { generateScramble, scrambleToString, type SupportedCubeSize } from "@/lib/scramble-gen";
 import {
@@ -74,6 +74,23 @@ export default function TimerPage() {
     },
     [regenerateScramble, cubeSize]
   );
+
+  const togglePenalty = useCallback((id: string, target: "+2" | "DNF") => {
+    setSolves((prev) =>
+      prev.map((s) => {
+        if (s.id !== id) return s;
+        const nextPenalty: Penalty = s.penalty === target ? "none" : target;
+        const updated: Solve = { ...s, penalty: nextPenalty };
+        void updateSolve(updated);
+        return updated;
+      })
+    );
+  }, []);
+
+  const removeSolve = useCallback((id: string) => {
+    setSolves((prev) => prev.filter((s) => s.id !== id));
+    void deleteSolve(id);
+  }, []);
 
   const {
     phase,
@@ -227,9 +244,37 @@ export default function TimerPage() {
             .map((solve) => {
               const effective = effectiveTimeMs(solve);
               return (
-                <div key={solve.id} className="flex justify-between px-2 py-0.5 rounded hover:bg-slate-900">
-                  <span>{effective === null ? "DNF" : formatTimeMs(effective)}</span>
-                  <span className="text-slate-600">{solve.penalty === "+2" ? "+2" : ""}</span>
+                <div
+                  key={solve.id}
+                  className="group flex items-center justify-between px-2 py-0.5 rounded hover:bg-slate-900"
+                >
+                  <span>
+                    {effective === null ? "DNF" : formatTimeMs(effective)}
+                    {solve.penalty === "+2" ? " +2" : ""}
+                  </span>
+                  <span className="hidden group-hover:flex gap-2 text-[10px] uppercase tracking-wide">
+                    <button
+                      type="button"
+                      onClick={() => togglePenalty(solve.id, "+2")}
+                      className={solve.penalty === "+2" ? "text-amber-400" : "text-slate-500 hover:text-amber-400"}
+                    >
+                      +2
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => togglePenalty(solve.id, "DNF")}
+                      className={solve.penalty === "DNF" ? "text-red-400" : "text-slate-500 hover:text-red-400"}
+                    >
+                      dnf
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSolve(solve.id)}
+                      className="text-slate-500 hover:text-slate-200"
+                    >
+                      del
+                    </button>
+                  </span>
                 </div>
               );
             })}
