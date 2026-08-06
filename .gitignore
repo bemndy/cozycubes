@@ -3,6 +3,13 @@
 # scratch / personal notes, not part of the project
 /.misc
 
+# AI coding agent memory/instructions — local to this working copy, not
+# shared project state (project docs like specs/reviews stay tracked)
+/memory
+CLAUDE.md
+AGENTS.md
+.claude/
+
 # dependencies
 /node_modules
 /.pnp
@@ -22,12 +29,16 @@
 
 # production
 /build
+/dist
+/target
 
 # misc
 .DS_Store
 *.pem
 
-# debug
+# logs
+*.log
+/logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
