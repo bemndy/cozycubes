@@ -39,7 +39,7 @@ export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(true);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   const [cubeSize, setCubeSize] = useState<SupportedCubeSize>(3);
-  const [scramble, setScramble] = useState<string[]>(() => generateScramble(3));
+  const [scramble, setScramble] = useState<string[]>([]);
   const [solves, setSolves] = useState<Solve[]>([]);
   const startedRef = useRef(false);
 
@@ -93,12 +93,17 @@ export default function TimerPage() {
   phaseRef.current = phase;
 
   // Arm the first attempt, and re-arm automatically after each completed solve.
+  // Scramble generation is deferred to this client-only effect (rather than a
+  // useState initializer) since generateScramble() uses Math.random() and
+  // running it during SSR would produce a different scramble server vs.
+  // client, causing a hydration mismatch.
   useEffect(() => {
     if (!startedRef.current) {
       startedRef.current = true;
+      regenerateScramble(cubeSize);
       prepareNextSolve();
     }
-  }, [prepareNextSolve]);
+  }, [prepareNextSolve, regenerateScramble, cubeSize]);
 
   function handleCubeSizeChange(size: SupportedCubeSize) {
     setCubeSize(size);
