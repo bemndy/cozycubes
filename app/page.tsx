@@ -56,17 +56,14 @@ export default function TimerPage() {
   }, [prepareNextSolve]);
 
   useEffect(() => {
-    if (phase === "stopped") {
-      const timeout = setTimeout(() => prepareNextSolve(), 1200);
-      return () => clearTimeout(timeout);
-    }
-  }, [phase, prepareNextSolve]);
-
-  useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.code !== TIMER_KEY) return;
       if (e.repeat) return;
       e.preventDefault();
+      if (phase === "stopped") {
+        prepareNextSolve();
+        return;
+      }
       keyDown();
     }
     function onKeyUp(e: KeyboardEvent) {
@@ -80,7 +77,7 @@ export default function TimerPage() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [keyDown, keyUp]);
+  }, [keyDown, keyUp, phase, prepareNextSolve]);
 
   const color = phaseColor(phase, holdIntensity, isHolding);
 
