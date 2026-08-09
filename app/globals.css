@@ -1,26 +1,370 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------------------------------------------------------------------------
+   Design tokens
+   ---------------------------------------------------------------------------
+   Every theme redefines the same token names on [data-theme]. Components read
+   tokens only and never branch on the active theme.
+
+   --edge is the one border colour in the system, and it is transparent in the
+   three "soft" themes: the UI is built from type, spacing, and tone, not from
+   lines. The two mono themes turn it solid, because visible structural rules
+   are the entire point of those themes — that is what --edge exists for.
+
+   color-scheme makes native UI (the cube-size dropdown's popup, scrollbars,
+   focus rings) follow the theme instead of always rendering light.
+--------------------------------------------------------------------------- */
+
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface: #000000;
+
+  --ink: rgba(255, 255, 255, 0.92);
+  --ink-dim: rgba(255, 255, 255, 0.72);
+  --ink-dimmer: rgba(255, 255, 255, 0.4);
+  --ink-faint: rgba(255, 255, 255, 0.16);
+
+  --accent: oklch(82% 0.15 80);
+  --accent-soft: oklch(82% 0.15 80 / 0.8);
+
+  --edge: transparent;
+  --hover-tint: rgba(255, 255, 255, 0.05);
+
+  --wash: oklch(82% 0.15 80 / 0.08);
+  --vignette: rgba(0, 0, 0, 0.62);
+
+  --quality-good: oklch(84% 0.16 85);
+  --quality-mid: rgba(255, 255, 255, 0.45);
+  --quality-slow: oklch(58% 0.14 30 / 0.7);
+  --quality-warn: oklch(66% 0.17 35 / 0.55);
+
+  --tooltip-bg: rgba(24, 24, 24, 0.96);
+  --tooltip-ink: rgba(255, 255, 255, 0.85);
+
+  --glass-bg: rgba(28, 28, 30, 0.68);
+  --glass-blur: blur(30px) saturate(180%);
+  --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --scrim: rgba(0, 0, 0, 0.4);
 }
 
+[data-theme="light"] {
+  color-scheme: light;
+
+  --surface: oklch(97% 0.01 80);
+
+  --ink: rgba(20, 16, 14, 0.9);
+  --ink-dim: rgba(20, 16, 14, 0.7);
+  --ink-dimmer: rgba(20, 16, 14, 0.45);
+  --ink-faint: rgba(20, 16, 14, 0.18);
+
+  --accent: oklch(64% 0.15 38);
+  --accent-soft: oklch(64% 0.15 38 / 0.85);
+
+  --edge: transparent;
+  --hover-tint: rgba(20, 16, 14, 0.05);
+
+  --wash: oklch(64% 0.15 38 / 0.07);
+  /* Warm-white fade rather than black — a dark vignette blows out on a light
+     surface. */
+  --vignette: rgba(255, 250, 244, 0.75);
+
+  --quality-good: oklch(58% 0.16 45);
+  --quality-mid: rgba(20, 16, 14, 0.4);
+  --quality-slow: oklch(55% 0.14 30 / 0.7);
+  --quality-warn: oklch(55% 0.17 25 / 0.5);
+
+  --tooltip-bg: rgba(255, 252, 247, 0.97);
+  --tooltip-ink: rgba(20, 16, 14, 0.85);
+
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(30px) saturate(180%);
+  --glass-shadow: 0 24px 60px -12px rgba(20, 16, 14, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --scrim: rgba(20, 16, 14, 0.18);
+}
+
+/* Mono pair: --edge goes solid and thick. These are the only themes that draw
+   lines, and it is deliberate. */
+[data-theme="contrast-dark"] {
+  color-scheme: dark;
+
+  --surface: #000000;
+
+  --ink: #ffffff;
+  --ink-dim: rgba(255, 255, 255, 0.8);
+  --ink-dimmer: rgba(255, 255, 255, 0.45);
+  --ink-faint: rgba(255, 255, 255, 0.25);
+
+  --accent: #ffffff;
+  --accent-soft: rgba(255, 255, 255, 0.85);
+
+  --edge: #ffffff;
+  --hover-tint: rgba(255, 255, 255, 0.12);
+
+  --wash: transparent;
+  --vignette: transparent;
+
+  --quality-good: #ffffff;
+  --quality-mid: rgba(255, 255, 255, 0.45);
+  --quality-slow: rgba(255, 255, 255, 0.2);
+  --quality-warn: rgba(255, 255, 255, 0.12);
+
+  --tooltip-bg: #000000;
+  --tooltip-ink: #ffffff;
+
+  /* Opaque and unblurred — frosted translucency would undercut the flat,
+     high-contrast identity these two themes exist for. --edge draws the rule. */
+  --glass-bg: #000000;
+  --glass-blur: none;
+  --glass-shadow: none;
+  --scrim: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="contrast-light"] {
+  color-scheme: light;
+
+  --surface: #ffffff;
+
+  --ink: #000000;
+  --ink-dim: rgba(0, 0, 0, 0.8);
+  --ink-dimmer: rgba(0, 0, 0, 0.45);
+  --ink-faint: rgba(0, 0, 0, 0.25);
+
+  --accent: #000000;
+  --accent-soft: rgba(0, 0, 0, 0.85);
+
+  --edge: #000000;
+  --hover-tint: rgba(0, 0, 0, 0.08);
+
+  --wash: transparent;
+  --vignette: transparent;
+
+  --quality-good: #000000;
+  --quality-mid: rgba(0, 0, 0, 0.45);
+  --quality-slow: rgba(0, 0, 0, 0.2);
+  --quality-warn: rgba(0, 0, 0, 0.12);
+
+  --tooltip-bg: #ffffff;
+  --tooltip-ink: #000000;
+
+  --glass-bg: #ffffff;
+  --glass-blur: none;
+  --glass-shadow: none;
+  --scrim: rgba(0, 0, 0, 0.25);
+}
+
+/* Derived from ColorfulLoader.module.css's hot pink / grey pair, so the boot
+   screen and the app read as one system. */
+[data-theme="loader"] {
+  color-scheme: dark;
+
+  --surface: #0a0a0a;
+
+  --ink: rgba(255, 255, 255, 0.92);
+  --ink-dim: rgba(255, 255, 255, 0.7);
+  --ink-dimmer: rgba(255, 255, 255, 0.4);
+  --ink-faint: rgba(255, 77, 133, 0.3);
+
+  --accent: rgb(255, 77, 133);
+  --accent-soft: rgba(255, 77, 133, 0.8);
+
+  --edge: transparent;
+  --hover-tint: rgba(255, 77, 133, 0.08);
+
+  --wash: rgba(255, 77, 133, 0.1);
+  --vignette: rgba(0, 0, 0, 0.6);
+
+  --quality-good: rgb(255, 77, 133);
+  --quality-mid: rgba(255, 255, 255, 0.45);
+  --quality-slow: rgb(75, 75, 75);
+  --quality-warn: rgba(255, 77, 133, 0.3);
+
+  --tooltip-bg: rgba(24, 24, 24, 0.96);
+  --tooltip-ink: rgba(255, 255, 255, 0.85);
+
+  --glass-bg: rgba(26, 18, 22, 0.74);
+  --glass-blur: blur(30px) saturate(180%);
+  --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 77, 133, 0.18);
+  --scrim: rgba(0, 0, 0, 0.45);
+}
+
+/* Expose tokens to Tailwind as utilities. `inline` keeps the utility
+   referencing the var, so it re-resolves when data-theme changes rather than
+   baking in the default theme's value. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-dimmer: var(--ink-dimmer);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-pixel: var(--font-pixel-face);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  /* The platform's own text face — SF on Apple, sane fallbacks elsewhere.
+     Nothing to download, so chrome paints on the first frame with no swap. */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+    "Segoe UI", system-ui, sans-serif;
+  /* next/font exposes the face as --font-pixelify. Kept distinct from the
+     --font-pixel Tailwind token above: pointing a token at a var of its own
+     name makes a reference cycle, which CSS resolves to nothing. */
+  --font-pixel-face: var(--font-pixelify), "Courier New", monospace;
+
+  /* One readable column, shared by header, timer stack, and footer, so every
+     edge in the app lines up on the same two verticals. */
+  --shell-width: 48rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+/* The shared measure. */
+.shell {
+  width: 100%;
+  max-width: var(--shell-width);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Background — static wash + vignette only.
+
+   The animated blurred-blob mesh from the design file is deliberately deferred
+   to its own design pass. A page whose job is millisecond timing should not be
+   paying for a continuous composite of seven 110px-blurred layers.
+--------------------------------------------------------------------------- */
+
+.bg-wash,
+.bg-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bg-wash {
+  z-index: 0;
+  background: radial-gradient(circle at 50% 40%, var(--wash), transparent 65%);
+}
+
+.bg-vignette {
+  z-index: 1;
+  background: radial-gradient(circle at 50% 46%, transparent 34%, var(--vignette) 88%);
+}
+
+/* ---------------------------------------------------------------------------
+   Frosted surface
+   ---------------------------------------------------------------------------
+   The iOS-style translucent panel behind the dropdown and every footer dialog.
+   The blur samples whatever is underneath, so it only reads as glass over the
+   themed background — which is why the mono themes opt out into a flat opaque
+   fill rather than inheriting a frost that would muddy them.
+--------------------------------------------------------------------------- */
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  box-shadow: var(--glass-shadow);
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-panel-in {
+  animation: panelIn 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-panel-in {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Keyframes — only the two still in use. driftA/B/C and asciiGlow belong to
+   the deferred background pass.
+--------------------------------------------------------------------------- */
+
+@keyframes softFlash {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-soft-flash {
+  animation: softFlash 3.2s ease-in-out infinite;
+}
+
+.animate-blink {
+  animation: blink 1.1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-soft-flash,
+  .animate-blink {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Thin scrollbar for the horizontally-scrolling solve panel
+--------------------------------------------------------------------------- */
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-faint) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--ink-faint);
+  border-radius: 999px;
+}
+
+.scroll-thin:hover::-webkit-scrollbar-thumb {
+  background: var(--ink-dimmer);
 }
