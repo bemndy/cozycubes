@@ -23,6 +23,18 @@
   overflow: hidden;
   background-color: var(--bg-color-a);
   animation: bg-flash 0.9s ease-in-out infinite;
+  opacity: 1;
+  transition: opacity var(--exit-duration, 500ms) ease;
+}
+
+/*
+ * Fades out over whatever is already rendered underneath, so the reveal is a
+ * cross-fade rather than a cut. The consumer unmounts this once the transition
+ * has run — keep its timeout and --exit-duration in step.
+ */
+.exiting {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* The original's form: covers the viewport. */
@@ -80,6 +92,7 @@
 @media (prefers-reduced-motion: reduce) {
   .loader {
     animation: none;
+    transition: none;
   }
 
   .symbol {

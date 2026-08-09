@@ -1,10 +1,14 @@
 # Investigation: 2x2/3x3 random-state scrambles
 
-**Status:** investigated, decided, **not yet implemented** — see
-[Decision](#decision). Branched off `feature/claude/scramble-depth-notation`
-per `../reviews/REVIEW_M1.md` finding #5. The `cubejs` dependency and the
-wiring described below are still to be done on a future branch; nothing in
-`lib/scramble-gen.ts` has changed as a result of this investigation.
+**Status:** **3x3 done, 2x2 still open.** Branched off
+`feature/claude/scramble-depth-notation` per `../reviews/REVIEW_M1.md`
+finding #5.
+
+3x3 now generates genuine random-state scrambles via `cubejs`, wired up in
+`lib/scrambler.ts` — see [Decision](#decision) for the reasoning and
+[Outcome](#outcome) for what shipped. 2x2 remains random-move, waiting on its
+own engine. `lib/scramble-gen.ts` is unchanged and still backs every size
+except 3x3.
 
 ## The problem
 
@@ -99,21 +103,21 @@ uses at those sizes.
 
 ### How to integrate it
 
-- **Main thread, `async`/`await` — not a Web Worker.** A worker would keep the
-  main thread perfectly smooth during the 4-5s init, but it costs a worker
-  file, message passing, and serialization. Nothing else needs the thread
-  during a one-time init that happens before the user has a scramble to solve,
-  so the simpler path wins. Revisit only if the init actually janks the timer
-  UI in practice.
+- **Main thread — not a Web Worker.** A worker would keep the main thread
+  smooth during init, but it costs a worker file, message passing, and
+  serialization. Nothing else needs the thread during a one-time init that
+  happens before the user has a scramble to solve, so the simpler path wins.
+  Revisit only if the block actually hurts in practice. (Planned as
+  `async`/`await`; on implementation `initSolver()` turned out to be
+  synchronous, so there is nothing to await — see [Outcome](#outcome).)
 - **Init eagerly on mount**, since 3x3 is the default cube size — the warm-up
   overlaps with the user arriving on the page rather than blocking their first
   scramble.
 - **Cache the initialized solver for the session** so only the first scramble
   pays anything.
-- **Show `components/ColorfulLoader.tsx` while it warms** (already built, not
-  yet wired to anything). Use `fullScreen={false}` so it fills a slot rather
-  than covering the viewport — the timer itself works fine without a scramble
-  loaded.
+- **Show `components/ColorfulLoader.tsx` while it warms.** Shipped full-screen
+  rather than the originally-sketched `fullScreen={false}` slot: 3x3 is the
+  default size, so on a cold load there is no scramble to time against anyway.
 
 ### Known gap, deliberately not handled
 
@@ -122,3 +126,37 @@ arriving directly at a non-3x3 cube size before init finished. No routing or
 per-size deep-linking exists yet — cube size is component state, not a route —
 so this is unreachable today. Noted here so it isn't rediscovered as a bug if
 per-size routes are added later.
+
+## Outcome
+
+Shipped for 3x3. `lib/scrambler.ts` is the app's scramble source and routes by
+cube size: 3x3 to `Cube.scramble()`, everything else to the existing
+random-move generator. `lib/scramble-gen.ts` was deliberately left untouched
+and dependency-free so it stays unit-testable in isolation — the cubejs import
+lives only in `scrambler.ts`.
+
+Measured, rather than taken from the README:
+
+- `Cube.initSolver()` blocks for **~1.2s**, not the 4-5s the README quotes.
+  It is genuinely synchronous, so `async`/`await` around it would not free the
+  main thread — the only real alternatives were a Web Worker or accepting the
+  block. At ~1.2s the block was judged acceptable.
+- `Cube.scramble()` costs ~13ms afterwards, so only the first load pays.
+- Output is 22 moves, versus the 20 the random-move generator produced.
+- Correctness spot-check: 5/5 generated scrambles left the cube unsolved and
+  were solvable, with the returned solution verified to restore a solved state.
+
+`app/page.tsx` waits for a painted frame before calling `initScrambler()`, so
+the full-screen `ColorfulLoader` is actually on screen for the block instead of
+the browser going white. Keyboard handlers and the first scramble are both
+gated on the solver being ready.
+
+Known rough edge, deferred to the UI work: the handoff from loader to timer is
+an instant swap with no fade or staggered reveal. That belongs with M2.3
+(micro-animations), not here.
+
+### Still open
+
+2x2 is unchanged — still random-move, still an 11-move sequence rather than a
+true random-state scramble. cubejs cannot help; it is 3x3 only. A dedicated 2x2
+engine is the planned route.
