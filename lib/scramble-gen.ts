@@ -48,9 +48,11 @@ interface CubeSizeConfig {
 // (maxDepth 1 = plain face turns only). Lengths match TNoodle's published
 // scramble lengths for 4x4-7x7; 2x2/3x3 lengths are this project's own
 // random-move defaults (see file header — those two sizes aren't
-// random-state here yet).
+// random-state here yet). 2x2 uses 11 to match the length of an official
+// 2x2 scramble, which is bounded by God's number for the pocket cube in
+// HTM (11) since random-state scrambles invert an optimal solution.
 const CUBE_CONFIG: Record<SupportedCubeSize, CubeSizeConfig> = {
-  2: { length: 9, maxDepth: 1 },
+  2: { length: 11, maxDepth: 1 },
   3: { length: 20, maxDepth: 2 },
   4: { length: 40, maxDepth: 3 },
   5: { length: 60, maxDepth: 4 },

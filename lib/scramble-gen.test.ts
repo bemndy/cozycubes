@@ -27,7 +27,7 @@ function faceOf(move: string): string {
 
 const SIZES: SupportedCubeSize[] = [2, 3, 4, 5, 6, 7];
 const EXPECTED_LENGTH: Record<SupportedCubeSize, number> = {
-  2: 9,
+  2: 11,
   3: 20,
   4: 40,
   5: 60,
