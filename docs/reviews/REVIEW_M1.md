@@ -2,7 +2,7 @@
 
 Fresh-eyes review pass across all 7 stacked `feature/claude/*` branches for M1
 (core timer), done after the initial build session. Findings below, ordered
-logic-errors-first per the review priority in `initial_spec.md` §8.
+logic-errors-first per the review priority in `../../initial_spec.md` §8.
 
 ## Fixed
 
@@ -34,19 +34,36 @@ logic-errors-first per the review priority in `initial_spec.md` §8.
    compute the new value once, then update state and persist as separate,
    non-nested steps. Commit `1e74be6`.
 
-## Open — needs a call
-
-4. **Scramble generator doesn't reach the inner layers of 5x5/6x6/7x7
+4. **Scramble generator didn't reach the inner layers of 5x5/6x6/7x7
    (`feature/claude/scramble-gen`, `lib/scramble-gen.ts`).** The generator only
-   emits single-layer (`R`) and 2-layer-wide (`Rw`) moves. Verified by simulation:
-   for 5x5 the true center layer is never turned; for 6x6 the two innermost
-   layers never turn; for 7x7 three innermost layers never turn. Only
-   2x2/3x3/4x4 are fully scrambled as-is (2-layer-wide from both sides covers
-   4-layer cubes completely). The spec explicitly anticipated this (§2.2: "big
-   cubes use wide-move / layer notation, e.g. `3Rw`, `Uw`") — this wasn't a
-   missed edge case, it's an unimplemented spec requirement. Needs a real fix
-   (numbered-depth notation, e.g. `3Rw`, with a sensible depth range per cube
-   size), not a one-line patch — left for a decision before implementing.
+   emitted single-layer (`R`) and 2-layer-wide (`Rw`) moves regardless of cube
+   size. Verified against WCA Regulation 12a2 (wide-move depth `n` must satisfy
+   `1 < n < N`) and real official scramble examples (which use `3Rw`, `4Lw`,
+   etc.) that big-cube scrambles legally range up to depth `N-1`, and that
+   TNoodle's own big-cube scrambler is random-move (not random-state) — the
+   right approach was already in use here, just with an incomplete move
+   vocabulary. Fixed on `feature/claude/scramble-depth-notation` (branched off
+   this stack's tip) by picking depth uniformly from `1..N-1` per move.
+   Existing move counts (40/60/80/100 for 4x4-7x7) were independently
+   confirmed to already match TNoodle's published lengths. Commit `ea3225a`.
+
+## Open — needs investigation (see `feature/claude/2x2-3x3-random-state-investigation`)
+
+5. **2x2/3x3 use random-move, not WCA's true random-state.** Confirmed (via
+   TNoodle docs and cubing.js docs) that official WCA 2x2/3x3 scrambles are
+   genuine random-state: a uniformly-random legal cube permutation is chosen,
+   then solved back to get the scramble sequence (typically via a two-phase /
+   Kociemba-style solver). Our scramble-gen instead does random-move with
+   legality filtering for these two sizes — legal and fair for practice, but
+   not distributionally identical to competition scrambles. Matching it
+   exactly means either porting a real solver or taking a dependency (the
+   `cubing` npm package provides genuine WCA-parity scrambles for all sizes,
+   but pulls in three.js as a transitive dependency — in tension with this
+   project's explicit no-Three.js decision — and runs generation in a Web
+   Worker, requiring an async "generating..." UI state instead of the current
+   synchronous generation). Branched off for dedicated investigation rather
+   than decided inline; see that branch for findings on what other cubing
+   timers (csTimer, cubedesk, etc.) actually ship for these two sizes.
 
 ## Noted, not fixed (low severity / out of scope for a patch)
 

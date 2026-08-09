@@ -1,0 +1,118 @@
+/*
+ * Port of the "colorful" (gradient-mode) preloader from brandonemartinez.com
+ * — see that project's src/components/Overlay/Overlay.css. A square rotated
+ * 45deg into a diamond, pulsing opacity and scale against a background that
+ * cross-fades in antiphase, so the diamond reads grey-on-pink then flips to
+ * pink-on-grey once per cycle.
+ *
+ * Deliberately dependency-free and driven entirely by the four custom
+ * properties below, under the same names the original uses, so this drops
+ * into another project and re-themes by overriding them.
+ */
+
+.loader {
+  --bg-color-a: rgb(255, 77, 133);
+  --bg-color-b: rgb(75, 75, 75);
+  --symbol-color-a: rgb(75, 75, 75);
+  --symbol-color-b: rgb(255, 77, 133);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  overflow: hidden;
+  background-color: var(--bg-color-a);
+  animation: bg-flash 0.9s ease-in-out infinite;
+  opacity: 1;
+  transition: opacity var(--exit-duration, 500ms) ease;
+}
+
+/*
+ * Fades out over whatever is already rendered underneath, so the reveal is a
+ * cross-fade rather than a cut. The consumer unmounts this once the transition
+ * has run — keep its timeout and --exit-duration in step.
+ */
+.exiting {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The original's form: covers the viewport. */
+.fullScreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 3;
+}
+
+/* Inline form: fills whatever box the consumer sizes it into. */
+.contained {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.symbol {
+  width: clamp(18px, 3vw, 28px);
+  height: clamp(18px, 3vw, 28px);
+  background-color: var(--symbol-color-a);
+  transform: rotate(45deg);
+  animation: symbol-flash 0.9s ease-in-out infinite;
+}
+
+@keyframes bg-flash {
+  0%,
+  100% {
+    background-color: var(--bg-color-a);
+  }
+  50% {
+    background-color: var(--bg-color-b);
+  }
+}
+
+@keyframes symbol-flash {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: rotate(45deg) scale(0.7);
+    background-color: var(--symbol-color-a);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+    background-color: var(--symbol-color-b);
+  }
+}
+
+/*
+ * Per spec §2.4, animation has to be disable-able. Hold both layers at the
+ * high-contrast end of the cycle so it still reads as a loader without motion.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .loader {
+    animation: none;
+    transition: none;
+  }
+
+  .symbol {
+    animation: none;
+    opacity: 1;
+    transform: rotate(45deg);
+    background-color: var(--symbol-color-b);
+  }
+}
+
+/* Announced by screen readers, never painted — keeps the visual an exact
+   replica while the loader still says what it is. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

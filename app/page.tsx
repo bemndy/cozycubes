@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { addSolve, deleteSolve, getSolvesByCubeSize, updateSolve } from "@/lib/db";
 import { formatTimeMs } from "@/lib/format";
-import { generateScramble, scrambleToString, type SupportedCubeSize } from "@/lib/scramble-gen";
+import { scrambleToString, type SupportedCubeSize } from "@/lib/scramble-gen";
+import { generateScrambleForSize, initScrambler } from "@/lib/scrambler";
+import { ColorfulLoader, LOADER_EXIT_MS } from "@/components/ColorfulLoader";
 import {
   allTimeMean,
   ao12,
@@ -36,16 +38,25 @@ function phaseColor(phase: string, holdIntensity: number, isHolding: boolean): s
 }
 
 export default function TimerPage() {
-  const [inspectionEnabled, setInspectionEnabled] = useState(true);
+  const [inspectionEnabled, setInspectionEnabled] = useState(false);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   const [cubeSize, setCubeSize] = useState<SupportedCubeSize>(3);
   const [scramble, setScramble] = useState<string[]>([]);
   const [solves, setSolves] = useState<Solve[]>([]);
-  const startedRef = useRef(false);
+  const [scramblerReady, setScramblerReady] = useState(false);
+  const [loaderMounted, setLoaderMounted] = useState(true);
 
   const regenerateScramble = useCallback((size: SupportedCubeSize) => {
-    setScramble(generateScramble(size));
+    setScramble(generateScrambleForSize(size));
   }, []);
+
+  // Unmount the loader only once its fade has finished, so it cross-fades over
+  // the timer instead of being cut away.
+  useEffect(() => {
+    if (!scramblerReady) return;
+    const timeout = setTimeout(() => setLoaderMounted(false), LOADER_EXIT_MS);
+    return () => clearTimeout(timeout);
+  }, [scramblerReady]);
 
   // Reload the persisted solve history whenever the active cube size changes.
   useEffect(() => {
@@ -106,38 +117,71 @@ export default function TimerPage() {
     onSolveComplete,
   });
 
-  const phaseRef = useRef(phase);
-  phaseRef.current = phase;
-
-  // Arm the first attempt, and re-arm automatically after each completed solve.
-  // Scramble generation is deferred to this client-only effect (rather than a
-  // useState initializer) since generateScramble() uses Math.random() and
-  // running it during SSR would produce a different scramble server vs.
-  // client, causing a hydration mismatch.
+  // 3x3 is the default size and needs cubejs's pruning tables, which take
+  // 1-2s to build and block the main thread while they do. Wait for an actual
+  // painted frame before starting so the loader is on screen for it, rather
+  // than the browser going white — a passive effect alone doesn't guarantee
+  // the paint has happened.
+  //
+  // The first scramble is generated here too, before the reveal, so the timer
+  // underneath is fully populated when it fades in rather than showing an
+  // empty scramble line for a frame.
+  //
+  // The guard is `scramblerReady` — the work having *finished* — and not a ref
+  // latched on start: the cleanup cancels the pending frame, so a start-latched
+  // guard makes any cleanup that lands before the frame fires (StrictMode's
+  // mount/unmount/remount, or a `prepareNextSolve` identity change when the
+  // mode flips) permanent, leaving the loader up forever.
   useEffect(() => {
-    if (!startedRef.current) {
-      startedRef.current = true;
-      regenerateScramble(cubeSize);
-      prepareNextSolve();
-    }
-  }, [prepareNextSolve, regenerateScramble, cubeSize]);
+    if (scramblerReady) return;
+
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const frame = requestAnimationFrame(() => {
+      timeout = setTimeout(() => {
+        try {
+          initScrambler();
+          regenerateScramble(cubeSize);
+          prepareNextSolve();
+        } catch (err) {
+          // A solver that fails to build must not strand the app behind the
+          // loader; reveal the timer and let Tab retry the scramble.
+          console.error("Scrambler init failed", err);
+        } finally {
+          setScramblerReady(true);
+        }
+      }, 0);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      clearTimeout(timeout);
+    };
+  }, [scramblerReady, cubeSize, regenerateScramble, prepareNextSolve]);
 
   function handleCubeSizeChange(size: SupportedCubeSize) {
     // Same guard as the Tab new-scramble keybind: switching cube size mid-solve
     // would change what onSolveComplete records the in-flight solve as (it
     // closes over cubeSize), silently corrupting which cube size's stats the
     // solve lands in. Block it while a solve/inspection is in progress.
-    if (phaseRef.current === "inspecting" || phaseRef.current === "solving") return;
+    if (phase === "inspecting" || phase === "solving") return;
     setCubeSize(size);
     regenerateScramble(size);
   }
 
   useEffect(() => {
+    // Nothing to drive while the loader is up, and a keypress landing before
+    // the first scramble exists would start a solve against a blank scramble.
+    if (!scramblerReady) return;
+
     function onKeyDown(e: KeyboardEvent) {
       if (e.code === TIMER_KEY) {
         if (e.repeat) return;
         e.preventDefault();
-        if (phase === "stopped") {
+        // Inspection mode: this press starts the next countdown, flipping the
+        // display from the last time to 15. Standard mode: the press instead
+        // begins the next ready-hold, so one continuous hold-and-release goes
+        // from "showing your last time" to "timing" without spending a
+        // separate press just to reset the display.
+        if (phase === "stopped" && inspectionEnabled) {
           prepareNextSolve();
           return;
         }
@@ -146,7 +190,7 @@ export default function TimerPage() {
       }
       if (e.code === NEW_SCRAMBLE_KEY) {
         // Guard against changing the scramble mid-inspection/solve, per spec §2.2.
-        if (phaseRef.current === "inspecting" || phaseRef.current === "solving") return;
+        if (phase === "inspecting" || phase === "solving") return;
         e.preventDefault();
         regenerateScramble(cubeSize);
       }
@@ -162,7 +206,16 @@ export default function TimerPage() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [keyDown, keyUp, phase, prepareNextSolve, regenerateScramble, cubeSize]);
+  }, [
+    scramblerReady,
+    keyDown,
+    keyUp,
+    phase,
+    prepareNextSolve,
+    regenerateScramble,
+    cubeSize,
+    inspectionEnabled,
+  ]);
 
   const color = phaseColor(phase, holdIntensity, isHolding);
 
@@ -182,7 +235,17 @@ export default function TimerPage() {
   const cubeSizeLocked = phase === "inspecting" || phase === "solving";
 
   return (
-    <main className="flex flex-col items-center min-h-screen gap-8 bg-black text-white px-4 pt-8">
+    <>
+      {/* Kept mounted through the fade so the loader dissolves into a timer
+          that is already rendered underneath, rather than cutting to it. */}
+      {loaderMounted && (
+        <ColorfulLoader label="Warming up scrambler" exiting={scramblerReady} />
+      )}
+      <main
+        className={`flex flex-col items-center min-h-screen gap-8 bg-black text-white px-4 pt-8 transition-opacity duration-500 ease-out ${
+          scramblerReady ? "opacity-100" : "opacity-0"
+        }`}
+      >
       <div className="flex flex-col items-center gap-3 w-full max-w-3xl">
         <div className="flex gap-1 rounded-full border border-slate-800 p-1">
           {CUBE_SIZES.map((size) => (
@@ -290,7 +353,8 @@ export default function TimerPage() {
             })}
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
 
