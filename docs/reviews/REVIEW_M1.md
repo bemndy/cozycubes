@@ -2,7 +2,7 @@
 
 Fresh-eyes review pass across all 7 stacked `feature/claude/*` branches for M1
 (core timer), done after the initial build session. Findings below, ordered
-logic-errors-first per the review priority in `initial_spec.md` §8.
+logic-errors-first per the review priority in `../../initial_spec.md` §8.
 
 ## Fixed
 
