@@ -42,6 +42,17 @@ export function penaltyForInspectionElapsed(elapsedMs: number): Penalty {
   return "DNF";
 }
 
+/**
+ * Phases a Mode B ready-hold may begin from: a freshly armed timer, or one
+ * still showing the previous result. Allowing "stopped" is what lets a single
+ * uninterrupted hold-and-release restart the timer — the last time stays on
+ * screen and ramps under the hold, and only the release clears it and starts
+ * timing, instead of burning one press purely to reset the display.
+ */
+function canHoldFrom(phase: TimerPhase): boolean {
+  return phase === "idle" || phase === "stopped";
+}
+
 export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyState {
   const { mode, onSolveComplete } = options;
   const inspectionDurationMs = options.inspectionDurationMs ?? DEFAULT_INSPECTION_MS;
@@ -55,6 +66,7 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
   const [isHolding, setIsHolding] = useState(false);
 
   const phaseRef = useRef<TimerPhase>("idle");
+  const modeRef = useRef<TimerMode>(mode);
   const isHoldingRef = useRef(false);
   const inspectionStartRef = useRef<number | null>(null);
   const holdStartRef = useRef<number | null>(null);
@@ -64,7 +76,18 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
   const rafRef = useRef<number | null>(null);
   const tickRef = useRef<() => void>(() => {});
 
-  phaseRef.current = phase;
+  // The single writer for phase: updates the ref that the rAF loop and the key
+  // handlers read, in lockstep with the state the UI renders from. Writing a
+  // ref from a callback is allowed — only writes during render are not — and
+  // doing it here rather than in an effect keeps the update synchronous.
+  // That matters: a passive effect can flush after the animation frame it was
+  // meant to inform, and the tick loop only reschedules itself from inside a
+  // matching branch, so one tick reading a stale phase would kill the loop and
+  // freeze the running timer display.
+  const commitPhase = useCallback((next: TimerPhase) => {
+    phaseRef.current = next;
+    setPhase(next);
+  }, []);
 
   const stopRaf = useCallback(() => {
     if (rafRef.current !== null) {
@@ -91,15 +114,17 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
       setHoldIntensity(0);
       setInspectionRemainingMs(null);
       setSolvingElapsedMs(0);
-      setPhase("solving");
+      commitPhase("solving");
       runTick();
     },
-    [runTick]
+    [commitPhase, runTick]
   );
 
-  // Reassigned every render so the rAF loop always sees fresh options/closures
-  // without needing a brittle useCallback dependency chain against itself.
-  tickRef.current = () => {
+  // Rebuilt every render so the rAF loop always sees fresh options/closures
+  // without needing a brittle useCallback dependency chain against itself,
+  // then published to the ref in the effect below. Building the closure during
+  // render is fine; only the ref write has to wait for commit.
+  const tick = () => {
     const now = performance.now();
     const currentPhase = phaseRef.current;
 
@@ -135,7 +160,7 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
       }
 
       if (elapsed >= DNF_CUTOFF_MS) {
-        setPhase("stopped");
+        commitPhase("stopped");
         setInspectionRemainingMs(0);
         onSolveComplete?.(0, "DNF");
         return;
@@ -146,7 +171,7 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
     }
 
     if (
-      currentPhase === "idle" &&
+      canHoldFrom(currentPhase) &&
       mode === "standard" &&
       isHoldingRef.current &&
       holdStartRef.current !== null
@@ -163,6 +188,12 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
     }
   };
 
+  // No dependency array on purpose: the loop must always call the newest
+  // closure, and a rAF callback can only fire after the commit that stored it.
+  useEffect(() => {
+    tickRef.current = tick;
+  });
+
   useEffect(() => stopRaf, [stopRaf]);
 
   const prepareNextSolve = useCallback(() => {
@@ -178,13 +209,30 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
     if (mode === "inspection") {
       inspectionStartRef.current = performance.now();
       setInspectionRemainingMs(inspectionDurationMs);
-      setPhase("inspecting");
+      commitPhase("inspecting");
       runTick();
     } else {
       setInspectionRemainingMs(null);
-      setPhase("idle");
+      commitPhase("idle");
     }
-  }, [mode, inspectionDurationMs, stopRaf, runTick]);
+  }, [mode, inspectionDurationMs, commitPhase, stopRaf, runTick]);
+
+  // Re-arm on a mode switch so the phase always matches the active mode.
+  // Each mode's keyDown only handles its own waiting phase ("idle" for
+  // standard, "inspecting" for inspection), so a switch that leaves the
+  // machine in the other one strands it: toggling inspection on while idle
+  // makes the timer stop responding entirely, and toggling it off while
+  // inspecting starts the next solve against a stale inspection clock,
+  // applying a penalty from a countdown that's no longer running.
+  useEffect(() => {
+    if (modeRef.current === mode) return;
+    modeRef.current = mode;
+    // "stopped" is handled by both modes, and "solving" must never be
+    // interrupted mid-solve — only the waiting phases need re-arming.
+    if (phaseRef.current === "idle" || phaseRef.current === "inspecting") {
+      prepareNextSolve();
+    }
+  }, [mode, prepareNextSolve]);
 
   const keyDown = useCallback(() => {
     const currentPhase = phaseRef.current;
@@ -192,7 +240,7 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
     if (currentPhase === "solving") {
       const raw = performance.now() - (solveStartRef.current ?? performance.now());
       stopRaf();
-      setPhase("stopped");
+      commitPhase("stopped");
       setSolvingElapsedMs(raw);
       onSolveComplete?.(Math.round(raw), pendingPenaltyRef.current);
       return;
@@ -200,7 +248,7 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
 
     if (isHoldingRef.current) return; // ignore key-repeat while already held
 
-    if (currentPhase === "idle" && mode === "standard") {
+    if (canHoldFrom(currentPhase) && mode === "standard") {
       isHoldingRef.current = true;
       setIsHolding(true);
       holdStartRef.current = performance.now();
@@ -214,7 +262,7 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
       setIsHolding(true);
       holdStartRef.current = performance.now();
     }
-  }, [mode, onSolveComplete, runTick, stopRaf]);
+  }, [mode, commitPhase, onSolveComplete, runTick, stopRaf]);
 
   const keyUp = useCallback(() => {
     if (!isHoldingRef.current) return;
@@ -228,7 +276,7 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
       return;
     }
 
-    if (currentPhase === "idle" && mode === "standard") {
+    if (canHoldFrom(currentPhase) && mode === "standard") {
       const elapsed = performance.now() - (holdStartRef.current ?? performance.now());
       isHoldingRef.current = false;
       setIsHolding(false);

@@ -36,7 +36,7 @@ function phaseColor(phase: string, holdIntensity: number, isHolding: boolean): s
 }
 
 export default function TimerPage() {
-  const [inspectionEnabled, setInspectionEnabled] = useState(true);
+  const [inspectionEnabled, setInspectionEnabled] = useState(false);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   const [cubeSize, setCubeSize] = useState<SupportedCubeSize>(3);
   const [scramble, setScramble] = useState<string[]>([]);
@@ -106,9 +106,6 @@ export default function TimerPage() {
     onSolveComplete,
   });
 
-  const phaseRef = useRef(phase);
-  phaseRef.current = phase;
-
   // Arm the first attempt, and re-arm automatically after each completed solve.
   // Scramble generation is deferred to this client-only effect (rather than a
   // useState initializer) since generateScramble() uses Math.random() and
@@ -127,7 +124,7 @@ export default function TimerPage() {
     // would change what onSolveComplete records the in-flight solve as (it
     // closes over cubeSize), silently corrupting which cube size's stats the
     // solve lands in. Block it while a solve/inspection is in progress.
-    if (phaseRef.current === "inspecting" || phaseRef.current === "solving") return;
+    if (phase === "inspecting" || phase === "solving") return;
     setCubeSize(size);
     regenerateScramble(size);
   }
@@ -137,7 +134,12 @@ export default function TimerPage() {
       if (e.code === TIMER_KEY) {
         if (e.repeat) return;
         e.preventDefault();
-        if (phase === "stopped") {
+        // Inspection mode: this press starts the next countdown, flipping the
+        // display from the last time to 15. Standard mode: the press instead
+        // begins the next ready-hold, so one continuous hold-and-release goes
+        // from "showing your last time" to "timing" without spending a
+        // separate press just to reset the display.
+        if (phase === "stopped" && inspectionEnabled) {
           prepareNextSolve();
           return;
         }
@@ -146,7 +148,7 @@ export default function TimerPage() {
       }
       if (e.code === NEW_SCRAMBLE_KEY) {
         // Guard against changing the scramble mid-inspection/solve, per spec §2.2.
-        if (phaseRef.current === "inspecting" || phaseRef.current === "solving") return;
+        if (phase === "inspecting" || phase === "solving") return;
         e.preventDefault();
         regenerateScramble(cubeSize);
       }
@@ -162,7 +164,15 @@ export default function TimerPage() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [keyDown, keyUp, phase, prepareNextSolve, regenerateScramble, cubeSize]);
+  }, [
+    keyDown,
+    keyUp,
+    phase,
+    prepareNextSolve,
+    regenerateScramble,
+    cubeSize,
+    inspectionEnabled,
+  ]);
 
   const color = phaseColor(phase, holdIntensity, isHolding);
 
