@@ -3,40 +3,34 @@
 import { useCallback, useEffect, useState } from "react";
 import { addSolve, deleteSolve, getSolvesByCubeSize, updateSolve } from "@/lib/db";
 import { formatTimeMs } from "@/lib/format";
-import { scrambleToString, type SupportedCubeSize } from "@/lib/scramble-gen";
+import { type SupportedCubeSize } from "@/lib/scramble-gen";
 import { generateScrambleForSize, initScrambler } from "@/lib/scrambler";
-import { ColorfulLoader, LOADER_EXIT_MS } from "@/components/ColorfulLoader";
-import {
-  allTimeMean,
-  ao12,
-  ao5,
-  bestSingle,
-  effectiveTimeMs,
-  type Penalty,
-  type Solve,
-} from "@/lib/stats-engine";
+import { Backdrop } from "@/components/Backdrop";
+import { BootScreen, BOOT_EXIT_MS } from "@/components/BootScreen";
+import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
+import { ScrambleLine } from "@/components/ScrambleLine";
+import { SolveHistory } from "@/components/SolveHistory";
+import { StatsRow } from "@/components/StatsRow";
+import { TimerDisplay } from "@/components/TimerDisplay";
+import { effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
+import { useOnceFlag } from "@/lib/useOnceFlag";
+import { useMouseIdle } from "@/lib/useMouseIdle";
+import { useAnyOverlayOpen } from "@/lib/overlayState";
 
 const TIMER_KEY = "Space";
 const NEW_SCRAMBLE_KEY = "Tab";
-const CUBE_SIZES: SupportedCubeSize[] = [2, 3, 4, 5, 6, 7];
+const TAB_HINT_FLAG = "cozycubes:tab-used";
 
-function formatStat(ms: number | null): string {
-  return ms === null ? "—" : formatTimeMs(ms);
-}
-
-function phaseColor(phase: string, holdIntensity: number, isHolding: boolean): string {
-  if (phase === "solving") return "#22c55e"; // green while solving
-  if (isHolding) {
-    // ramp neutral blue -> red as holdIntensity goes 0 -> 1
-    const r = Math.round(59 + (239 - 59) * holdIntensity);
-    const g = Math.round(130 + (68 - 130) * holdIntensity);
-    const b = Math.round(246 + (68 - 246) * holdIntensity);
-    return `rgb(${r}, ${g}, ${b})`;
-  }
-  return "#64748b"; // neutral slate
-}
-
+/**
+ * Composition root for the timer.
+ *
+ * All state and both effects that drive behaviour (keyboard handling, scrambler
+ * warm-up) stay here on purpose — the components below are presentational and
+ * take props. Moving useHoldReadyState or the key listeners into a child would
+ * change when they mount and remount, and so change the timer's behaviour.
+ */
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(false);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
@@ -44,19 +38,18 @@ export default function TimerPage() {
   const [scramble, setScramble] = useState<string[]>([]);
   const [solves, setSolves] = useState<Solve[]>([]);
   const [scramblerReady, setScramblerReady] = useState(false);
-  const [loaderMounted, setLoaderMounted] = useState(true);
+  const [booted, setBooted] = useState(false);
+  const [bootMounted, setBootMounted] = useState(true);
+  // The Tab hint is a teaching aid, not permanent chrome — it retires itself
+  // the first time the user actually uses Tab.
+  const [tabHintUsed, markTabHintUsed] = useOnceFlag(TAB_HINT_FLAG);
+
+  const pointerIdle = useMouseIdle();
+  const overlayOpen = useAnyOverlayOpen();
 
   const regenerateScramble = useCallback((size: SupportedCubeSize) => {
     setScramble(generateScrambleForSize(size));
   }, []);
-
-  // Unmount the loader only once its fade has finished, so it cross-fades over
-  // the timer instead of being cut away.
-  useEffect(() => {
-    if (!scramblerReady) return;
-    const timeout = setTimeout(() => setLoaderMounted(false), LOADER_EXIT_MS);
-    return () => clearTimeout(timeout);
-  }, [scramblerReady]);
 
   // Reload the persisted solve history whenever the active cube size changes.
   useEffect(() => {
@@ -119,9 +112,9 @@ export default function TimerPage() {
 
   // 3x3 is the default size and needs cubejs's pruning tables, which take
   // 1-2s to build and block the main thread while they do. Wait for an actual
-  // painted frame before starting so the loader is on screen for it, rather
-  // than the browser going white — a passive effect alone doesn't guarantee
-  // the paint has happened.
+  // painted frame before starting so the boot screen is on screen for it,
+  // rather than the browser going white — a passive effect alone doesn't
+  // guarantee the paint has happened.
   //
   // The first scramble is generated here too, before the reveal, so the timer
   // underneath is fully populated when it fades in rather than showing an
@@ -130,8 +123,7 @@ export default function TimerPage() {
   // The guard is `scramblerReady` — the work having *finished* — and not a ref
   // latched on start: the cleanup cancels the pending frame, so a start-latched
   // guard makes any cleanup that lands before the frame fires (StrictMode's
-  // mount/unmount/remount, or a `prepareNextSolve` identity change when the
-  // mode flips) permanent, leaving the loader up forever.
+  // mount/unmount/remount) permanent, leaving the boot screen up forever.
   useEffect(() => {
     if (scramblerReady) return;
 
@@ -141,10 +133,9 @@ export default function TimerPage() {
         try {
           initScrambler();
           regenerateScramble(cubeSize);
-          prepareNextSolve();
         } catch (err) {
           // A solver that fails to build must not strand the app behind the
-          // loader; reveal the timer and let Tab retry the scramble.
+          // boot screen; reveal the timer and let Tab retry the scramble.
           console.error("Scrambler init failed", err);
         } finally {
           setScramblerReady(true);
@@ -155,7 +146,25 @@ export default function TimerPage() {
       cancelAnimationFrame(frame);
       clearTimeout(timeout);
     };
-  }, [scramblerReady, cubeSize, regenerateScramble, prepareNextSolve]);
+  }, [scramblerReady, cubeSize, regenerateScramble]);
+
+  // Arming the timer is deliberately deferred to the boot dismissal rather than
+  // done during scrambler init. In inspection mode prepareNextSolve() starts the
+  // 15s countdown immediately, and starting it behind a boot screen that waits
+  // on a keypress would let inspection run — and expire into a forced start —
+  // before the user has even seen the timer.
+  const handleBoot = useCallback(() => {
+    setBooted(true);
+    prepareNextSolve();
+  }, [prepareNextSolve]);
+
+  // Unmount the boot screen only once its fade has finished, so it dissolves
+  // over a timer that is already rendered underneath.
+  useEffect(() => {
+    if (!booted) return;
+    const timeout = setTimeout(() => setBootMounted(false), BOOT_EXIT_MS);
+    return () => clearTimeout(timeout);
+  }, [booted]);
 
   function handleCubeSizeChange(size: SupportedCubeSize) {
     // Same guard as the Tab new-scramble keybind: switching cube size mid-solve
@@ -168,9 +177,16 @@ export default function TimerPage() {
   }
 
   useEffect(() => {
-    // Nothing to drive while the loader is up, and a keypress landing before
-    // the first scramble exists would start a solve against a blank scramble.
-    if (!scramblerReady) return;
+    // Gating on `booted` subsumes the old `scramblerReady` guard — the boot
+    // screen only accepts a keypress once the scrambler is warm. It also means
+    // no Space handler is registered at the moment the dismissing keypress
+    // fires, so that keypress cannot also start a solve.
+    //
+    // `overlayOpen` covers the dropdown and the footer dialogs, which need the
+    // same two keys this handler claims: Space activates the focused option and
+    // Tab moves between controls. Without detaching here, picking a cube size
+    // with the keyboard would also start a solve.
+    if (!booted || overlayOpen) return;
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.code === TIMER_KEY) {
@@ -189,10 +205,11 @@ export default function TimerPage() {
         return;
       }
       if (e.code === NEW_SCRAMBLE_KEY) {
-        // Guard against changing the scramble mid-inspection/solve, per spec §2.2.
+        // Guard against changing the scramble mid-inspection/solve, per spec 2.2.
         if (phase === "inspecting" || phase === "solving") return;
         e.preventDefault();
         regenerateScramble(cubeSize);
+        markTabHintUsed();
       }
     }
     function onKeyUp(e: KeyboardEvent) {
@@ -207,7 +224,8 @@ export default function TimerPage() {
       window.removeEventListener("keyup", onKeyUp);
     };
   }, [
-    scramblerReady,
+    booted,
+    overlayOpen,
     keyDown,
     keyUp,
     phase,
@@ -215,9 +233,8 @@ export default function TimerPage() {
     regenerateScramble,
     cubeSize,
     inspectionEnabled,
+    markTabHintUsed,
   ]);
-
-  const color = phaseColor(phase, holdIntensity, isHolding);
 
   let display: string;
   if (phase === "solving") {
@@ -225,7 +242,9 @@ export default function TimerPage() {
   } else if (phase === "stopped" && lastSolve) {
     const effective = effectiveTimeMs(lastSolve);
     display =
-      effective === null ? "DNF" : `${formatTimeMs(effective)}${lastSolve.penalty === "+2" ? " +2" : ""}`;
+      effective === null
+        ? "DNF"
+        : `${formatTimeMs(effective)}${lastSolve.penalty === "+2" ? " +2" : ""}`;
   } else if (phase === "inspecting" && inspectionRemainingMs !== null) {
     display = String(Math.ceil(inspectionRemainingMs / 1000));
   } else {
@@ -234,135 +253,110 @@ export default function TimerPage() {
 
   const cubeSizeLocked = phase === "inspecting" || phase === "solving";
 
+  // Focus mode. The chrome recedes when the pointer is at rest, and is forced
+  // away outright while inspecting or solving — the "serious state", where only
+  // the scramble, the digits, and the session's solves should be on screen.
+  // An open overlay always wins: fading the footer out from under a dialog the
+  // user just opened would strand it.
+  const chromeDimmed = !overlayOpen && (pointerIdle || cubeSizeLocked);
+
   return (
     <>
-      {/* Kept mounted through the fade so the loader dissolves into a timer
-          that is already rendered underneath, rather than cutting to it. */}
-      {loaderMounted && (
-        <ColorfulLoader label="Warming up scrambler" exiting={scramblerReady} />
+      <Backdrop />
+
+      {bootMounted && (
+        <BootScreen ready={scramblerReady} booted={booted} onBoot={handleBoot} />
       )}
-      <main
-        className={`flex flex-col items-center min-h-screen gap-8 bg-black text-white px-4 pt-8 transition-opacity duration-500 ease-out ${
-          scramblerReady ? "opacity-100" : "opacity-0"
-        }`}
-      >
-      <div className="flex flex-col items-center gap-3 w-full max-w-3xl">
-        <div className="flex gap-1 rounded-full border border-slate-800 p-1">
-          {CUBE_SIZES.map((size) => (
-            <button
-              key={size}
-              type="button"
-              disabled={cubeSizeLocked}
-              onClick={() => handleCubeSizeChange(size)}
-              className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                cubeSizeLocked ? "cursor-not-allowed opacity-40" : ""
-              } ${
-                size === cubeSize
-                  ? "bg-slate-100 text-black"
-                  : "text-slate-500 hover:text-slate-300"
-              }`}
-            >
-              {size}×{size}
-            </button>
-          ))}
-        </div>
-
-        <p className="font-mono text-center text-lg md:text-xl tracking-wide text-slate-100">
-          {scrambleToString(scramble)}
-        </p>
-        <p className="text-[11px] text-slate-600">
-          press <kbd className="px-1 border border-slate-700 rounded">tab</kbd> for a new scramble
-          {inspectionEnabled ? " (disabled during inspection/solve)" : " (disabled while solving)"}
-        </p>
-      </div>
-
-      <div className="flex-1" />
 
       <div
-        className="font-mono text-7xl md:text-8xl font-bold tabular-nums transition-colors duration-150"
-        style={{ color }}
+        className="relative z-10 flex min-h-screen flex-col"
+        style={{
+          opacity: booted ? 1 : 0,
+          transform: booted ? "translateY(0)" : "translateY(16px)",
+          pointerEvents: booted ? "auto" : "none",
+          transition: "opacity .8s ease .1s, transform .8s ease .1s",
+        }}
       >
-        {display}
+        <Header
+          cubeSize={cubeSize}
+          locked={cubeSizeLocked}
+          onCubeSizeChange={handleCubeSizeChange}
+          inspectionEnabled={inspectionEnabled}
+          onToggleInspection={() => setInspectionEnabled((v) => !v)}
+          dimmed={chromeDimmed}
+        />
+
+        {/*
+          Explicit grid rows rather than a flex column with spacers.
+
+          Every row except the timer's has a fixed height, and the timer sits in
+          the single 1fr row, centred. That is what makes the digits hold
+          absolutely still: a scramble that wraps to three lines, a dismissed
+          Tab hint, an empty solve list and a hundred-solve one all resolve
+          inside their own fixed box and cannot push the timer by a pixel.
+
+          The min-content floor on the timer row means a short viewport makes
+          the page scroll rather than letting the digits overlap the stats.
+
+          Focus mode fades the chrome rather than removing it from the layout,
+          for the same reason: a reflow on every pointer idle would move the
+          digits, which is exactly what these fixed rows exist to prevent.
+        */}
+        <main
+          className="shell grid min-h-screen py-24"
+          style={{ gridTemplateRows: "9rem minmax(min-content, 1fr) 5rem 11rem" }}
+        >
+          {/* Scrambles run from 11 moves on 2x2 to 100 on 7x7, so this row
+              scrolls internally rather than growing. */}
+          <div className="scroll-thin flex flex-col items-center justify-center gap-3 overflow-y-auto">
+            <ScrambleLine scramble={scramble} />
+            {/* Always rendered so its space stays reserved; it just fades out
+                once the user has actually used Tab, on this device. */}
+            <p
+              aria-hidden={tabHintUsed}
+              className="text-[11px] transition-opacity duration-500"
+              style={{
+                color: "var(--ink-dimmer)",
+                opacity: tabHintUsed ? 0 : 1,
+              }}
+            >
+              press{" "}
+              <kbd className="rounded px-1 font-mono" style={{ color: "var(--ink-dim)" }}>
+                tab
+              </kbd>{" "}
+              for a new scramble
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center">
+            <TimerDisplay
+              display={display}
+              phase={phase}
+              holdIntensity={holdIntensity}
+              isHolding={isHolding}
+              hint={
+                inspectionEnabled
+                  ? "hold space to ready up during inspection, release to start"
+                  : "hold space to ready up, release to start"
+              }
+            />
+          </div>
+
+          <div className="flex items-center justify-center">
+            <StatsRow solves={solves} />
+          </div>
+
+          <div className="flex justify-center">
+            <SolveHistory
+              solves={solves}
+              onTogglePenalty={togglePenalty}
+              onDelete={removeSolve}
+            />
+          </div>
+        </main>
+
+        <Footer solveCount={solves.length} dimmed={chromeDimmed} />
       </div>
-
-      <button
-        type="button"
-        onClick={() => setInspectionEnabled((v) => !v)}
-        className="text-xs text-slate-500 hover:text-slate-300 border border-slate-800 rounded-full px-3 py-1"
-      >
-        inspection: {inspectionEnabled ? "on" : "off"} (click to toggle)
-      </button>
-
-      <p className="text-xs text-slate-600">
-        hold <kbd className="px-1 border border-slate-700 rounded">space</kbd> to
-        {inspectionEnabled ? " ready up during inspection" : " ready up"}, release to start,
-        press again to stop
-      </p>
-
-      <div className="flex-1" />
-
-      <div className="w-full max-w-3xl border-t border-slate-900 pt-4 pb-8 flex flex-col gap-4">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-          <Stat label="best" value={formatStat(bestSingle(solves))} />
-          <Stat label="ao5" value={formatStat(ao5(solves))} />
-          <Stat label="ao12" value={formatStat(ao12(solves))} />
-          <Stat label="mean" value={formatStat(allTimeMean(solves))} />
-          <Stat label="solves" value={String(solves.length)} />
-        </div>
-
-        <div className="flex flex-col-reverse gap-1 max-h-40 overflow-y-auto text-xs font-mono text-slate-400">
-          {solves
-            .slice(-20)
-            .reverse()
-            .map((solve) => {
-              const effective = effectiveTimeMs(solve);
-              return (
-                <div
-                  key={solve.id}
-                  className="group flex items-center justify-between px-2 py-0.5 rounded hover:bg-slate-900"
-                >
-                  <span>
-                    {effective === null ? "DNF" : formatTimeMs(effective)}
-                    {solve.penalty === "+2" ? " +2" : ""}
-                  </span>
-                  <span className="hidden group-hover:flex gap-2 text-[10px] uppercase tracking-wide">
-                    <button
-                      type="button"
-                      onClick={() => togglePenalty(solve.id, "+2")}
-                      className={solve.penalty === "+2" ? "text-amber-400" : "text-slate-500 hover:text-amber-400"}
-                    >
-                      +2
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => togglePenalty(solve.id, "DNF")}
-                      className={solve.penalty === "DNF" ? "text-red-400" : "text-slate-500 hover:text-red-400"}
-                    >
-                      dnf
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeSolve(solve.id)}
-                      className="text-slate-500 hover:text-slate-200"
-                    >
-                      del
-                    </button>
-                  </span>
-                </div>
-              );
-            })}
-        </div>
-      </div>
-      </main>
     </>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-wider text-slate-600">{label}</span>
-      <span className="font-mono text-sm text-slate-200">{value}</span>
-    </div>
   );
 }
