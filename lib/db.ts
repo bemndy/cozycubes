@@ -53,3 +53,12 @@ export async function clearAllSolves(): Promise<void> {
   const db = await getDb();
   await db.clear("solves");
 }
+
+/** Delete every solve recorded for a single cube size, leaving other sizes' history intact. */
+export async function clearSolvesByCubeSize(cubeSize: number): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction("solves", "readwrite");
+  const keys = await tx.store.index("cubeSize").getAllKeys(cubeSize);
+  await Promise.all(keys.map((key) => tx.store.delete(key)));
+  await tx.done;
+}

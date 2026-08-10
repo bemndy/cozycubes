@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { addSolve, deleteSolve, getSolvesByCubeSize, updateSolve } from "@/lib/db";
+import { addSolve, clearSolvesByCubeSize, deleteSolve, getSolvesByCubeSize, updateSolve } from "@/lib/db";
 import { formatTimeMs } from "@/lib/format";
 import { scrambleToString, type SupportedCubeSize } from "@/lib/scramble-gen";
 import { generateScrambleForSize, initScrambler } from "@/lib/scrambler";
@@ -102,6 +102,16 @@ export default function TimerPage() {
     setSolves((prev) => prev.filter((s) => s.id !== id));
     void deleteSolve(id);
   }, []);
+
+  const clearSession = useCallback(() => {
+    if (solves.length === 0) return;
+    if (!window.confirm(`Clear all ${solves.length} ${cubeSize}×${cubeSize} solves? This can't be undone.`)) {
+      return;
+    }
+    setSolves([]);
+    setLastSolve(null);
+    void clearSolvesByCubeSize(cubeSize);
+  }, [solves.length, cubeSize]);
 
   const {
     phase,
@@ -302,12 +312,22 @@ export default function TimerPage() {
       <div className="flex-1" />
 
       <div className="w-full max-w-3xl border-t border-slate-900 pt-4 pb-8 flex flex-col gap-4">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
-          <Stat label="best" value={formatStat(bestSingle(solves))} />
-          <Stat label="ao5" value={formatStat(ao5(solves))} />
-          <Stat label="ao12" value={formatStat(ao12(solves))} />
-          <Stat label="mean" value={formatStat(allTimeMean(solves))} />
-          <Stat label="solves" value={String(solves.length)} />
+        <div className="flex items-center justify-between">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center flex-1">
+            <Stat label="best" value={formatStat(bestSingle(solves))} />
+            <Stat label="ao5" value={formatStat(ao5(solves))} />
+            <Stat label="ao12" value={formatStat(ao12(solves))} />
+            <Stat label="mean" value={formatStat(allTimeMean(solves))} />
+            <Stat label="solves" value={String(solves.length)} />
+          </div>
+          <button
+            type="button"
+            onClick={clearSession}
+            disabled={solves.length === 0}
+            className="text-[10px] uppercase tracking-wider text-slate-600 hover:text-red-400 disabled:opacity-30 disabled:hover:text-slate-600 shrink-0 ml-3"
+          >
+            clear session
+          </button>
         </div>
 
         <div className="flex flex-col-reverse gap-1 max-h-40 overflow-y-auto text-xs font-mono text-slate-400">
