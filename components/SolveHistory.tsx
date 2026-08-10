@@ -14,6 +14,12 @@ interface SolveHistoryProps {
 /** Solves per row. Five, so a row is also an Ao5 window. */
 const PER_ROW = 5;
 
+/**
+ * Width of the leading colour column: five 8px squares plus their 4px gaps,
+ * held constant so short rows still line up with full ones.
+ */
+const COLOR_COLUMN = "4rem";
+
 /** Rows visible before expanding. */
 const COLLAPSED_ROWS = 5;
 
@@ -88,10 +94,15 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
             <div
               key={row[0].solve.id}
               className="grid items-start gap-x-2"
-              style={{ gridTemplateColumns: `auto repeat(${PER_ROW}, minmax(0, 1fr))` }}
+              style={{
+                // Fixed, not auto: a final row holding fewer than five solves
+                // would otherwise shrink its colour column and knock every time
+                // in that row out of line with the rows above it.
+                gridTemplateColumns: `${COLOR_COLUMN} repeat(${PER_ROW}, minmax(0, 1fr))`,
+              }}
             >
-              {/* Column one: this row's five solves, as colour alone. */}
-              <div className="flex items-center gap-1 pr-1 pt-0.5">
+              {/* Column one: this row's solves, as colour alone. */}
+              <div className="flex items-center gap-1 pt-0.5">
                 {row.map(({ solve }) => (
                   <span
                     key={solve.id}

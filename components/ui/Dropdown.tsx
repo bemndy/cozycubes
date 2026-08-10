@@ -174,7 +174,7 @@ export function Dropdown<T extends string | number>({
                 aria-selected={isSelected}
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => commit(index)}
-                className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-[13px]"
+                className="flex cursor-pointer items-center justify-between gap-3 rounded-[6px] px-2.5 py-1.5 text-[13px]"
                 style={{
                   background: isActive ? "var(--hover-tint)" : "transparent",
                   color: isSelected ? "var(--ink)" : "var(--ink-dim)",

@@ -227,23 +227,32 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Page grid
+   Page widths
    ---------------------------------------------------------------------------
-   The three sections: net left, scramble and timer middle, solves right.
+   Three sections: net left, scramble and timer middle, solves right.
 
-   Header, main, and footer all use this same class, and the header and footer
-   put their contents in the middle cell. That is what makes them line up with
-   the timer at every viewport width — a fixed max-width on the bars could only
-   ever match a fractional middle column at one specific width, and drift
-   everywhere else.
+   The middle column is a fixed width and the flanks are equal fractions of
+   what's left. Two consequences worth stating, because the layout leans on
+   both: the middle is centred on the page by construction at any viewport, and
+   the flanks absorb all the extra width rather than the timer stack stretching.
 
-   The flanks are equal, so the middle cell is centred on the page by
-   construction.
+   --mid-width is deliberately narrower than --bar-width. The header and footer
+   sit on the wider measure, so the space between the two — a few rem on each
+   side — is left over for the net and the solve list to spread into rather
+   than being claimed by the timer column.
 --------------------------------------------------------------------------- */
+
+:root {
+  --page-max: 84rem;
+  --bar-width: 40rem;
+  --mid-width: 34rem;
+}
 
 .page-grid {
   display: grid;
   width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
   padding-inline: 1.5rem;
   column-gap: 2.5rem;
   grid-template-columns: minmax(0, 1fr);
@@ -251,8 +260,16 @@ body {
 
 @media (min-width: 1024px) {
   .page-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) var(--mid-width) minmax(0, 1fr);
   }
+}
+
+/* The header and footer's own measure — wider than the timer column. */
+.bar-inner {
+  width: 100%;
+  max-width: var(--bar-width);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
 }
 
 /* ---------------------------------------------------------------------------
@@ -294,7 +311,7 @@ body {
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.6rem;
-  border-radius: 8px;
+  border-radius: 5px;
   background: var(--ink);
   color: var(--surface);
   font-size: 11px;
@@ -315,12 +332,14 @@ body {
    fill rather than inheriting a frost that would muddy them.
 --------------------------------------------------------------------------- */
 
+/* No border at all — the blur and the shadow do the separating. The soft
+   themes' --edge was transparent anyway, so this only changes the mono pair,
+   which keeps its definition from the flat opaque fill. */
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--edge);
-  border-radius: 14px;
+  border-radius: 10px;
   box-shadow: var(--glass-shadow);
 }
 

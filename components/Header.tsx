@@ -61,10 +61,10 @@ export function Header({
       className="fixed inset-x-0 top-0 z-30 flex h-20 items-center transition-opacity duration-500"
       style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
     >
-      {/* Same grid as <main>, with the contents in the middle cell, so the bar
-          sits directly above the timer at every width. */}
-      <div className="page-grid items-center">
-        <div className="hidden lg:block" />
+      {/* The bar's own measure, wider than the timer column it sits above. The
+          few rem of difference on each side is what the net and the solve list
+          spread into. */}
+      <div className="bar-inner">
         <div className="flex items-center justify-between">
           {/* Not a link. The timer is the only page, so a wordmark pointing at
               "/" would navigate to itself, remounting the tree and discarding
@@ -108,7 +108,6 @@ export function Header({
             />
           </div>
         </div>
-        <div className="hidden lg:block" />
       </div>
     </header>
   );

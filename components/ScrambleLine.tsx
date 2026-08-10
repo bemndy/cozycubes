@@ -31,7 +31,7 @@ export function ScrambleLine({ scramble, onRefresh, locked }: ScrambleLineProps)
     // would centre the pair, pushing the scramble left of the page's centre
     // line by half the button's width.
     <div className="flex w-full justify-center">
-      <div className="relative max-w-[30rem]">
+      <div className="relative max-w-[26rem]">
         <p className="text-center font-mono text-[15px] leading-[1.8] tracking-wide sm:text-[17px]">
           <span
             aria-hidden="true"

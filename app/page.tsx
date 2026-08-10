@@ -327,7 +327,7 @@ export default function TimerPage() {
         */}
         <main className="page-grid min-h-screen content-center items-center gap-y-12 py-24">
           <aside
-            className="order-2 flex h-40 items-center justify-center transition-opacity duration-500 lg:order-1"
+            className="order-2 grid h-40 place-items-center transition-opacity duration-500 lg:order-1"
             style={{ opacity: dimmed ? 0 : 1 }}
             aria-hidden={dimmed}
           >
@@ -366,13 +366,13 @@ export default function TimerPage() {
           </div>
 
           <aside
-            className="order-3 flex items-center justify-center transition-opacity duration-500"
+            className="order-3 grid place-items-center transition-opacity duration-500"
             style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
             aria-hidden={dimmed}
           >
             {/* Capped and centred, so the list sits in the middle of its
                 section rather than stretching to fill it. */}
-            <div className="w-full max-w-[24rem]">
+            <div className="w-full max-w-[22rem]">
               <SolveHistory
                 solves={solves}
                 onTogglePenalty={togglePenalty}
