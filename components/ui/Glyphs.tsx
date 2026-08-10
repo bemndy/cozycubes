@@ -36,21 +36,30 @@ export function InspectionGlyph(props: GlyphProps) {
   );
 }
 
-/** Half-filled circle — the conventional light/dark switch. */
-export function ThemeGlyph(props: GlyphProps) {
+/**
+ * Git branch — changelog.
+ *
+ * Two commit nodes on a trunk with a branch merging back, which is the shape
+ * the releases in the dialog actually came from.
+ */
+export function GitGlyph(props: GlyphProps) {
   return (
     <Svg {...props}>
-      <circle cx="8" cy="8" r="6.25" />
-      <path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor" stroke="none" />
+      <circle cx="4.25" cy="3.25" r="1.75" />
+      <circle cx="4.25" cy="12.75" r="1.75" />
+      <circle cx="11.75" cy="8" r="1.75" />
+      <path d="M4.25 5v6" />
+      <path d="M10 8H8.5A4.25 4.25 0 0 1 4.25 3.75" />
     </Svg>
   );
 }
 
-/** Stacked releases — changelog. */
-export function ChangelogGlyph(props: GlyphProps) {
+/** Circular arrow — reroll the scramble. */
+export function RefreshGlyph(props: GlyphProps) {
   return (
     <Svg {...props}>
-      <path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h7" />
+      <path d="M13.25 8a5.25 5.25 0 1 1-1.6-3.78" />
+      <path d="M13.5 2.25v3.5H10" />
     </Svg>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { IconButton } from "./ui/IconButton";
 import {
-  ChangelogGlyph,
+  GitGlyph,
   ContactGlyph,
   PrivacyGlyph,
   SecurityGlyph,
@@ -64,7 +64,7 @@ export function Footer({ solveCount, dimmed }: FooterProps) {
               onClick={() => setOpenPanel("changelog")}
               expanded={openPanel === "changelog"}
             >
-              <ChangelogGlyph />
+              <GitGlyph />
             </IconButton>
 
             {INFO_ITEMS.map(({ topic, label, Glyph }) => (

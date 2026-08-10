@@ -9,27 +9,33 @@ import { Backdrop } from "@/components/Backdrop";
 import { BootScreen, BOOT_EXIT_MS } from "@/components/BootScreen";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { CubeNet } from "@/components/CubeNet";
+import { ScrambleHint, TimerHint } from "@/components/Hints";
 import { ScrambleLine } from "@/components/ScrambleLine";
 import { SolveHistory } from "@/components/SolveHistory";
 import { StatsRow } from "@/components/StatsRow";
 import { TimerDisplay } from "@/components/TimerDisplay";
 import { effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
-import { useOnceFlag } from "@/lib/useOnceFlag";
 import { useMouseIdle } from "@/lib/useMouseIdle";
 import { useAnyOverlayOpen } from "@/lib/overlayState";
 
 const TIMER_KEY = "Space";
 const NEW_SCRAMBLE_KEY = "Tab";
-const TAB_HINT_FLAG = "cozycubes:tab-used";
+
+/**
+ * Elements that own their own click. A pointer press landing on one of these
+ * must not also arm the timer, or picking a theme would start a solve.
+ */
+const INTERACTIVE = 'button, a, select, input, [role="listbox"], [role="dialog"]';
 
 /**
  * Composition root for the timer.
  *
- * All state and both effects that drive behaviour (keyboard handling, scrambler
- * warm-up) stay here on purpose — the components below are presentational and
- * take props. Moving useHoldReadyState or the key listeners into a child would
- * change when they mount and remount, and so change the timer's behaviour.
+ * All state and every effect that drives behaviour stay here on purpose — the
+ * components below are presentational and take props. Moving useHoldReadyState
+ * or the input listeners into a child would change when they mount and remount,
+ * and so change the timer's behaviour.
  */
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(false);
@@ -40,9 +46,6 @@ export default function TimerPage() {
   const [scramblerReady, setScramblerReady] = useState(false);
   const [booted, setBooted] = useState(false);
   const [bootMounted, setBootMounted] = useState(true);
-  // The Tab hint is a teaching aid, not permanent chrome — it retires itself
-  // the first time the user actually uses Tab.
-  const [tabHintUsed, markTabHintUsed] = useOnceFlag(TAB_HINT_FLAG);
 
   const pointerIdle = useMouseIdle();
   const overlayOpen = useAnyOverlayOpen();
@@ -110,15 +113,13 @@ export default function TimerPage() {
     onSolveComplete,
   });
 
+  const cubeSizeLocked = phase === "inspecting" || phase === "solving";
+
   // 3x3 is the default size and needs cubejs's pruning tables, which take
   // 1-2s to build and block the main thread while they do. Wait for an actual
   // painted frame before starting so the boot screen is on screen for it,
   // rather than the browser going white — a passive effect alone doesn't
   // guarantee the paint has happened.
-  //
-  // The first scramble is generated here too, before the reveal, so the timer
-  // underneath is fully populated when it fades in rather than showing an
-  // empty scramble line for a frame.
   //
   // The guard is `scramblerReady` — the work having *finished* — and not a ref
   // latched on start: the cleanup cancels the pending frame, so a start-latched
@@ -167,14 +168,36 @@ export default function TimerPage() {
   }, [booted]);
 
   function handleCubeSizeChange(size: SupportedCubeSize) {
-    // Same guard as the Tab new-scramble keybind: switching cube size mid-solve
+    // Same guard as the new-scramble binding: switching cube size mid-solve
     // would change what onSolveComplete records the in-flight solve as (it
     // closes over cubeSize), silently corrupting which cube size's stats the
-    // solve lands in. Block it while a solve/inspection is in progress.
-    if (phase === "inspecting" || phase === "solving") return;
+    // solve lands in.
+    if (cubeSizeLocked) return;
     setCubeSize(size);
     regenerateScramble(size);
   }
+
+  /** Shared by the Tab keybind and the reroll button. */
+  const newScramble = useCallback(() => {
+    // Guard against changing the scramble mid-inspection/solve, per spec 2.2.
+    if (phase === "inspecting" || phase === "solving") return;
+    regenerateScramble(cubeSize);
+  }, [phase, cubeSize, regenerateScramble]);
+
+  // Press and release, shared verbatim by the spacebar and the pointer so the
+  // two bindings cannot drift apart.
+  const handlePress = useCallback(() => {
+    // Inspection mode: this press starts the next countdown, flipping the
+    // display from the last time to 15. Standard mode: the press instead
+    // begins the next ready-hold, so one continuous hold-and-release goes from
+    // "showing your last time" to "timing" without spending a separate press
+    // just to reset the display.
+    if (phase === "stopped" && inspectionEnabled) {
+      prepareNextSolve();
+      return;
+    }
+    keyDown();
+  }, [phase, inspectionEnabled, prepareNextSolve, keyDown]);
 
   useEffect(() => {
     // Gating on `booted` subsumes the old `scramblerReady` guard — the boot
@@ -182,34 +205,21 @@ export default function TimerPage() {
     // no Space handler is registered at the moment the dismissing keypress
     // fires, so that keypress cannot also start a solve.
     //
-    // `overlayOpen` covers the dropdown and the footer dialogs, which need the
+    // `overlayOpen` covers the dropdowns and the footer dialogs, which need the
     // same two keys this handler claims: Space activates the focused option and
-    // Tab moves between controls. Without detaching here, picking a cube size
-    // with the keyboard would also start a solve.
+    // Tab moves between controls.
     if (!booted || overlayOpen) return;
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.code === TIMER_KEY) {
         if (e.repeat) return;
         e.preventDefault();
-        // Inspection mode: this press starts the next countdown, flipping the
-        // display from the last time to 15. Standard mode: the press instead
-        // begins the next ready-hold, so one continuous hold-and-release goes
-        // from "showing your last time" to "timing" without spending a
-        // separate press just to reset the display.
-        if (phase === "stopped" && inspectionEnabled) {
-          prepareNextSolve();
-          return;
-        }
-        keyDown();
+        handlePress();
         return;
       }
       if (e.code === NEW_SCRAMBLE_KEY) {
-        // Guard against changing the scramble mid-inspection/solve, per spec 2.2.
-        if (phase === "inspecting" || phase === "solving") return;
         e.preventDefault();
-        regenerateScramble(cubeSize);
-        markTabHintUsed();
+        newScramble();
       }
     }
     function onKeyUp(e: KeyboardEvent) {
@@ -217,24 +227,37 @@ export default function TimerPage() {
       e.preventDefault();
       keyUp();
     }
+    // The pointer is bound on window, exactly like the spacebar, and runs the
+    // same handlePress/keyUp pair. Anything narrower — binding press to the
+    // timer surface only — makes the two behave differently depending on where
+    // the cursor happens to be, which is the one thing they must not do.
+    function onPointerDown(e: PointerEvent) {
+      // Primary button only: right-click opens a context menu, and a middle
+      // click has no business starting a solve.
+      if (e.button !== 0) return;
+      if ((e.target as HTMLElement).closest(INTERACTIVE)) return;
+      // Stops a hold from turning into a text-selection drag across the page.
+      e.preventDefault();
+      handlePress();
+    }
+    // Release is unconditional: a press that starts on the page and releases
+    // off it — or over the header — must still register, or the timer stays
+    // stuck holding. keyUp already no-ops when nothing is held.
+    function onPointerUp() {
+      keyUp();
+    }
+
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointerup", onPointerUp);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerUp);
     };
-  }, [
-    booted,
-    overlayOpen,
-    keyDown,
-    keyUp,
-    phase,
-    prepareNextSolve,
-    regenerateScramble,
-    cubeSize,
-    inspectionEnabled,
-    markTabHintUsed,
-  ]);
+  }, [booted, overlayOpen, handlePress, newScramble, keyUp]);
 
   let display: string;
   if (phase === "solving") {
@@ -251,14 +274,14 @@ export default function TimerPage() {
     display = "0.00";
   }
 
-  const cubeSizeLocked = phase === "inspecting" || phase === "solving";
-
-  // Focus mode. The chrome recedes when the pointer is at rest, and is forced
-  // away outright while inspecting or solving — the "serious state", where only
-  // the scramble, the digits, and the session's solves should be on screen.
+  // Focus mode: the chrome, the hints, the net, and the solve list recede when
+  // the pointer is at rest, and outright while inspecting or solving — the
+  // "serious state". What survives is the scramble text, the digits, and the
+  // summary stats.
+  //
   // An open overlay always wins: fading the footer out from under a dialog the
   // user just opened would strand it.
-  const chromeDimmed = !overlayOpen && (pointerIdle || cubeSizeLocked);
+  const dimmed = !overlayOpen && (pointerIdle || cubeSizeLocked);
 
   return (
     <>
@@ -283,79 +306,85 @@ export default function TimerPage() {
           onCubeSizeChange={handleCubeSizeChange}
           inspectionEnabled={inspectionEnabled}
           onToggleInspection={() => setInspectionEnabled((v) => !v)}
-          dimmed={chromeDimmed}
+          dimmed={dimmed}
         />
 
         {/*
-          Explicit grid rows rather than a flex column with spacers.
+          Rows are laid out from the top rather than centred, and every row above
+          the solves has a fixed height. That is what pins the digits: a scramble
+          that wraps, a hidden hint, an empty solve list and a full one all
+          resolve inside their own box.
 
-          Every row except the timer's has a fixed height, and the timer sits in
-          the single 1fr row, centred. That is what makes the digits hold
-          absolutely still: a scramble that wraps to three lines, a dismissed
-          Tab hint, an empty solve list and a hundred-solve one all resolve
-          inside their own fixed box and cannot push the timer by a pixel.
-
-          The min-content floor on the timer row means a short viewport makes
-          the page scroll rather than letting the digits overlap the stats.
-
-          Focus mode fades the chrome rather than removing it from the layout,
-          for the same reason: a reflow on every pointer idle would move the
-          digits, which is exactly what these fixed rows exist to prevent.
+          The solve list is the one row that grows, because expanding it is a
+          direct response to a click. It pushes the page taller downward and
+          leaves everything above it exactly where it was.
         */}
-        <main
-          className="shell grid min-h-screen py-24"
-          style={{ gridTemplateRows: "9rem minmax(min-content, 1fr) 5rem 11rem" }}
-        >
-          {/* Scrambles run from 11 moves on 2x2 to 100 on 7x7, so this row
-              scrolls internally rather than growing. */}
-          <div className="scroll-thin flex flex-col items-center justify-center gap-3 overflow-y-auto">
-            <ScrambleLine scramble={scramble} />
-            {/* Always rendered so its space stays reserved; it just fades out
-                once the user has actually used Tab, on this device. */}
-            <p
-              aria-hidden={tabHintUsed}
-              className="text-[11px] transition-opacity duration-500"
-              style={{
-                color: "var(--ink-dimmer)",
-                opacity: tabHintUsed ? 0 : 1,
-              }}
-            >
-              press{" "}
-              <kbd className="rounded px-1 font-mono" style={{ color: "var(--ink-dim)" }}>
-                tab
-              </kbd>{" "}
-              for a new scramble
-            </p>
+        {/*
+          Three columns on wide screens: the net claims the left margin, the
+          solve list the right, the scramble and timer keep the middle. Both
+          flanks are fixed widths and the centre is the remainder, so the timer
+          holds the page's centre line whatever either side is doing.
+
+          Every column is centred against the others, and the centre column is
+          built symmetrically — the blocks above and below the digits are the
+          same fixed height — so the digits land exactly halfway down the stack.
+          The net and the solve list then centre onto that same line. Below lg
+          it stacks to one column, timer block first.
+        */}
+        <main className="grid min-h-screen w-full content-center items-center gap-x-10 gap-y-12 px-6 py-24 lg:grid-cols-[15rem_minmax(0,1fr)_24rem]">
+          <aside
+            className="order-2 flex h-40 items-center justify-center transition-opacity duration-500 lg:order-1"
+            style={{ opacity: dimmed ? 0 : 1 }}
+            aria-hidden={dimmed}
+          >
+            <CubeNet cubeSize={cubeSize} scramble={scramble} />
+          </aside>
+
+          <div className="order-1 flex flex-col items-center lg:order-2">
+            {/* Fixed height. The hint hugs the scramble; the rest of the block
+                is the gap down to the digits. */}
+            <div className="flex h-36 w-full flex-col items-center justify-start gap-2">
+              <div className="scroll-thin flex max-h-[6.5rem] w-full justify-center overflow-y-auto">
+                <ScrambleLine
+                  scramble={scramble}
+                  onRefresh={newScramble}
+                  locked={cubeSizeLocked}
+                />
+              </div>
+              <ScrambleHint hidden={dimmed} />
+            </div>
+
+            <div className="flex h-32 items-center justify-center">
+              <TimerDisplay
+                display={display}
+                phase={phase}
+                holdIntensity={holdIntensity}
+                isHolding={isHolding}
+              />
+            </div>
+
+            {/* Mirrors the block above: same height, contents pushed to the far
+                edge, so the hint hugs the stats and the gap lands by the digits. */}
+            <div className="flex h-36 w-full flex-col items-center justify-end gap-2">
+              <TimerHint hidden={dimmed} />
+              <StatsRow solves={solves} />
+            </div>
           </div>
 
-          <div className="flex items-center justify-center">
-            <TimerDisplay
-              display={display}
-              phase={phase}
-              holdIntensity={holdIntensity}
-              isHolding={isHolding}
-              hint={
-                inspectionEnabled
-                  ? "hold space to ready up during inspection, release to start"
-                  : "hold space to ready up, release to start"
-              }
-            />
-          </div>
-
-          <div className="flex items-center justify-center">
-            <StatsRow solves={solves} />
-          </div>
-
-          <div className="flex justify-center">
+          <aside
+            className="order-3 flex items-center justify-center transition-opacity duration-500"
+            style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
+            aria-hidden={dimmed}
+          >
             <SolveHistory
               solves={solves}
               onTogglePenalty={togglePenalty}
               onDelete={removeSolve}
             />
-          </div>
+          </aside>
         </main>
 
-        <Footer solveCount={solves.length} dimmed={chromeDimmed} />
+        <Footer solveCount={solves.length} dimmed={dimmed} />
       </div>
     </>
   );

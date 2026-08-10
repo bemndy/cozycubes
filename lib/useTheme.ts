@@ -1,13 +1,7 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
-import {
-  DEFAULT_THEME,
-  isThemeId,
-  nextTheme,
-  THEME_STORAGE_KEY,
-  type ThemeId,
-} from "./theme";
+import { useSyncExternalStore } from "react";
+import { DEFAULT_THEME, isThemeId, THEME_STORAGE_KEY, type ThemeId } from "./theme";
 
 /**
  * Theme state, read from `<html data-theme>`.
@@ -73,6 +67,5 @@ export function applyTheme(next: ThemeId): void {
 
 export function useTheme() {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const cycleTheme = useCallback(() => applyTheme(nextTheme(theme)), [theme]);
-  return { theme, setTheme: applyTheme, cycleTheme };
+  return { theme, setTheme: applyTheme };
 }

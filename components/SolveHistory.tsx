@@ -11,117 +11,112 @@ interface SolveHistoryProps {
   onDelete: (id: string) => void;
 }
 
-/**
- * Rows in the column-flow grid. Constant in both states on purpose: expanding
- * widens the panel and never changes its height, so the timer above it cannot
- * be pushed around by opening the list.
- */
-const ROWS = 4;
+/** Solves per row. Five, so a row is also an Ao5 window. */
+const PER_ROW = 5;
+
+/** Rows visible before expanding. */
+const COLLAPSED_ROWS = 5;
 
 /**
- * Cap on rendered cells. Every solve is still stored and still counts toward
- * the stats — this only bounds how many DOM nodes the panel builds, so a user
- * with thousands of solves doesn't pay for all of them on every render.
+ * Height the scroll area grows to when expanded.
+ *
+ * Chosen to keep the whole panel inside the centre column's fixed height: the
+ * three columns are vertically centred against each other, so a solve list that
+ * grew taller than the timer stack would re-centre the row and drag the timer
+ * off the page's middle. Expanding scrolls here instead of growing.
  */
-const MAX_RENDERED = 120;
+const EXPANDED_MAX_HEIGHT = "20rem";
 
 /**
- * All-time solve list.
+ * Cap on rendered solves. Every solve is still stored and still counts toward
+ * the stats — this only bounds how many DOM nodes the list builds.
+ */
+const MAX_RENDERED = 250;
+
+/**
+ * All-time solves, five to a row, newest first.
  *
- * Laid out as a column-flow grid rather than a vertical scroller: solves fill
- * top-to-bottom then start a new column, so history reads left-to-right and
- * overflows sideways. That keeps the panel short — it no longer competes
- * vertically with the timer — and makes "how did the session go" legible at a
- * glance instead of requiring a scroll through twenty rows.
+ * Each row opens with a colour column carrying one square per solve in that
+ * row, so the row reads as a unit: five squares is a glanceable shape for how
+ * that group of five went, which is the same window an Ao5 covers. Rows near
+ * the end of the history can hold fewer than five, and the column shrinks to
+ * match rather than padding with blanks.
  *
- * Its outer height is fixed and identical whether there are zero solves or a
- * hundred, and whether it is collapsed or expanded. Nothing this component does
- * can move the timer.
- *
- * Behaviour is unchanged from the original list: same +2/DNF/delete handlers,
- * same semantics, just revealed on hover per cell.
+ * Each solve reserves the height of its hover controls at all times, visible or
+ * not. Revealing them on hover without reserved space would either overlap the
+ * neighbouring solve or reflow the whole grid under the pointer.
  */
 export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistoryProps) {
   const [expanded, setExpanded] = useState(false);
 
-  // One baseline for the whole list rather than one per cell.
   const baseline = useMemo(() => tierBaselineMs(solves), [solves]);
-  // Newest first, bounded.
-  const ordered = useMemo(() => solves.slice(-MAX_RENDERED).reverse(), [solves]);
+
+  // Newest first, bounded, then grouped into rows of five.
+  const rows = useMemo(() => {
+    const start = Math.max(0, solves.length - MAX_RENDERED);
+    const ordered = solves
+      .slice(start)
+      .map((solve, i) => ({ solve, index: start + i + 1 }))
+      .reverse();
+
+    const grouped: (typeof ordered)[] = [];
+    for (let i = 0; i < ordered.length; i += PER_ROW) {
+      grouped.push(ordered.slice(i, i + PER_ROW));
+    }
+    return grouped;
+  }, [solves]);
+
+  if (rows.length === 0) {
+    return (
+      <p className="font-mono text-[12px]" style={{ color: "var(--ink-faint)" }}>
+        no solves yet
+      </p>
+    );
+  }
+
+  const hasMore = rows.length > COLLAPSED_ROWS;
+  const visible = expanded ? rows : rows.slice(0, COLLAPSED_ROWS);
 
   return (
-    <section
-      className="flex flex-col gap-2 transition-[width] duration-500 ease-out"
-      style={{ width: expanded ? "min(40rem, 100%)" : "min(22rem, 100%)" }}
-      aria-label="All-time solves"
-    >
-      <div className="flex items-baseline gap-3">
-        <span
-          className="font-mono text-[10px] tracking-[.18em]"
-          style={{ color: "var(--ink-dimmer)" }}
-        >
-          ALL-TIME
-        </span>
-        <span className="font-mono text-[10px]" style={{ color: "var(--ink-faint)" }}>
-          {solves.length}
-        </span>
-        {solves.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            className="ml-auto font-mono text-[10px] tracking-[.12em] opacity-40 transition-opacity hover:opacity-100"
-            style={{ color: "var(--ink)" }}
-          >
-            {expanded ? "COLLAPSE" : "EXPAND"}
-          </button>
-        )}
-      </div>
-
-      {/* Fixed height, always. The empty state occupies exactly the same box as
-          a full one so the stack above never reflows. */}
-      <div className="h-[6.5rem]">
-        {ordered.length === 0 ? (
-          <p className="font-mono text-[11px]" style={{ color: "var(--ink-faint)" }}>
-            no solves yet
-          </p>
-        ) : (
-          <div className="scroll-thin h-full overflow-x-auto">
+    <section aria-label="All-time solves" className="flex w-full flex-col gap-3">
+      <div
+        className={expanded ? "scroll-thin overflow-y-auto" : undefined}
+        style={expanded ? { maxHeight: EXPANDED_MAX_HEIGHT } : undefined}
+      >
+        <div className="flex flex-col gap-2">
+          {visible.map((row) => (
             <div
-              className="grid grid-flow-col gap-x-4 gap-y-0.5"
-              style={{
-                gridTemplateRows: `repeat(${ROWS}, minmax(0, 1fr))`,
-                gridAutoColumns: "9.5rem",
-              }}
+              key={row[0].solve.id}
+              className="grid items-start gap-x-2"
+              style={{ gridTemplateColumns: `auto repeat(${PER_ROW}, minmax(0, 1fr))` }}
             >
-              {ordered.map((solve, index) => {
-                const effective = effectiveTimeMs(solve);
-                const tier = solveTier(solve, baseline);
-                return (
-                  <div
+              {/* Column one: this row's five solves, as colour alone. */}
+              <div className="flex items-center gap-1 pr-1 pt-0.5">
+                {row.map(({ solve }) => (
+                  <span
                     key={solve.id}
-                    className="group flex items-center gap-2 rounded px-1.5 font-mono text-[12px] transition-colors hover:bg-[var(--hover-tint)]"
-                  >
+                    aria-hidden="true"
+                    className="block size-2"
+                    style={{ background: TIER_COLOR_VAR[solveTier(solve, baseline)] }}
+                  />
+                ))}
+              </div>
+
+              {row.map(({ solve, index }) => {
+                const effective = effectiveTimeMs(solve);
+                return (
+                  <div key={solve.id} className="group flex flex-col items-start">
                     <span
-                      aria-hidden="true"
-                      className="block size-2 shrink-0"
-                      style={{ background: TIER_COLOR_VAR[tier] }}
-                    />
-                    <span
-                      className="w-6 shrink-0 tabular-nums text-[10px]"
-                      style={{ color: "var(--ink-faint)" }}
-                    >
-                      {solves.length - index}
-                    </span>
-                    <span
-                      className="tabular-nums group-hover:hidden"
+                      className="font-mono text-[12px] tabular-nums"
                       style={{ color: "var(--ink-dim)" }}
+                      title={`Solve ${index}`}
                     >
                       {effective === null ? "DNF" : formatTimeMs(effective)}
                       {solve.penalty === "+2" ? " +2" : ""}
                     </span>
 
-                    <span className="hidden gap-1.5 text-[9px] uppercase tracking-wide group-hover:flex">
+                    {/* Always occupies its line, so hovering never reflows. */}
+                    <span className="invisible flex gap-1.5 font-mono text-[8px] uppercase tracking-wide group-hover:visible">
                       <button
                         type="button"
                         onClick={() => onTogglePenalty(solve.id, "+2")}
@@ -149,7 +144,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                       <button
                         type="button"
                         onClick={() => onDelete(solve.id)}
-                        aria-label="Delete solve"
+                        aria-label={`Delete solve ${index}`}
                         className="transition-opacity hover:opacity-100"
                         style={{ color: "var(--ink-dimmer)" }}
                       >
@@ -160,9 +155,23 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                 );
               })}
             </div>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
+
+      {hasMore && (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+            className="font-mono text-[10px] tracking-[.14em] opacity-40 transition-opacity hover:opacity-100"
+            style={{ color: "var(--ink)" }}
+          >
+            {expanded ? "COLLAPSE" : "EXPAND"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }

@@ -2,10 +2,15 @@
 
 import { Dropdown, type DropdownOption } from "./ui/Dropdown";
 import { IconButton } from "./ui/IconButton";
-import { InspectionGlyph, ThemeGlyph } from "./ui/Glyphs";
+import { InspectionGlyph } from "./ui/Glyphs";
 import { useTheme } from "@/lib/useTheme";
-import { THEME_LABELS } from "@/lib/theme";
+import { THEME_IDS, THEME_LABELS, type ThemeId } from "@/lib/theme";
 import type { SupportedCubeSize } from "@/lib/scramble-gen";
+
+const THEME_OPTIONS: readonly DropdownOption<ThemeId>[] = THEME_IDS.map((id) => ({
+  value: id,
+  label: THEME_LABELS[id],
+}));
 
 const CUBE_OPTIONS: readonly DropdownOption<SupportedCubeSize>[] = [
   { value: 2, label: "2x2" },
@@ -48,7 +53,7 @@ export function Header({
   onToggleInspection,
   dimmed,
 }: HeaderProps) {
-  const { theme, cycleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
     <header
@@ -88,9 +93,15 @@ export function Header({
             <InspectionGlyph />
           </IconButton>
 
-          <IconButton label={`theme · ${THEME_LABELS[theme]}`} onClick={cycleTheme}>
-            <ThemeGlyph />
-          </IconButton>
+          {/* Same control as cube size. Cycling through five themes with a
+              single button meant up to four clicks to reach one, and no way to
+              see what the options were. */}
+          <Dropdown
+            ariaLabel="Theme"
+            options={THEME_OPTIONS}
+            value={theme}
+            onChange={setTheme}
+          />
         </div>
       </div>
     </header>

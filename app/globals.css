@@ -214,10 +214,10 @@
      Nothing to download, so chrome paints on the first frame with no swap. */
   --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
     "Segoe UI", system-ui, sans-serif;
-  /* next/font exposes the face as --font-pixelify. Kept distinct from the
+  /* next/font exposes the face as --font-pixel-src. Kept distinct from the
      --font-pixel Tailwind token above: pointing a token at a var of its own
      name makes a reference cycle, which CSS resolves to nothing. */
-  --font-pixel-face: var(--font-pixelify), "Courier New", monospace;
+  --font-pixel-face: var(--font-pixel-src), "Courier New", monospace;
 
   /* One readable column, shared by header, timer stack, and footer, so every
      edge in the app lines up on the same two verticals. */
@@ -261,6 +261,32 @@ body {
 .bg-vignette {
   z-index: 1;
   background: radial-gradient(circle at 50% 46%, transparent 34%, var(--vignette) 88%);
+}
+
+/* ---------------------------------------------------------------------------
+   Hint chips
+   ---------------------------------------------------------------------------
+   Inverted against the rest of the theme: the surface's ink colour becomes the
+   chip's background and vice versa. That is what makes them read as physical
+   keycaps rather than as more dim body text, which is the one thing every other
+   label on the page already is.
+--------------------------------------------------------------------------- */
+
+.hint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--surface);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* The body text sits back; the key name stays solid. */
+.hint-chip > .hint-text {
+  opacity: 0.65;
 }
 
 /* ---------------------------------------------------------------------------

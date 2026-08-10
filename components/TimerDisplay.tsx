@@ -23,19 +23,17 @@ interface TimerDisplayProps {
   phase: TimerPhase;
   holdIntensity: number;
   isHolding: boolean;
-  hint: string;
 }
 
 /**
- * The hero digits. Arial 400 at display scale with tight tracking — per the
- * design direction, presence comes from size and spacing, not weight.
+ * The hero digits, and nothing else. The keybind hints moved out to their own
+ * component so they can hide in focus mode while the digits stay.
  */
 export function TimerDisplay({
   display,
   phase,
   holdIntensity,
   isHolding,
-  hint,
 }: TimerDisplayProps) {
   return (
     <div className="flex flex-col items-center">
@@ -47,14 +45,11 @@ export function TimerDisplay({
       <div
         role="timer"
         aria-live="off"
-        className="font-pixel text-[clamp(68px,15vw,224px)] leading-none font-normal tabular-nums tracking-[.02em] transition-colors duration-150"
+        className="font-pixel text-[clamp(52px,9vw,132px)] leading-none font-normal tabular-nums tracking-[.02em] transition-colors duration-150"
         style={{ color: phaseColor(phase, holdIntensity, isHolding) }}
       >
         {display}
       </div>
-      <p className="mt-4 text-[13px]" style={{ color: "var(--ink-dimmer)" }}>
-        {hint}
-      </p>
     </div>
   );
 }
