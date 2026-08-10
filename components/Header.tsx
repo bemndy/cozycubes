@@ -57,9 +57,13 @@ export function Header({
 
   return (
     <header
-      aria-hidden={dimmed}
+      // inert rather than aria-hidden alone: these controls stay in the tab
+      // order when merely transparent, so a keyboard user would tab into
+      // invisible buttons. inert removes them from focus, hit-testing, and the
+      // accessibility tree together.
+      inert={dimmed}
       className="fixed inset-x-0 top-0 z-30 flex h-20 items-center transition-opacity duration-500"
-      style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
+      style={{ opacity: dimmed ? 0 : 1 }}
     >
       {/* The bar's own measure, wider than the timer column it sits above. The
           few rem of difference on each side is what the net and the solve list
@@ -69,13 +73,30 @@ export function Header({
           {/* Not a link. The timer is the only page, so a wordmark pointing at
               "/" would navigate to itself, remounting the tree and discarding
               the session's in-memory solves and timer phase. */}
-          <div className="group flex items-baseline gap-2 text-[17px] tracking-tight">
-            <span
-              className="font-mono text-[14px] transition-transform duration-300 group-hover:-translate-y-0.5"
-              style={{ color: "var(--accent)" }}
-            >
-              3³
-            </span>
+          <div className="group flex items-center gap-2.5 text-[17px] tracking-tight">
+            {/*
+              Both marks are always in the DOM; CSS shows whichever suits the
+              active theme's background (see globals.css). Plain <img> rather
+              than next/image: these are fixed-size local SVGs, so the image
+              optimiser has nothing to do, and it refuses SVG sources without
+              dangerouslyAllowSVG anyway.
+            */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/cozycube_light.svg"
+              alt=""
+              width={24}
+              height={24}
+              className="logo-for-dark size-6 transition-transform duration-300 group-hover:-translate-y-0.5"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/cozycube_dark.svg"
+              alt=""
+              width={24}
+              height={24}
+              className="logo-for-light size-6 transition-transform duration-300 group-hover:-translate-y-0.5"
+            />
             <span style={{ color: "var(--ink)" }}>cozycubes</span>
           </div>
 

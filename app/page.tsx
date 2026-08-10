@@ -6,6 +6,7 @@ import { formatTimeMs } from "@/lib/format";
 import { type SupportedCubeSize } from "@/lib/scramble-gen";
 import { generateScrambleForSize, initScrambler } from "@/lib/scrambler";
 import { Backdrop } from "@/components/Backdrop";
+import { ShaderBackdrop } from "@/components/ShaderBackdrop";
 import { BootScreen, BOOT_EXIT_MS } from "@/components/BootScreen";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -41,7 +42,8 @@ export default function TimerPage() {
   const [booted, setBooted] = useState(false);
   const [bootMounted, setBootMounted] = useState(true);
 
-  const pointerIdle = useMouseIdle();
+  // Only starts counting once the app is actually on screen.
+  const pointerIdle = useMouseIdle(2500, booted);
   const overlayOpen = useAnyOverlayOpen();
 
   const regenerateScramble = useCallback((size: SupportedCubeSize) => {
@@ -276,7 +278,16 @@ export default function TimerPage() {
   const dimmed = !overlayOpen && (pointerIdle || cubeSizeLocked);
 
   return (
-    <>
+    // Everything the overlays sit on top of lives inside .app-content, which is
+    // what gets blurred while one is open. The overlays portal to <body>, so
+    // they are siblings of this element rather than descendants, and stay sharp.
+    <div className="app-content" data-blurred={overlayOpen}>
+      {/*
+        Rendered before Backdrop so the vignette layers on top of the field and
+        keeps the UI legible over it. Active only once booted, while the pointer
+        is idle, and never during inspection or a solve.
+      */}
+      <ShaderBackdrop active={booted && pointerIdle && !cubeSizeLocked} />
       <Backdrop />
 
       {bootMounted && (
@@ -319,9 +330,9 @@ export default function TimerPage() {
         */}
         <main className="page-grid min-h-screen content-center items-center gap-y-12 py-24">
           <aside
-            className="order-2 grid h-40 place-items-center transition-opacity duration-500 lg:order-1"
+            className="order-2 grid h-52 place-items-center transition-opacity duration-500 lg:order-1"
             style={{ opacity: dimmed ? 0 : 1 }}
-            aria-hidden={dimmed}
+            inert={dimmed}
           >
             <CubeNet cubeSize={cubeSize} scramble={scramble} />
           </aside>
@@ -329,8 +340,8 @@ export default function TimerPage() {
           <div className="order-1 flex flex-col items-center lg:order-2">
             {/* Fixed height. The hint hugs the scramble; the rest of the block
                 is the gap down to the digits. */}
-            <div className="flex h-48 w-full flex-col items-center justify-start gap-2">
-              <div className="scroll-thin flex max-h-[6.5rem] w-full justify-center overflow-y-auto">
+            <div className="flex h-56 w-full flex-col items-center justify-start gap-3">
+              <div className="scroll-thin flex max-h-[10rem] w-full justify-center overflow-y-auto">
                 <ScrambleLine
                   scramble={scramble}
                   onRefresh={newScramble}
@@ -357,7 +368,7 @@ export default function TimerPage() {
 
             {/* Mirrors the block above: same height, contents pushed to the far
                 edge, so the hint hugs the stats and the gap lands by the digits. */}
-            <div className="flex h-48 w-full flex-col items-center justify-end gap-2">
+            <div className="flex h-56 w-full flex-col items-center justify-end gap-3">
               <TimerHint hidden={dimmed} />
               <StatsRow solves={solves} />
             </div>
@@ -365,12 +376,14 @@ export default function TimerPage() {
 
           <aside
             className="order-3 grid place-items-center transition-opacity duration-500"
-            style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
-            aria-hidden={dimmed}
+            style={{ opacity: dimmed ? 0 : 1 }}
+            // The list's +2/DNF/delete buttons would otherwise stay tabbable
+            // while invisible.
+            inert={dimmed}
           >
             {/* Capped and centred, so the list sits in the middle of its
                 section rather than stretching to fill it. */}
-            <div className="w-full max-w-[22rem]">
+            <div className="w-full max-w-[26rem]">
               <SolveHistory
                 solves={solves}
                 onTogglePenalty={togglePenalty}
@@ -382,6 +395,6 @@ export default function TimerPage() {
 
         <Footer solveCount={solves.length} dimmed={dimmed} />
       </div>
-    </>
+    </div>
   );
 }

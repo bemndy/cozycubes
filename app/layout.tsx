@@ -30,6 +30,19 @@ const pixelFace = DotGothic16({
 export const metadata: Metadata = {
   title: "CozyCubes",
   description: "A colorful, sound-rich Rubik's Cube speedsolving timer.",
+  // The black-framed mark is the default. The white-framed one takes over when
+  // the browser's own chrome is dark, since a black frame on a dark tab strip
+  // would leave only the pink monogram floating.
+  icons: {
+    icon: [
+      { url: "/cozycube_dark.svg", type: "image/svg+xml" },
+      {
+        url: "/cozycube_light.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+  },
 };
 
 // Runs before first paint, ahead of React hydrating, so the stored theme is

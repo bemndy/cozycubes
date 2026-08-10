@@ -17,19 +17,29 @@ interface DropdownProps<T extends string | number> {
   ariaLabel: string;
 }
 
+/** Where to pin the panel, in viewport coordinates. */
+interface Anchor {
+  top: number;
+  right: number;
+}
+
 /**
- * Custom listbox dropdown on the shared frosted panel.
+ * Custom listbox dropdown.
  *
- * Replaces the native <select>, which could not be given the glass treatment —
- * a select's popup is drawn by the OS and takes no CSS. The tradeoff is that
- * everything the native control provided has to be rebuilt here: keyboard
+ * Replaces a native <select>, whose popup is drawn by the OS and takes no CSS.
+ * The tradeoff is rebuilding what the native control provided: keyboard
  * navigation, the aria-activedescendant relationship, click-outside, focus
  * return, and Escape.
  *
- * Focus stays on the listbox itself and the highlighted option is reported via
- * aria-activedescendant, rather than moving DOM focus between options. That is
- * the pattern screen readers expect from a listbox, and it keeps the visual
- * highlight and the assistive-tech cursor in step.
+ * Both the scrim and the panel are portalled to <body>. The bar holding this
+ * dropdown is a stacking context nested inside another, so anything rendered in
+ * place is capped at the bar's layer — which is what previously let the scrim
+ * paint over the navbar and swallow its clicks. Portalled out, the panel sits
+ * on the true top layer and the scrim sits just under it.
+ *
+ * Because the panel is no longer a DOM descendant of the trigger, it has to be
+ * positioned from the trigger's rect, and the click-outside test has to check
+ * both elements.
  */
 export function Dropdown<T extends string | number>({
   options,
@@ -40,7 +50,8 @@ export function Dropdown<T extends string | number>({
 }: DropdownProps<T>) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [anchor, setAnchor] = useState<Anchor | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const baseId = useId();
 
@@ -52,34 +63,59 @@ export function Dropdown<T extends string | number>({
   );
   const selected = options[selectedIndex];
 
-  // Opening always starts the highlight on the current selection. Done in the
-  // handlers below rather than an effect: it is a consequence of the open
-  // action, not state that needs syncing to anything outside React.
+  // Opening measures the trigger and starts the highlight on the current
+  // selection. Done here rather than in an effect: both are consequences of the
+  // open action, not state that needs syncing to anything outside React.
   function openList() {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      setAnchor({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
     setActiveIndex(selectedIndex);
     setOpen(true);
   }
 
-  // Focus is a DOM side effect, so it does belong here.
+  // Focus is a DOM side effect, so it does belong in an effect.
   useEffect(() => {
     if (open) listRef.current?.focus();
   }, [open]);
 
-  // Click outside closes. Pointerdown rather than click so the dropdown is gone
-  // before whatever was clicked underneath reacts.
   useEffect(() => {
     if (!open) return;
+
+    // Pointerdown rather than click, so the panel is gone before whatever was
+    // clicked underneath reacts. Both the trigger and the portalled panel count
+    // as "inside" — the panel is no longer a descendant of the trigger.
     function onPointerDown(e: PointerEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      if (listRef.current?.contains(target)) return;
+      setOpen(false);
     }
+    // The anchor is a snapshot of where the trigger was. Rather than track it,
+    // close on anything that would invalidate it.
+    function onInvalidate() {
+      setOpen(false);
+    }
+
     window.addEventListener("pointerdown", onPointerDown);
-    return () => window.removeEventListener("pointerdown", onPointerDown);
+    window.addEventListener("resize", onInvalidate);
+    window.addEventListener("scroll", onInvalidate, true);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("resize", onInvalidate);
+      window.removeEventListener("scroll", onInvalidate, true);
+    };
   }, [open]);
 
   function commit(index: number) {
     const option = options[index];
     if (option) onChange(option.value);
     setOpen(false);
+    triggerRef.current?.focus();
   }
 
   function onListKeyDown(e: React.KeyboardEvent) {
@@ -109,26 +145,15 @@ export function Dropdown<T extends string | number>({
       case "Tab":
         e.preventDefault();
         setOpen(false);
+        triggerRef.current?.focus();
         break;
     }
   }
 
   return (
-    <div ref={rootRef} className="relative">
-      {/*
-        Portalled to <body> on purpose. The bar that holds this dropdown is
-        position:fixed with a z-index, which makes it a stacking context — a
-        scrim rendered inside it could never paint *behind* it, no matter how
-        low its z-index. At body level it sits at z-20, under the bar at z-30,
-        so the page blurs while the bar and this panel stay sharp.
-      */}
-      {open &&
-        createPortal(
-          <div className="scrim-page animate-scrim-in" aria-hidden="true" />,
-          document.body
-        )}
-
+    <>
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
         aria-haspopup="listbox"
@@ -167,44 +192,51 @@ export function Dropdown<T extends string | number>({
         </svg>
       </button>
 
-      {open && (
-        <ul
-          ref={listRef}
-          role="listbox"
-          aria-label={ariaLabel}
-          aria-activedescendant={`${baseId}-${activeIndex}`}
-          tabIndex={-1}
-          onKeyDown={onListKeyDown}
-          className="glass-panel animate-panel-in absolute right-0 top-[calc(100%+8px)] z-40 min-w-[7rem] p-1 outline-none"
-        >
-          {options.map((option, index) => {
-            const isSelected = option.value === value;
-            const isActive = index === activeIndex;
-            return (
-              <li
-                key={String(option.value)}
-                id={`${baseId}-${index}`}
-                role="option"
-                aria-selected={isSelected}
-                onMouseEnter={() => setActiveIndex(index)}
-                onClick={() => commit(index)}
-                className="flex cursor-pointer items-center justify-between gap-3 rounded-[6px] px-2.5 py-1.5 text-[13px]"
-                style={{
-                  background: isActive ? "var(--hover-tint)" : "transparent",
-                  color: isSelected ? "var(--ink)" : "var(--ink-dim)",
-                }}
-              >
-                {option.label}
-                {isSelected && (
-                  <span aria-hidden="true" style={{ color: "var(--accent)" }}>
-                    ·
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+      {open &&
+        anchor &&
+        createPortal(
+          <>
+            <div className="overlay-scrim animate-scrim-in" aria-hidden="true" />
+            <ul
+              ref={listRef}
+              role="listbox"
+              aria-label={ariaLabel}
+              aria-activedescendant={`${baseId}-${activeIndex}`}
+              tabIndex={-1}
+              onKeyDown={onListKeyDown}
+              className="overlay-panel animate-panel-in fixed z-[110] min-w-[8rem] p-1 outline-none"
+              style={{ top: anchor.top, right: anchor.right }}
+            >
+              {options.map((option, index) => {
+                const isSelected = option.value === value;
+                const isActive = index === activeIndex;
+                return (
+                  <li
+                    key={String(option.value)}
+                    id={`${baseId}-${index}`}
+                    role="option"
+                    aria-selected={isSelected}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onClick={() => commit(index)}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-[6px] px-3 py-2 text-[13px]"
+                    style={{
+                      background: isActive ? "var(--hover-tint)" : "transparent",
+                      color: isSelected ? "var(--ink)" : "var(--ink-dim)",
+                    }}
+                  >
+                    {option.label}
+                    {isSelected && (
+                      <span aria-hidden="true" style={{ color: "var(--accent)" }}>
+                        ·
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </>,
+          document.body
+        )}
+    </>
   );
 }

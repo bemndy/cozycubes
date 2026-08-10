@@ -18,7 +18,10 @@ const PER_ROW = 5;
  * Width of the leading colour column: five 8px squares plus their 4px gaps,
  * held constant so short rows still line up with full ones.
  */
-const COLOR_COLUMN = "4rem";
+const COLOR_COLUMN = "5rem";
+
+/** Shared by the colour column and the time cells so the two line up. */
+const ROW_HEIGHT = "h-9";
 
 /** Rows visible before expanding. */
 const COLLAPSED_ROWS = 5;
@@ -74,7 +77,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
 
   if (rows.length === 0) {
     return (
-      <p className="font-mono text-[12px]" style={{ color: "var(--ink-faint)" }}>
+      <p className="font-mono text-[13px]" style={{ color: "var(--ink-faint)" }}>
         no solves yet
       </p>
     );
@@ -93,7 +96,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
           {visible.map((row) => (
             <div
               key={row[0].solve.id}
-              className="grid items-start gap-x-2"
+              className="grid gap-x-2"
               style={{
                 // Fixed, not auto: a final row holding fewer than five solves
                 // would otherwise shrink its colour column and knock every time
@@ -101,13 +104,15 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                 gridTemplateColumns: `${COLOR_COLUMN} repeat(${PER_ROW}, minmax(0, 1fr))`,
               }}
             >
-              {/* Column one: this row's solves, as colour alone. */}
-              <div className="flex items-center gap-1 pt-0.5">
+              {/* Column one: this row's solves, as colour alone. Same height as
+                  the time cells and centred the same way — top-aligning it left
+                  the squares floating above the times on every row. */}
+              <div className={`flex ${ROW_HEIGHT} items-center gap-1`}>
                 {row.map(({ solve }) => (
                   <span
                     key={solve.id}
                     aria-hidden="true"
-                    className="block size-2"
+                    className="block size-2.5"
                     style={{ background: TIER_COLOR_VAR[solveTier(solve, baseline)] }}
                   />
                 ))}
@@ -116,9 +121,12 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
               {row.map(({ solve, index }) => {
                 const effective = effectiveTimeMs(solve);
                 return (
-                  <div key={solve.id} className="group flex flex-col items-start">
+                  <div key={solve.id} className={`group relative ${ROW_HEIGHT}`}>
+                    {/* Truncates rather than overflowing: a minute-plus time
+                        with a +2 is wider than a fifth of the column, and
+                        letting it spill would run it into the next solve. */}
                     <span
-                      className="font-mono text-[12px] tabular-nums"
+                      className="flex h-full items-center overflow-hidden whitespace-nowrap font-mono text-[13px] tabular-nums group-hover:opacity-0"
                       style={{ color: "var(--ink-dim)" }}
                       title={`Solve ${index}`}
                     >
@@ -126,12 +134,18 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                       {solve.penalty === "+2" ? " +2" : ""}
                     </span>
 
-                    {/* Always occupies its line, so hovering never reflows. */}
-                    <span className="invisible flex gap-1.5 font-mono text-[8px] uppercase tracking-wide group-hover:visible">
+                    {/*
+                      Takes over the whole cell on hover rather than sitting
+                      under the time in a reserved strip. The cell is only a few
+                      characters wide, so sharing it meant 8px controls; owning
+                      it outright buys enough room to make them hittable.
+                      Absolute, so revealing them can't reflow the grid.
+                    */}
+                    <div className="invisible absolute inset-0 grid grid-cols-2 grid-rows-2 items-center gap-x-1 font-mono text-[11px] uppercase group-hover:visible">
                       <button
                         type="button"
                         onClick={() => onTogglePenalty(solve.id, "+2")}
-                        className="transition-opacity hover:opacity-100"
+                        className="text-left transition-opacity hover:opacity-100"
                         style={{
                           color:
                             solve.penalty === "+2" ? "var(--accent)" : "var(--ink-dimmer)",
@@ -142,7 +156,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                       <button
                         type="button"
                         onClick={() => onTogglePenalty(solve.id, "DNF")}
-                        className="transition-opacity hover:opacity-100"
+                        className="text-left transition-opacity hover:opacity-100"
                         style={{
                           color:
                             solve.penalty === "DNF"
@@ -156,12 +170,12 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                         type="button"
                         onClick={() => onDelete(solve.id)}
                         aria-label={`Delete solve ${index}`}
-                        className="transition-opacity hover:opacity-100"
+                        className="col-span-2 text-left transition-opacity hover:opacity-100"
                         style={{ color: "var(--ink-dimmer)" }}
                       >
                         del
                       </button>
-                    </span>
+                    </div>
                   </div>
                 );
               })}
@@ -176,7 +190,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
             type="button"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
-            className="font-mono text-[10px] tracking-[.14em] opacity-40 transition-opacity hover:opacity-100"
+            className="font-mono text-[11px] tracking-[.14em] opacity-40 transition-opacity hover:opacity-100"
             style={{ color: "var(--ink)" }}
           >
             {expanded ? "COLLAPSE" : "EXPAND"}

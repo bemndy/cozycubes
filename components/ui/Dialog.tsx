@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useRegisterOverlay } from "@/lib/overlayState";
 
 interface DialogProps {
@@ -27,6 +28,19 @@ export function Dialog({ open, onClose, title, subtitle, children }: DialogProps
 
   useRegisterOverlay(open);
 
+  // Held in a ref so the effect below depends on `open` alone.
+  //
+  // Callers routinely pass an inline arrow, which is a new function identity on
+  // every render of the parent. With onClose in the dependency array, any
+  // re-render of that parent while the dialog was open would tear the effect
+  // down and set it back up — and the teardown calls restoreFocus, which yanked
+  // focus out of the open dialog. The page re-renders on pointer-idle, so this
+  // fired just by reading a dialog without moving the mouse.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!open) return;
 
@@ -37,7 +51,7 @@ export function Dialog({ open, onClose, title, subtitle, children }: DialogProps
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab") return;
@@ -68,13 +82,16 @@ export function Dialog({ open, onClose, title, subtitle, children }: DialogProps
       window.removeEventListener("keydown", onKeyDown, true);
       restoreFocusRef.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
-  return (
+  // Portalled to <body>. Rendered in place it would sit inside the footer,
+  // which is a stacking context nested inside another — no z-index could lift
+  // it above the page from there.
+  return createPortal(
     <div
-      className="scrim-modal animate-scrim-in z-50 flex items-center justify-center p-5"
+      className="overlay-scrim animate-scrim-in flex items-center justify-center p-5"
       onClick={onClose}
     >
       <div
@@ -85,7 +102,7 @@ export function Dialog({ open, onClose, title, subtitle, children }: DialogProps
         tabIndex={-1}
         // The scrim closes on click; the panel must not pass its own clicks up.
         onClick={(e) => e.stopPropagation()}
-        className="glass-panel animate-panel-in flex max-h-[70vh] w-full max-w-md flex-col gap-4 p-5 outline-none"
+        className="overlay-panel animate-panel-in flex max-h-[70vh] w-full max-w-md flex-col gap-4 p-5 outline-none"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-0.5">
@@ -113,6 +130,7 @@ export function Dialog({ open, onClose, title, subtitle, children }: DialogProps
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

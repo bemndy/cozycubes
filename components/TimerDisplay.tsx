@@ -6,15 +6,30 @@ import type { TimerPhase } from "@/lib/useHoldReadyState";
  * green while solving) that the spec pins in section 2.1, so they stay fixed
  * rather than following the theme accent.
  */
+const HOLD_RED = "#ef4444";
+const READY_GREEN = "#22c55e";
+
+/**
+ * Hold colour, following the convention every cubing timer uses: red the whole
+ * time you're holding, flipping to green the moment releasing would actually
+ * start the timer.
+ *
+ * There used to be a gradient here, interpolating blue to red across the hold.
+ * It read as grey, and for a good reason: the midpoint of blue-to-red in RGB is
+ * a desaturated purple, and with a 400ms threshold that muddy middle is most of
+ * what you ever see. Two flat states carry the same information and are legible
+ * at a glance, which is the only thing this colour has to do.
+ *
+ * holdIntensity reaches exactly 1 at the ready threshold, so it doubles as the
+ * ready signal and no extra state is needed.
+ *
+ * Solving is deliberately plain ink rather than green. Green means "release and
+ * it starts"; leaving the running timer green would make the release — the one
+ * transition that matters — invisible.
+ */
 function phaseColor(phase: TimerPhase, holdIntensity: number, isHolding: boolean): string {
-  if (phase === "solving") return "#22c55e"; // green while solving
-  if (isHolding) {
-    // ramp neutral blue -> red as holdIntensity goes 0 -> 1
-    const r = Math.round(59 + (239 - 59) * holdIntensity);
-    const g = Math.round(130 + (68 - 130) * holdIntensity);
-    const b = Math.round(246 + (68 - 246) * holdIntensity);
-    return `rgb(${r}, ${g}, ${b})`;
-  }
+  if (isHolding) return holdIntensity >= 1 ? READY_GREEN : HOLD_RED;
+  if (phase === "solving") return "var(--ink)";
   return "var(--ink)";
 }
 

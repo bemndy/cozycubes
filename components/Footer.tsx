@@ -52,9 +52,10 @@ export function Footer({ solveCount, dimmed }: FooterProps) {
   return (
     <>
       <footer
-        aria-hidden={dimmed}
+        // See Header: inert keeps hidden controls out of the tab order.
+        inert={dimmed}
         className="fixed inset-x-0 bottom-0 z-30 flex h-20 items-center transition-opacity duration-500"
-        style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
+        style={{ opacity: dimmed ? 0 : 1 }}
       >
         {/* Same measure as the header. Links pinned left, session pinned right,
             the gap between them carrying whatever width is left over. */}

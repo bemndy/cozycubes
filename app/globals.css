@@ -6,10 +6,9 @@
    Every theme redefines the same token names on [data-theme]. Components read
    tokens only and never branch on the active theme.
 
-   --edge is the one border colour in the system, and it is transparent in the
-   three "soft" themes: the UI is built from type, spacing, and tone, not from
-   lines. The two mono themes turn it solid, because visible structural rules
-   are the entire point of those themes — that is what --edge exists for.
+   There are no borders anywhere in the system: separation comes from type,
+   spacing, tone, and blur. The mono pair keeps its identity through flat opaque
+   fills instead of rules.
 
    color-scheme makes native UI (the cube-size dropdown's popup, scrollbars,
    focus rings) follow the theme instead of always rendering light.
@@ -29,7 +28,6 @@
   --accent: oklch(82% 0.15 80);
   --accent-soft: oklch(82% 0.15 80 / 0.8);
 
-  --edge: transparent;
   --hover-tint: rgba(255, 255, 255, 0.05);
 
   --wash: oklch(82% 0.15 80 / 0.08);
@@ -40,12 +38,13 @@
   --quality-slow: oklch(58% 0.14 30 / 0.7);
   --quality-warn: oklch(66% 0.17 35 / 0.55);
 
-  --tooltip-bg: rgba(24, 24, 24, 0.96);
   --tooltip-ink: rgba(255, 255, 255, 0.85);
 
-  --glass-bg: rgba(28, 28, 30, 0.68);
-  --glass-blur: blur(64px) saturate(190%);
+  --shader-bg: #000000;
+  --shader-a: #f2b78c;
+  --shader-b: #ff9ebb;
   --scrim: rgba(0, 0, 0, 0.4);
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
 [data-theme="light"] {
@@ -61,7 +60,6 @@
   --accent: oklch(64% 0.15 38);
   --accent-soft: oklch(64% 0.15 38 / 0.85);
 
-  --edge: transparent;
   --hover-tint: rgba(20, 16, 14, 0.05);
 
   --wash: oklch(64% 0.15 38 / 0.07);
@@ -74,16 +72,16 @@
   --quality-slow: oklch(55% 0.14 30 / 0.7);
   --quality-warn: oklch(55% 0.17 25 / 0.5);
 
-  --tooltip-bg: rgba(255, 252, 247, 0.97);
   --tooltip-ink: rgba(20, 16, 14, 0.85);
 
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-blur: blur(64px) saturate(190%);
+  --shader-bg: #f7f2ea;
+  --shader-a: #e5738f;
+  --shader-b: #f2b78c;
   --scrim: rgba(20, 16, 14, 0.18);
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 16, 14, 0.28);
 }
 
-/* Mono pair: --edge goes solid and thick. These are the only themes that draw
-   lines, and it is deliberate. */
+/* Mono pair: flat, opaque, unblurred. */
 [data-theme="contrast-dark"] {
   color-scheme: dark;
 
@@ -97,7 +95,6 @@
   --accent: #ffffff;
   --accent-soft: rgba(255, 255, 255, 0.85);
 
-  --edge: #ffffff;
   --hover-tint: rgba(255, 255, 255, 0.12);
 
   --wash: transparent;
@@ -108,14 +105,13 @@
   --quality-slow: rgba(255, 255, 255, 0.2);
   --quality-warn: rgba(255, 255, 255, 0.12);
 
-  --tooltip-bg: #000000;
   --tooltip-ink: #ffffff;
 
-  /* Opaque and unblurred — frosted translucency would undercut the flat,
-     high-contrast identity these two themes exist for. --edge draws the rule. */
-  --glass-bg: #000000;
-  --glass-blur: none;
+  --shader-bg: #000000;
+  --shader-a: #242424;
+  --shader-b: #3a3a3a;
   --scrim: rgba(0, 0, 0, 0.6);
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
 [data-theme="contrast-light"] {
@@ -131,7 +127,6 @@
   --accent: #000000;
   --accent-soft: rgba(0, 0, 0, 0.85);
 
-  --edge: #000000;
   --hover-tint: rgba(0, 0, 0, 0.08);
 
   --wash: transparent;
@@ -142,12 +137,13 @@
   --quality-slow: rgba(0, 0, 0, 0.2);
   --quality-warn: rgba(0, 0, 0, 0.12);
 
-  --tooltip-bg: #ffffff;
   --tooltip-ink: #000000;
 
-  --glass-bg: #ffffff;
-  --glass-blur: none;
+  --shader-bg: #ffffff;
+  --shader-a: #ececec;
+  --shader-b: #d6d6d6;
   --scrim: rgba(0, 0, 0, 0.25);
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 16, 14, 0.28);
 }
 
 /* Derived from ColorfulLoader.module.css's hot pink / grey pair, so the boot
@@ -165,7 +161,6 @@
   --accent: rgb(255, 77, 133);
   --accent-soft: rgba(255, 77, 133, 0.8);
 
-  --edge: transparent;
   --hover-tint: rgba(255, 77, 133, 0.08);
 
   --wash: rgba(255, 77, 133, 0.1);
@@ -176,12 +171,13 @@
   --quality-slow: rgb(75, 75, 75);
   --quality-warn: rgba(255, 77, 133, 0.3);
 
-  --tooltip-bg: rgba(24, 24, 24, 0.96);
   --tooltip-ink: rgba(255, 255, 255, 0.85);
 
-  --glass-bg: rgba(26, 18, 22, 0.74);
-  --glass-blur: blur(64px) saturate(190%);
+  --shader-bg: #0a0a0a;
+  --shader-a: #ff4d85;
+  --shader-b: #4b4b4b;
   --scrim: rgba(0, 0, 0, 0.45);
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
 /* Expose tokens to Tailwind as utilities. `inline` keeps the utility
@@ -235,9 +231,14 @@ body {
 --------------------------------------------------------------------------- */
 
 :root {
-  --page-max: 84rem;
+  /* Nudged up alongside the wider column gap, so the extra padding comes out of
+     the page's own margins rather than out of the flanks. */
+  --page-max: 94rem;
   --bar-width: 40rem;
-  --mid-width: 34rem;
+  /* Narrowing the middle widens both flanks: each gets half of whatever the
+     timer column gives up, which is where the solve list's extra room and the
+     net's larger box come from. */
+  --mid-width: 32rem;
 }
 
 .page-grid {
@@ -246,7 +247,10 @@ body {
   max-width: var(--page-max);
   margin-inline: auto;
   padding-inline: 1.5rem;
-  column-gap: 2.5rem;
+  /* The breathing room on either side of the timer column. Widening this pushes
+     the net and the solve list outward; since the flanks are equal fractions of
+     whatever the middle leaves, they each give up half the increase. */
+  column-gap: 4rem;
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -254,6 +258,33 @@ body {
   .page-grid {
     grid-template-columns: minmax(0, 1fr) var(--mid-width) minmax(0, 1fr);
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Wordmark
+   ---------------------------------------------------------------------------
+   Two marks, identical but for their frame — black on one, white on the other.
+   Which one shows is decided in CSS off [data-theme] rather than in React,
+   because the inline script in layout.tsx stamps that attribute before first
+   paint. Choosing in JS would mean the server rendering one mark and the client
+   swapping it after hydration, i.e. a visible flash of the wrong logo on every
+   load for anyone not on the default theme.
+--------------------------------------------------------------------------- */
+
+.logo-for-dark,
+.logo-for-light {
+  display: none;
+}
+
+[data-theme="dark"] .logo-for-dark,
+[data-theme="contrast-dark"] .logo-for-dark,
+[data-theme="loader"] .logo-for-dark {
+  display: block;
+}
+
+[data-theme="light"] .logo-for-light,
+[data-theme="contrast-light"] .logo-for-light {
+  display: block;
 }
 
 /* The header and footer's own measure — wider than the timer column. */
@@ -316,52 +347,58 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Frosted surface
+   Overlays
    ---------------------------------------------------------------------------
-   The iOS-style translucent panel behind the dropdown and every footer dialog.
-   The blur samples whatever is underneath, so it only reads as glass over the
-   themed background — which is why the mono themes opt out into a flat opaque
-   fill rather than inheriting a frost that would muddy them.
+   Everything that pops over the page — dropdown panels, dialogs, tooltips —
+   is portalled to <body> and layered here.
+
+   Portalling is not cosmetic. The app wrapper carries both a z-index and a
+   transform, each of which opens a stacking context, so an overlay rendered
+   inside it can never rise above a sibling of that wrapper no matter what
+   z-index it is given. Rendering to <body> is what puts these on the real top
+   layer.
+
+   The panel is opaque, in the theme's own surface colour.
+
+   The blur is applied to the app content itself (.app-content below), not as a
+   backdrop-filter on the scrim. backdrop-filter has to sample a "backdrop root",
+   and the app wrapper carries a transform and its own stacking context, which
+   is exactly the situation where that sampling silently yields nothing — the
+   tint would land while the content behind stayed sharp. Filtering the content
+   directly has no such dependency: it always renders.
 --------------------------------------------------------------------------- */
 
-/* No border at all — the blur and the shadow do the separating. The soft
-   themes' --edge was transparent anyway, so this only changes the mono pair,
-   which keeps its definition from the flat opaque fill. */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: 10px;
-}
-
-/* ---------------------------------------------------------------------------
-   Scrims
-   ---------------------------------------------------------------------------
-   Two layers, at different depths, because the two kinds of overlay want
-   different things behind them.
-
-   .scrim-page sits below the header and footer, so opening a dropdown blurs
-   the page content while the bar holding that dropdown stays sharp.
-
-   .scrim-modal sits above everything, so a dialog blurs the bars too — the
-   dialog is the whole focus, and leaving the chrome crisp behind it would keep
-   pulling the eye back out.
---------------------------------------------------------------------------- */
-
-.scrim-page,
-.scrim-modal {
+.overlay-scrim {
   position: fixed;
   inset: 0;
+  z-index: 100;
   background: var(--scrim);
-  /* Deep enough that the page behind resolves into a soft field of colour
-     rather than a recognisable blurred layout — the iOS-7 treatment, where the
-     backdrop reads as a gradient rather than as out-of-focus content. */
-  backdrop-filter: blur(72px) saturate(180%);
-  -webkit-backdrop-filter: blur(72px) saturate(180%);
 }
 
-.scrim-page {
-  z-index: 20;
+/*
+   Blurred while any overlay is open. The overlays themselves are portalled to
+   <body>, outside this element, so they stay perfectly sharp.
+
+   Note: `filter` makes this a containing block for position:fixed descendants,
+   so the header and footer anchor to it rather than the viewport while it is
+   active. That is only true for the moment an overlay is open — the property is
+   absent otherwise — and the page is static in that moment.
+*/
+.app-content {
+  transition: filter 220ms ease, opacity 220ms ease;
+}
+
+.app-content[data-blurred="true"] {
+  filter: blur(12px);
+}
+
+/* Surface only. Positioning is left to each caller: the dialog's panel is
+   centred by its scrim's flex box, while the dropdown's is pinned to its
+   trigger, and baking `position` in here would break the former. */
+.overlay-panel {
+  background: var(--surface);
+  border-radius: 10px;
+  box-shadow: var(--overlay-shadow);
 }
 
 @keyframes scrimIn {

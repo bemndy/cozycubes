@@ -17,10 +17,15 @@ import { useEffect, useState } from "react";
  * by the spacebar, so treating keys as movement would flash the whole interface
  * back on at the exact moment the user starts a solve.
  */
-export function useMouseIdle(delayMs = 2500): boolean {
+export function useMouseIdle(delayMs = 2500, enabled = true): boolean {
   const [idle, setIdle] = useState(false);
 
   useEffect(() => {
+    // While disabled the clock never starts, so idle stays false. This is what
+    // keeps the boot screen's wait from counting: the timer would otherwise
+    // expire behind it and the app would fade in with its chrome already gone.
+    if (!enabled) return;
+
     let timeout: ReturnType<typeof setTimeout>;
 
     function schedule() {
@@ -43,7 +48,7 @@ export function useMouseIdle(delayMs = 2500): boolean {
       window.removeEventListener("pointermove", onActivity);
       window.removeEventListener("touchstart", onActivity);
     };
-  }, [delayMs]);
+  }, [delayMs, enabled]);
 
   return idle;
 }
