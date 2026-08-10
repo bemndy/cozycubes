@@ -51,7 +51,7 @@ export function IconButton({
       {children}
 
       {showText ? (
-        <span className="text-[11px] tracking-tight">{label}</span>
+        <span className="text-[12px] tracking-tight">{label}</span>
       ) : (
         <span
           role="tooltip"

@@ -21,13 +21,28 @@ export function AsciiCube({ className = "" }: { className?: string }) {
     return () => clearInterval(id);
   }, []);
 
+  // One element per row so each can carry its own animation phase. Keyed by
+  // index deliberately: the rows are positional, and stable elements are what
+  // let the CSS shimmer keep running instead of restarting every 80ms tick.
+  const lines = frame.split("\n");
+
   return (
     <pre
       aria-hidden="true"
       className={`m-0 text-left font-mono text-[15px] leading-[1.05] ${className}`}
-      style={{ color: "var(--ink-dim)" }}
     >
-      {frame}
+      {lines.map((line, i) => (
+        <span
+          key={i}
+          className="cube-line"
+          // Negative delay starts each row mid-cycle, so the brightness wave is
+          // already travelling on the first frame rather than every row
+          // flashing together and then separating.
+          style={{ animationDelay: `${-i * 0.11}s` }}
+        >
+          {line}
+        </span>
+      ))}
     </pre>
   );
 }

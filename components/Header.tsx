@@ -62,7 +62,7 @@ export function Header({
       // invisible buttons. inert removes them from focus, hit-testing, and the
       // accessibility tree together.
       inert={dimmed}
-      className="fixed inset-x-0 top-0 z-30 flex h-20 items-center transition-opacity duration-500"
+      className="fixed inset-x-0 top-0 z-30 flex h-24 items-center transition-opacity duration-500"
       style={{ opacity: dimmed ? 0 : 1 }}
     >
       {/* The bar's own measure, wider than the timer column it sits above. The
@@ -73,7 +73,7 @@ export function Header({
           {/* Not a link. The timer is the only page, so a wordmark pointing at
               "/" would navigate to itself, remounting the tree and discarding
               the session's in-memory solves and timer phase. */}
-          <div className="group flex items-center gap-2.5 text-[17px] tracking-tight">
+          <div className="group flex items-center gap-3 text-[19px] tracking-tight">
             {/*
               Both marks are always in the DOM; CSS shows whichever suits the
               active theme's background (see globals.css). Plain <img> rather
@@ -85,17 +85,17 @@ export function Header({
             <img
               src="/cozycube_light.svg"
               alt=""
-              width={24}
-              height={24}
-              className="logo-for-dark size-6 transition-transform duration-300 group-hover:-translate-y-0.5"
+              width={28}
+              height={28}
+              className="logo-for-dark size-7 transition-transform duration-300 group-hover:-translate-y-0.5"
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/cozycube_dark.svg"
               alt=""
-              width={24}
-              height={24}
-              className="logo-for-light size-6 transition-transform duration-300 group-hover:-translate-y-0.5"
+              width={28}
+              height={28}
+              className="logo-for-light size-7 transition-transform duration-300 group-hover:-translate-y-0.5"
             />
             <span style={{ color: "var(--ink)" }}>cozycubes</span>
           </div>

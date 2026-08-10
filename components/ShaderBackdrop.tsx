@@ -60,8 +60,12 @@ export function ShaderBackdrop({ active }: { active: boolean }) {
     const styles = getComputedStyle(document.documentElement);
     const palette = {
       bg: styles.getPropertyValue("--shader-bg"),
-      a: styles.getPropertyValue("--shader-a"),
-      b: styles.getPropertyValue("--shader-b"),
+      // The palette vars directly, not the semantic aliases: these are plain
+      // hex that hexToRgb can parse, where an alias risks arriving as an
+      // unresolved var() token.
+      a: styles.getPropertyValue("--p1"),
+      b: styles.getPropertyValue("--p2"),
+      c: styles.getPropertyValue("--p3"),
     };
 
     // Reduced motion still gets the field, held on one frame — the colour is

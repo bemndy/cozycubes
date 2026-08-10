@@ -1,183 +1,264 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Design tokens
+   Themes
    ---------------------------------------------------------------------------
-   Every theme redefines the same token names on [data-theme]. Components read
-   tokens only and never branch on the active theme.
+   Ten of them. Each defines only what is genuinely its own: a surface, an ink
+   colour, and a five-colour palette (--p1..--p5). Everything else — the ink
+   ramp, hover tints, solve-quality colours, the shader's mixing colours, the
+   scrim and vignette — is derived from those once, in the DERIVED block below.
 
-   There are no borders anywhere in the system: separation comes from type,
-   spacing, tone, and blur. The mono pair keeps its identity through flat opaque
-   fills instead of rules.
+   That indirection is the point. It means a new theme is eight values rather
+   than thirty, the five palette colours are guaranteed to actually appear
+   across the UI rather than sitting unused, and no component ever branches on
+   which theme is active.
 
-   color-scheme makes native UI (the cube-size dropdown's popup, scrollbars,
-   focus rings) follow the theme instead of always rendering light.
+   Ink is stored as bare RGB channels so the ramp can build alpha variants from
+   it without a colour-mix per level.
+
+   color-scheme makes native UI (scrollbars, focus rings, form controls) follow
+   the theme instead of always rendering light.
 --------------------------------------------------------------------------- */
 
+/* Charred black under peach, rose and amber — the palette the app was designed against. */
 :root,
-[data-theme="dark"] {
+[data-theme="ember"] {
   color-scheme: dark;
 
   --surface: #000000;
+  --ink-rgb: 255, 255, 255;
 
-  --ink: rgba(255, 255, 255, 0.92);
-  --ink-dim: rgba(255, 255, 255, 0.72);
-  --ink-dimmer: rgba(255, 255, 255, 0.4);
-  --ink-faint: rgba(255, 255, 255, 0.16);
-
-  --accent: oklch(82% 0.15 80);
-  --accent-soft: oklch(82% 0.15 80 / 0.8);
-
-  --hover-tint: rgba(255, 255, 255, 0.05);
-
-  --wash: oklch(82% 0.15 80 / 0.08);
-  --vignette: rgba(0, 0, 0, 0.62);
-
-  --quality-good: oklch(84% 0.16 85);
-  --quality-mid: rgba(255, 255, 255, 0.45);
-  --quality-slow: oklch(58% 0.14 30 / 0.7);
-  --quality-warn: oklch(66% 0.17 35 / 0.55);
-
-  --tooltip-ink: rgba(255, 255, 255, 0.85);
+  --p1: #f2b78c;
+  --p2: #ff9ebb;
+  --p3: #ffd9a0;
+  --p4: #e5738f;
+  --p5: #c98a5e;
 
   --shader-bg: #000000;
-  --shader-a: #f2b78c;
-  --shader-b: #ff9ebb;
-  --scrim: rgba(0, 0, 0, 0.4);
+  --logo-on-dark: block;
+  --cube-ink: #f2b78c;
   --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
+/* Deep indigo with periwinkle, lavender and a cold aqua. */
+[data-theme="nocturne"] {
+  color-scheme: dark;
+
+  --surface: #07070f;
+  --ink-rgb: 234, 238, 255;
+
+  --p1: #8b9cf7;
+  --p2: #c3a6f5;
+  --p3: #7de3e8;
+  --p4: #f2a0c8;
+  --p5: #5f6bbf;
+
+  --shader-bg: #07070f;
+  --logo-on-dark: block;
+  --cube-ink: #a9b6ff;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Underwater greens — seafoam, mint and pale lime over near-black teal. */
+[data-theme="kelp"] {
+  color-scheme: dark;
+
+  --surface: #04100e;
+  --ink-rgb: 228, 255, 246;
+
+  --p1: #5fd3b2;
+  --p2: #9ae6b4;
+  --p3: #cfe8a9;
+  --p4: #4fb3a3;
+  --p5: #e8d9a0;
+
+  --shader-bg: #04100e;
+  --logo-on-dark: block;
+  --cube-ink: #7fe3c4;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Warm white with terracotta and peach. */
+[data-theme="linen"] {
+  color-scheme: light;
+
+  --surface: #fdf8f4;
+  --ink-rgb: 38, 30, 26;
+
+  --p1: #e08d6f;
+  --p2: #f0b49a;
+  --p3: #d9a05b;
+  --p4: #c96f7a;
+  --p5: #a8836b;
+
+  --shader-bg: #fdf8f4;
+  --logo-on-light: block;
+  --cube-ink: #c9765a;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 40, 30, 0.22);
+}
+
+/* Cool white with mint, aqua and a deeper sea green. */
+[data-theme="seaglass"] {
+  color-scheme: light;
+
+  --surface: #f4faf8;
+  --ink-rgb: 20, 38, 36;
+
+  --p1: #5fb8a6;
+  --p2: #92d5c4;
+  --p3: #7fc3d9;
+  --p4: #b6dfc9;
+  --p5: #4a8f92;
+
+  --shader-bg: #f4faf8;
+  --logo-on-light: block;
+  --cube-ink: #3f9b89;
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 50, 48, 0.2);
+}
+
+/* White with a pink cast — rose, lilac and a warm apricot. */
+[data-theme="blossom"] {
+  color-scheme: light;
+
+  --surface: #fdf5f9;
+  --ink-rgb: 42, 26, 38;
+
+  --p1: #e58bb0;
+  --p2: #f3b6cf;
+  --p3: #bfa3e8;
+  --p4: #f7cfa0;
+  --p5: #b0688f;
+
+  --shader-bg: #fdf5f9;
+  --logo-on-light: block;
+  --cube-ink: #d1699a;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 30, 50, 0.2);
+}
+
+/* The light theme that isn't white: parchment, clay, ochre and olive. */
 [data-theme="light"] {
   color-scheme: light;
 
-  --surface: oklch(97% 0.01 80);
+  --surface: #f2e9d8;
+  --ink-rgb: 48, 38, 28;
 
-  --ink: rgba(20, 16, 14, 0.9);
-  --ink-dim: rgba(20, 16, 14, 0.7);
-  --ink-dimmer: rgba(20, 16, 14, 0.45);
-  --ink-faint: rgba(20, 16, 14, 0.18);
+  --p1: #c4703f;
+  --p2: #d9a05b;
+  --p3: #8a9a5b;
+  --p4: #b5523f;
+  --p5: #6b5b45;
 
-  --accent: oklch(64% 0.15 38);
-  --accent-soft: oklch(64% 0.15 38 / 0.85);
-
-  --hover-tint: rgba(20, 16, 14, 0.05);
-
-  --wash: oklch(64% 0.15 38 / 0.07);
-  /* Warm-white fade rather than black — a dark vignette blows out on a light
-     surface. */
-  --vignette: rgba(255, 250, 244, 0.75);
-
-  --quality-good: oklch(58% 0.16 45);
-  --quality-mid: rgba(20, 16, 14, 0.4);
-  --quality-slow: oklch(55% 0.14 30 / 0.7);
-  --quality-warn: oklch(55% 0.17 25 / 0.5);
-
-  --tooltip-ink: rgba(20, 16, 14, 0.85);
-
-  --shader-bg: #f7f2ea;
-  --shader-a: #e5738f;
-  --shader-b: #f2b78c;
-  --scrim: rgba(20, 16, 14, 0.18);
-  --overlay-shadow: 0 12px 32px -12px rgba(20, 16, 14, 0.28);
+  --shader-bg: #f2e9d8;
+  --logo-on-light: block;
+  --cube-ink: #8a5a3c;
+  --overlay-shadow: 0 12px 32px -12px rgba(70, 55, 35, 0.24);
 }
 
-/* Mono pair: flat, opaque, unblurred. */
-[data-theme="contrast-dark"] {
-  color-scheme: dark;
-
-  --surface: #000000;
-
-  --ink: #ffffff;
-  --ink-dim: rgba(255, 255, 255, 0.8);
-  --ink-dimmer: rgba(255, 255, 255, 0.45);
-  --ink-faint: rgba(255, 255, 255, 0.25);
-
-  --accent: #ffffff;
-  --accent-soft: rgba(255, 255, 255, 0.85);
-
-  --hover-tint: rgba(255, 255, 255, 0.12);
-
-  --wash: transparent;
-  --vignette: transparent;
-
-  --quality-good: #ffffff;
-  --quality-mid: rgba(255, 255, 255, 0.45);
-  --quality-slow: rgba(255, 255, 255, 0.2);
-  --quality-warn: rgba(255, 255, 255, 0.12);
-
-  --tooltip-ink: #ffffff;
-
-  --shader-bg: #000000;
-  --shader-a: #242424;
-  --shader-b: #3a3a3a;
-  --scrim: rgba(0, 0, 0, 0.6);
-  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
-}
-
-[data-theme="contrast-light"] {
-  color-scheme: light;
-
-  --surface: #ffffff;
-
-  --ink: #000000;
-  --ink-dim: rgba(0, 0, 0, 0.8);
-  --ink-dimmer: rgba(0, 0, 0, 0.45);
-  --ink-faint: rgba(0, 0, 0, 0.25);
-
-  --accent: #000000;
-  --accent-soft: rgba(0, 0, 0, 0.85);
-
-  --hover-tint: rgba(0, 0, 0, 0.08);
-
-  --wash: transparent;
-  --vignette: transparent;
-
-  --quality-good: #000000;
-  --quality-mid: rgba(0, 0, 0, 0.45);
-  --quality-slow: rgba(0, 0, 0, 0.2);
-  --quality-warn: rgba(0, 0, 0, 0.12);
-
-  --tooltip-ink: #000000;
-
-  --shader-bg: #ffffff;
-  --shader-a: #ececec;
-  --shader-b: #d6d6d6;
-  --scrim: rgba(0, 0, 0, 0.25);
-  --overlay-shadow: 0 12px 32px -12px rgba(20, 16, 14, 0.28);
-}
-
-/* Derived from ColorfulLoader.module.css's hot pink / grey pair, so the boot
-   screen and the app read as one system. */
+/* The wordmark's pinks and peaches over the loader's hot pink. */
 [data-theme="loader"] {
   color-scheme: dark;
 
-  --surface: #0a0a0a;
+  --surface: #0b0709;
+  --ink-rgb: 255, 240, 246;
 
-  --ink: rgba(255, 255, 255, 0.92);
-  --ink-dim: rgba(255, 255, 255, 0.7);
-  --ink-dimmer: rgba(255, 255, 255, 0.4);
-  --ink-faint: rgba(255, 77, 133, 0.3);
+  --p1: #ff4d85;
+  --p2: #ffc0cb;
+  --p3: #ffdab9;
+  --p4: #ff9ebb;
+  --p5: #f2b78c;
 
-  --accent: rgb(255, 77, 133);
-  --accent-soft: rgba(255, 77, 133, 0.8);
-
-  --hover-tint: rgba(255, 77, 133, 0.08);
-
-  --wash: rgba(255, 77, 133, 0.1);
-  --vignette: rgba(0, 0, 0, 0.6);
-
-  --quality-good: rgb(255, 77, 133);
-  --quality-mid: rgba(255, 255, 255, 0.45);
-  --quality-slow: rgb(75, 75, 75);
-  --quality-warn: rgba(255, 77, 133, 0.3);
-
-  --tooltip-ink: rgba(255, 255, 255, 0.85);
-
-  --shader-bg: #0a0a0a;
-  --shader-a: #ff4d85;
-  --shader-b: #4b4b4b;
-  --scrim: rgba(0, 0, 0, 0.45);
+  --shader-bg: #0b0709;
+  --logo-on-dark: block;
+  --cube-ink: #ff4d85;
   --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/*
+   The mono pair. No palette — black and white only, and the one place in the
+   system that draws borders: --edge-width goes non-zero, so every div that
+   carries a rectangular background (hint chips, dropdown and dialog panels)
+   gains a high-contrast rule. That structural line is the entire identity of
+   these two themes, which is why nothing else has one.
+*/
+[data-theme="mono-dark"] {
+  color-scheme: dark;
+
+  --surface: #000000;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #ffffff;
+  --p2: #e0e0e0;
+  --p3: #bdbdbd;
+  --p4: #8a8a8a;
+  --p5: #5a5a5a;
+
+  --shader-bg: #000000;
+  --logo-on-dark: block;
+  --cube-ink: #ffffff;
+  --overlay-shadow: none;
+
+  --edge: #ffffff;
+  --edge-width: 2px;
+}
+
+[data-theme="mono-light"] {
+  color-scheme: light;
+
+  --surface: #ffffff;
+  --ink-rgb: 0, 0, 0;
+
+  --p1: #000000;
+  --p2: #2b2b2b;
+  --p3: #4f4f4f;
+  --p4: #7a7a7a;
+  --p5: #a8a8a8;
+
+  --shader-bg: #ffffff;
+  --logo-on-light: block;
+  --cube-ink: #000000;
+  --overlay-shadow: none;
+
+  --edge: #000000;
+  --edge-width: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   DERIVED — written once, resolved per theme.
+
+   var() resolves against the element it lands on, and every theme sets its own
+   --p1..--p5 and --ink-rgb on the same <html>, so these definitions re-resolve
+   for free whenever data-theme changes.
+--------------------------------------------------------------------------- */
+
+:root {
+  --ink: rgba(var(--ink-rgb), 0.92);
+  --ink-dim: rgba(var(--ink-rgb), 0.72);
+  --ink-dimmer: rgba(var(--ink-rgb), 0.42);
+  --ink-faint: rgba(var(--ink-rgb), 0.16);
+  --hover-tint: rgba(var(--ink-rgb), 0.06);
+  --tooltip-ink: var(--ink);
+
+  /* The palette, spread across the UI so all five colours earn their place. */
+  --accent: var(--p1);
+  --accent-soft: var(--p2);
+  --quality-good: var(--p3);
+  --quality-mid: var(--ink-dimmer);
+  --quality-slow: var(--p5);
+  --quality-warn: var(--p4);
+
+  /* The gradient reads --p1..--p3 straight off the theme rather than through
+     aliases here — the shader parses those values as hex in JS, and an alias
+     would hand it an unresolved token to choke on. */
+
+  --wash: color-mix(in srgb, var(--p1) 10%, transparent);
+  /* Built from the surface, so a dark theme fades to black and a light one
+     fades to its own paper colour rather than to grey. */
+  --vignette: color-mix(in srgb, var(--surface) 78%, transparent);
+  --scrim: color-mix(in srgb, var(--surface) 55%, transparent);
+
+  /* Borders exist only in the mono pair; everywhere else this is a no-op. */
+  --edge: transparent;
+  --edge-width: 0px;
 }
 
 /* Expose tokens to Tailwind as utilities. `inline` keeps the utility
@@ -271,20 +352,18 @@ body {
    load for anyone not on the default theme.
 --------------------------------------------------------------------------- */
 
-.logo-for-dark,
+/*
+   Driven by a variable each theme sets for itself, not by a list of selectors
+   here. A list has to be edited every time a theme is added, and forgetting
+   leaves the wordmark invisible — which is exactly what happened when the
+   themes were renamed.
+*/
+.logo-for-dark {
+  display: var(--logo-on-dark, none);
+}
+
 .logo-for-light {
-  display: none;
-}
-
-[data-theme="dark"] .logo-for-dark,
-[data-theme="contrast-dark"] .logo-for-dark,
-[data-theme="loader"] .logo-for-dark {
-  display: block;
-}
-
-[data-theme="light"] .logo-for-light,
-[data-theme="contrast-light"] .logo-for-light {
-  display: block;
+  display: var(--logo-on-light, none);
 }
 
 /* The header and footer's own measure — wider than the timer column. */
@@ -335,6 +414,8 @@ body {
   gap: 0.4rem;
   padding: 0.3rem 0.6rem;
   border-radius: 5px;
+  /* Zero-width and transparent in every theme but the mono pair. */
+  border: var(--edge-width) solid var(--edge);
   background: var(--ink);
   color: var(--surface);
   font-size: 11px;
@@ -398,6 +479,7 @@ body {
 .overlay-panel {
   background: var(--surface);
   border-radius: 10px;
+  border: var(--edge-width) solid var(--edge);
   box-shadow: var(--overlay-shadow);
 }
 
@@ -506,4 +588,40 @@ body {
 
 .scroll-thin:hover::-webkit-scrollbar-thumb {
   background: var(--ink-dimmer);
+}
+
+/* ---------------------------------------------------------------------------
+   Boot cube shimmer
+   ---------------------------------------------------------------------------
+   Each row of the ASCII cube is its own element running the same keyframe, with
+   a negative animation-delay proportional to its row index. Offsetting the
+   phase per row turns one animation into a wave travelling down the cube.
+
+   Done in CSS rather than by varying colour per row in JS: the cube already
+   repaints every 80ms, and computing a brightness per row per frame would put
+   that work on the main thread for something the compositor does for free.
+--------------------------------------------------------------------------- */
+
+@keyframes cubeShimmer {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.cube-line {
+  display: block;
+  min-height: 1em;
+  color: var(--cube-ink);
+  animation: cubeShimmer 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cube-line {
+    animation: none;
+    opacity: 0.85;
+  }
 }

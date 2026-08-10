@@ -66,6 +66,7 @@ uniform vec2 u_res;
 uniform vec3 u_bg;
 uniform vec3 u_a;
 uniform vec3 u_b;
+uniform vec3 u_c;
 
 varying vec2 v_uv;
 
@@ -85,10 +86,15 @@ void main() {
 
   float n1 = snoise(p * 0.9 + u_time * 0.035);
   float n2 = snoise(p * 1.9 - u_time * 0.045 + 11.7);
+  float n3 = snoise(p * 0.5 + u_time * 0.022 - 5.3);
 
+  // Three octaves, three palette colours. The third runs at the lowest
+  // frequency so it reads as a slow wash under the other two rather than as a
+  // third competing band.
   vec3 color = u_bg;
   color = mix(color, u_a, smoothstep(-0.6, 0.9, n1) * 0.55);
-  color = mix(color, u_b, smoothstep(-0.4, 1.0, n2) * 0.4);
+  color = mix(color, u_b, smoothstep(-0.4, 1.0, n2) * 0.40);
+  color = mix(color, u_c, smoothstep(-0.2, 1.1, n3) * 0.30);
 
   // Radial falloff to the base colour, so the field reads as a glow sitting on
   // the surface rather than as a textured rectangle.
@@ -121,7 +127,10 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
 }
 
 export interface ShaderHandle {
-  render: (timeSec: number, colors: { bg: string; a: string; b: string }) => void;
+  render: (
+    timeSec: number,
+    colors: { bg: string; a: string; b: string; c: string }
+  ) => void;
   resize: (cssWidth: number, cssHeight: number) => void;
   dispose: () => void;
 }
@@ -167,6 +176,7 @@ export function createShaderBackdrop(canvas: HTMLCanvasElement): ShaderHandle | 
   const uBg = gl.getUniformLocation(program, "u_bg");
   const uA = gl.getUniformLocation(program, "u_a");
   const uB = gl.getUniformLocation(program, "u_b");
+  const uC = gl.getUniformLocation(program, "u_c");
 
   /**
    * Rendered at half resolution. The field is smooth noise with no fine detail,
@@ -187,6 +197,7 @@ export function createShaderBackdrop(canvas: HTMLCanvasElement): ShaderHandle | 
       gl.uniform3fv(uBg, hexToRgb(colors.bg));
       gl.uniform3fv(uA, hexToRgb(colors.a));
       gl.uniform3fv(uB, hexToRgb(colors.b));
+      gl.uniform3fv(uC, hexToRgb(colors.c));
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     },
     dispose() {

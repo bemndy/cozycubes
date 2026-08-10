@@ -231,20 +231,40 @@ export default function TimerPage() {
     function onPointerUp() {
       keyUp();
     }
+    // Stopping is unrestricted: once a solve is running, a click anywhere ends
+    // it. Starting stays pinned to the timer's own surface (onTimerPointerDown)
+    // so clicking the scramble or the solve list can't begin a solve.
+    function onPointerDown(e: PointerEvent) {
+      if (e.button !== 0 || phase !== "solving") return;
+      e.preventDefault();
+      handlePress();
+    }
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointerup", onPointerUp);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
     };
-  }, [booted, overlayOpen, handlePress, newScramble, keyUp]);
+  }, [booted, overlayOpen, handlePress, newScramble, keyUp, phase]);
 
-  /** The timer's own surface is the only place a click arms the timer. */
+  /**
+   * Starting is restricted to the timer's own surface; stopping is not.
+   *
+   * A running solve is stopped by a click anywhere (see the window listener
+   * above) — mid-solve your hand is not necessarily over the digits, and
+   * hunting for a target to end a solve is the worst possible moment to make
+   * someone aim. This handler bows out while solving so the two don't both
+   * fire on a click that lands here: a second press would stop the timer and
+   * then immediately begin a fresh hold.
+   */
   function onTimerPointerDown(e: React.PointerEvent) {
     if (!booted || overlayOpen) return;
+    if (phase === "solving") return;
     // Primary button only: right-click opens a context menu, and a middle click
     // has no business starting a solve.
     if (e.button !== 0) return;
@@ -328,19 +348,31 @@ export default function TimerPage() {
           hidden hint, an empty solve list or a full one all resolve inside their
           own box. Below lg it stacks to one column, timer block first.
         */}
-        <main className="page-grid min-h-screen content-center items-center gap-y-12 py-24">
+        <main className="page-grid min-h-screen items-stretch gap-y-12 py-24">
           <aside
-            className="order-2 grid h-52 place-items-center transition-opacity duration-500 lg:order-1"
+            className="order-2 grid h-52 place-items-center self-center transition-opacity duration-500 lg:order-1 lg:-translate-x-10"
             style={{ opacity: dimmed ? 0 : 1 }}
             inert={dimmed}
           >
             <CubeNet cubeSize={cubeSize} scramble={scramble} />
           </aside>
 
-          <div className="order-1 flex flex-col items-center lg:order-2">
-            {/* Fixed height. The hint hugs the scramble; the rest of the block
-                is the gap down to the digits. */}
-            <div className="flex h-56 w-full flex-col items-center justify-start gap-3">
+          <div className="order-1 flex h-full flex-col items-center justify-center lg:order-2">
+            {/*
+              This block and its mirror below the digits both take flex-1, so
+              they always split whatever height the digits leave, equally. Two
+              things fall out of that: the scramble and the stats push toward
+              the bars at any viewport height rather than only at one size, and
+              the digits stay exactly centred because the space above and below
+              them is equal by construction.
+
+              The max-height caps how far that push can go. Uncapped, a tall
+              display drove the two apart much harder than a laptop did — the
+              spread scaled with the screen. With the cap they stop growing past
+              26rem and the whole group centres instead, so the spacing looks
+              the same at 900px of viewport as at 1400px.
+            */}
+            <div className="flex max-h-[26rem] w-full min-h-0 flex-1 flex-col items-center justify-start gap-3">
               <div className="scroll-thin flex max-h-[10rem] w-full justify-center overflow-y-auto">
                 <ScrambleLine
                   scramble={scramble}
@@ -368,14 +400,14 @@ export default function TimerPage() {
 
             {/* Mirrors the block above: same height, contents pushed to the far
                 edge, so the hint hugs the stats and the gap lands by the digits. */}
-            <div className="flex h-56 w-full flex-col items-center justify-end gap-3">
+            <div className="flex max-h-[26rem] w-full min-h-0 flex-1 flex-col items-center justify-end gap-3">
               <TimerHint hidden={dimmed} />
               <StatsRow solves={solves} />
             </div>
           </div>
 
           <aside
-            className="order-3 grid place-items-center transition-opacity duration-500"
+            className="order-3 grid place-items-center self-center transition-opacity duration-500 lg:translate-x-10"
             style={{ opacity: dimmed ? 0 : 1 }}
             // The list's +2/DNF/delete buttons would otherwise stay tabbable
             // while invisible.

@@ -16,16 +16,16 @@ export function StatsRow({ solves }: { solves: Solve[] }) {
   ];
 
   return (
-    <div className="flex flex-wrap justify-center gap-7 sm:gap-10">
+    <div className="flex flex-wrap justify-center gap-8 sm:gap-12">
       {stats.map(({ label, value }) => (
         <div key={label} className="flex flex-col items-center gap-1">
           <span
-            className="text-[9px] tracking-[.12em]"
+            className="text-[10px] tracking-[.12em]"
             style={{ color: "var(--ink-dimmer)" }}
           >
             {label}
           </span>
-          <span className="font-mono text-[15px]" style={{ color: "var(--ink-dim)" }}>
+          <span className="font-mono text-[17px]" style={{ color: "var(--ink-dim)" }}>
             {value}
           </span>
         </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { DotGothic16, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { DEFAULT_THEME, THEME_STORAGE_KEY } from "@/lib/theme";
+import { DEFAULT_THEME, THEME_IDS, THEME_STORAGE_KEY } from "@/lib/theme";
 
 // Three faces, three jobs:
 //   UI chrome      -> the platform's own system font (see --font-ui in
@@ -47,12 +47,17 @@ export const metadata: Metadata = {
 
 // Runs before first paint, ahead of React hydrating, so the stored theme is
 // already on <html> when the page paints. Without it every load flashes the
-// default theme for a frame before the provider's effect corrects it.
-const themeScript = `(function(){try{var t=localStorage.getItem(${JSON.stringify(
-  THEME_STORAGE_KEY
-)});document.documentElement.setAttribute("data-theme",t||${JSON.stringify(
-  DEFAULT_THEME
-)});}catch(e){document.documentElement.setAttribute("data-theme",${JSON.stringify(
+// default theme for a frame before useTheme's read corrects it.
+//
+// The stored value is checked against the known list rather than trusted.
+// Theme ids do get renamed, and a stale one would otherwise be written to the
+// attribute, match no theme block, and leave React and the DOM disagreeing
+// about which theme is active.
+const themeScript = `(function(){try{var ids=${JSON.stringify(THEME_IDS)};
+var t=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});
+if(ids.indexOf(t)<0)t=${JSON.stringify(DEFAULT_THEME)};
+document.documentElement.setAttribute("data-theme",t);}
+catch(e){document.documentElement.setAttribute("data-theme",${JSON.stringify(
   DEFAULT_THEME
 )});}})();`;
 

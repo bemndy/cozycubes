@@ -54,7 +54,7 @@ export function Footer({ solveCount, dimmed }: FooterProps) {
       <footer
         // See Header: inert keeps hidden controls out of the tab order.
         inert={dimmed}
-        className="fixed inset-x-0 bottom-0 z-30 flex h-20 items-center transition-opacity duration-500"
+        className="fixed inset-x-0 bottom-0 z-30 flex h-24 items-center transition-opacity duration-500"
         style={{ opacity: dimmed ? 0 : 1 }}
       >
         {/* Same measure as the header. Links pinned left, session pinned right,
@@ -119,7 +119,7 @@ function SessionReadout({ solveCount }: { solveCount: number }) {
   const ss = String(elapsedSec % 60).padStart(2, "0");
 
   return (
-    <div className="flex shrink-0 items-center gap-2.5 font-mono text-[12px]">
+    <div className="flex shrink-0 items-center gap-3 font-mono text-[13px]">
       <span
         aria-hidden="true"
         className="size-1.5 shrink-0 rounded-full"
