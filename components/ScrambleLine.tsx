@@ -13,7 +13,7 @@ interface ScrambleLineProps {
 /**
  * The pinned scramble, with a reroll button beside it.
  *
- * The measure is deliberately narrower than the shell so a 3x3 scramble breaks
+ * The measure is deliberately narrower than its column so a 3x3 scramble breaks
  * over two lines. One long line forces the eye to track sideways across the
  * whole viewport mid-glance, and 4x4 and up would run off regardless — two
  * lines is the shape the block should always have.
@@ -23,27 +23,39 @@ interface ScrambleLineProps {
  */
 export function ScrambleLine({ scramble, onRefresh, locked }: ScrambleLineProps) {
   return (
-    <div className="flex w-full items-start justify-center gap-3">
-      <p className="max-w-[30rem] text-center font-mono text-[15px] leading-[1.8] tracking-wide sm:text-[17px]">
-        <span aria-hidden="true" style={{ color: "var(--accent-soft)", marginRight: 10 }}>
-          &gt;
-        </span>
-        <span style={{ color: "var(--ink-dim)" }}>{scrambleToString(scramble)}</span>
-      </p>
+    // The inner wrapper shrinks to the text, so the button anchors just off the
+    // scramble's own right edge rather than the column's — a full-width anchor
+    // parked it out in the margin, far from the thing it acts on.
+    //
+    // The button stays out of flow either way: sharing a flex row with the text
+    // would centre the pair, pushing the scramble left of the page's centre
+    // line by half the button's width.
+    <div className="flex w-full justify-center">
+      <div className="relative max-w-[30rem]">
+        <p className="text-center font-mono text-[15px] leading-[1.8] tracking-wide sm:text-[17px]">
+          <span
+            aria-hidden="true"
+            style={{ color: "var(--accent-soft)", marginRight: 10 }}
+          >
+            &gt;
+          </span>
+          <span style={{ color: "var(--ink-dim)" }}>{scrambleToString(scramble)}</span>
+        </p>
 
-      <button
-        type="button"
-        onClick={onRefresh}
-        disabled={locked}
-        aria-label="New scramble"
-        title="New scramble"
-        className={`mt-1 shrink-0 transition-opacity duration-200 ${
-          locked ? "cursor-not-allowed opacity-20" : "opacity-40 hover:opacity-100"
-        }`}
-        style={{ color: "var(--ink)" }}
-      >
-        <RefreshGlyph />
-      </button>
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={locked}
+          aria-label="New scramble"
+          title="New scramble"
+          className={`absolute -right-7 top-1 transition-opacity duration-200 ${
+            locked ? "cursor-not-allowed opacity-20" : "opacity-40 hover:opacity-100"
+          }`}
+          style={{ color: "var(--ink)" }}
+        >
+          <RefreshGlyph />
+        </button>
+      </div>
     </div>
   );
 }

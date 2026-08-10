@@ -310,28 +310,22 @@ export default function TimerPage() {
         />
 
         {/*
-          Rows are laid out from the top rather than centred, and every row above
-          the solves has a fixed height. That is what pins the digits: a scramble
-          that wraps, a hidden hint, an empty solve list and a full one all
-          resolve inside their own box.
+          Three sections: net left, scramble and timer middle, solves right.
 
-          The solve list is the one row that grows, because expanding it is a
-          direct response to a click. It pushes the page taller downward and
-          leaves everything above it exactly where it was.
-        */}
-        {/*
-          Three columns on wide screens: the net claims the left margin, the
-          solve list the right, the scramble and timer keep the middle. Both
-          flanks are fixed widths and the centre is the remainder, so the timer
-          holds the page's centre line whatever either side is doing.
+          The columns come from .page-grid, which the header and footer use too.
+          That shared definition is what keeps the bars aligned with the timer at
+          every width — a fixed max-width on the bars could only ever match a
+          fractional middle column at one specific viewport size.
 
           Every column is centred against the others, and the centre column is
-          built symmetrically — the blocks above and below the digits are the
-          same fixed height — so the digits land exactly halfway down the stack.
-          The net and the solve list then centre onto that same line. Below lg
-          it stacks to one column, timer block first.
+          built symmetrically: the blocks above and below the digits are the same
+          fixed height, so the digits land exactly halfway down the stack and the
+          net and solve list centre onto that same line. Fixed block heights also
+          pin the digits against content changes — a scramble that wraps, a
+          hidden hint, an empty solve list or a full one all resolve inside their
+          own box. Below lg it stacks to one column, timer block first.
         */}
-        <main className="grid min-h-screen w-full content-center items-center gap-x-10 gap-y-12 px-6 py-24 lg:grid-cols-[15rem_minmax(0,1fr)_24rem]">
+        <main className="page-grid min-h-screen content-center items-center gap-y-12 py-24">
           <aside
             className="order-2 flex h-40 items-center justify-center transition-opacity duration-500 lg:order-1"
             style={{ opacity: dimmed ? 0 : 1 }}
@@ -376,11 +370,15 @@ export default function TimerPage() {
             style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
             aria-hidden={dimmed}
           >
-            <SolveHistory
-              solves={solves}
-              onTogglePenalty={togglePenalty}
-              onDelete={removeSolve}
-            />
+            {/* Capped and centred, so the list sits in the middle of its
+                section rather than stretching to fill it. */}
+            <div className="w-full max-w-[24rem]">
+              <SolveHistory
+                solves={solves}
+                onTogglePenalty={togglePenalty}
+                onDelete={removeSolve}
+              />
+            </div>
           </aside>
         </main>
 

@@ -218,10 +218,6 @@
      --font-pixel Tailwind token above: pointing a token at a var of its own
      name makes a reference cycle, which CSS resolves to nothing. */
   --font-pixel-face: var(--font-pixel-src), "Courier New", monospace;
-
-  /* One readable column, shared by header, timer stack, and footer, so every
-     edge in the app lines up on the same two verticals. */
-  --shell-width: 48rem;
 }
 
 body {
@@ -230,12 +226,33 @@ body {
   font-family: var(--font-ui);
 }
 
-/* The shared measure. */
-.shell {
+/* ---------------------------------------------------------------------------
+   Page grid
+   ---------------------------------------------------------------------------
+   The three sections: net left, scramble and timer middle, solves right.
+
+   Header, main, and footer all use this same class, and the header and footer
+   put their contents in the middle cell. That is what makes them line up with
+   the timer at every viewport width — a fixed max-width on the bars could only
+   ever match a fractional middle column at one specific width, and drift
+   everywhere else.
+
+   The flanks are equal, so the middle cell is centred on the page by
+   construction.
+--------------------------------------------------------------------------- */
+
+.page-grid {
+  display: grid;
   width: 100%;
-  max-width: var(--shell-width);
-  margin-inline: auto;
   padding-inline: 1.5rem;
+  column-gap: 2.5rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) {
+  .page-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  }
 }
 
 /* ---------------------------------------------------------------------------

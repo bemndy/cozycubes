@@ -56,31 +56,41 @@ export function Footer({ solveCount, dimmed }: FooterProps) {
         className="fixed inset-x-0 bottom-0 z-30 flex h-20 items-center transition-opacity duration-500"
         style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
       >
-        <div className="shell flex items-center justify-between gap-6">
-          <nav className="flex items-center gap-5 sm:gap-6">
-            <IconButton
-              label="changelog"
-              showText
-              onClick={() => setOpenPanel("changelog")}
-              expanded={openPanel === "changelog"}
-            >
-              <GitGlyph />
-            </IconButton>
+        {/* Same grid as <main> and the header, contents in the middle cell, so
+            the bar sits directly below the timer at every width. */}
+        <div className="page-grid items-center">
+          <div className="hidden lg:block" />
 
-            {INFO_ITEMS.map(({ topic, label, Glyph }) => (
+          {/* Links pinned left, session pinned right, the gap between them
+              carrying whatever width is left over. */}
+          <div className="flex items-center justify-between gap-6">
+            <nav className="flex items-center gap-5">
               <IconButton
-                key={topic}
-                label={label}
+                label="changelog"
                 showText
-                onClick={() => setOpenPanel(topic)}
-                expanded={openPanel === topic}
+                onClick={() => setOpenPanel("changelog")}
+                expanded={openPanel === "changelog"}
               >
-                <Glyph />
+                <GitGlyph />
               </IconButton>
-            ))}
-          </nav>
 
-          <SessionReadout solveCount={solveCount} />
+              {INFO_ITEMS.map(({ topic, label, Glyph }) => (
+                <IconButton
+                  key={topic}
+                  label={label}
+                  showText
+                  onClick={() => setOpenPanel(topic)}
+                  expanded={openPanel === topic}
+                >
+                  <Glyph />
+                </IconButton>
+              ))}
+            </nav>
+
+            <SessionReadout solveCount={solveCount} />
+          </div>
+
+          <div className="hidden lg:block" />
         </div>
       </footer>
 

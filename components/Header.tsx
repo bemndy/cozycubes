@@ -61,48 +61,54 @@ export function Header({
       className="fixed inset-x-0 top-0 z-30 flex h-20 items-center transition-opacity duration-500"
       style={{ opacity: dimmed ? 0 : 1, pointerEvents: dimmed ? "none" : "auto" }}
     >
-      <div className="shell flex items-center justify-between">
-        {/* Not a link. The timer is the only page, so a wordmark pointing at
-            "/" would navigate to itself, remounting the tree and discarding the
-            session's in-memory solves and timer phase. */}
-        <div className="group flex items-baseline gap-2 text-[17px] tracking-tight">
-          <span
-            className="font-mono text-[14px] transition-transform duration-300 group-hover:-translate-y-0.5"
-            style={{ color: "var(--accent)" }}
-          >
-            3³
-          </span>
-          <span style={{ color: "var(--ink)" }}>cozycubes</span>
+      {/* Same grid as <main>, with the contents in the middle cell, so the bar
+          sits directly above the timer at every width. */}
+      <div className="page-grid items-center">
+        <div className="hidden lg:block" />
+        <div className="flex items-center justify-between">
+          {/* Not a link. The timer is the only page, so a wordmark pointing at
+              "/" would navigate to itself, remounting the tree and discarding
+              the session's in-memory solves and timer phase. */}
+          <div className="group flex items-baseline gap-2 text-[17px] tracking-tight">
+            <span
+              className="font-mono text-[14px] transition-transform duration-300 group-hover:-translate-y-0.5"
+              style={{ color: "var(--accent)" }}
+            >
+              3³
+            </span>
+            <span style={{ color: "var(--ink)" }}>cozycubes</span>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <Dropdown
+              ariaLabel="Cube size"
+              options={CUBE_OPTIONS}
+              value={cubeSize}
+              onChange={onCubeSizeChange}
+              disabled={locked}
+            />
+
+            <IconButton
+              label={`inspection ${inspectionEnabled ? "on" : "off"}`}
+              onClick={onToggleInspection}
+              active={inspectionEnabled}
+              pressed={inspectionEnabled}
+            >
+              <InspectionGlyph />
+            </IconButton>
+
+            {/* Same control as cube size. Cycling through five themes with a
+                single button meant up to four clicks to reach one, and no way
+                to see what the options were. */}
+            <Dropdown
+              ariaLabel="Theme"
+              options={THEME_OPTIONS}
+              value={theme}
+              onChange={setTheme}
+            />
+          </div>
         </div>
-
-        <div className="flex items-center gap-6">
-          <Dropdown
-            ariaLabel="Cube size"
-            options={CUBE_OPTIONS}
-            value={cubeSize}
-            onChange={onCubeSizeChange}
-            disabled={locked}
-          />
-
-          <IconButton
-            label={`inspection ${inspectionEnabled ? "on" : "off"}`}
-            onClick={onToggleInspection}
-            active={inspectionEnabled}
-            pressed={inspectionEnabled}
-          >
-            <InspectionGlyph />
-          </IconButton>
-
-          {/* Same control as cube size. Cycling through five themes with a
-              single button meant up to four clicks to reach one, and no way to
-              see what the options were. */}
-          <Dropdown
-            ariaLabel="Theme"
-            options={THEME_OPTIONS}
-            value={theme}
-            onChange={setTheme}
-          />
-        </div>
+        <div className="hidden lg:block" />
       </div>
     </header>
   );
