@@ -24,12 +24,6 @@ const TIMER_KEY = "Space";
 const NEW_SCRAMBLE_KEY = "Tab";
 
 /**
- * Elements that own their own click. A pointer press landing on one of these
- * must not also arm the timer, or picking a theme would start a solve.
- */
-const INTERACTIVE = 'button, a, select, input, [role="listbox"], [role="dialog"]';
-
-/**
  * Composition root for the timer.
  *
  * All state and every effect that drives behaviour stay here on purpose — the
@@ -227,37 +221,35 @@ export default function TimerPage() {
       e.preventDefault();
       keyUp();
     }
-    // The pointer is bound on window, exactly like the spacebar, and runs the
-    // same handlePress/keyUp pair. Anything narrower — binding press to the
-    // timer surface only — makes the two behave differently depending on where
-    // the cursor happens to be, which is the one thing they must not do.
-    function onPointerDown(e: PointerEvent) {
-      // Primary button only: right-click opens a context menu, and a middle
-      // click has no business starting a solve.
-      if (e.button !== 0) return;
-      if ((e.target as HTMLElement).closest(INTERACTIVE)) return;
-      // Stops a hold from turning into a text-selection drag across the page.
-      e.preventDefault();
-      handlePress();
-    }
-    // Release is unconditional: a press that starts on the page and releases
-    // off it — or over the header — must still register, or the timer stays
-    // stuck holding. keyUp already no-ops when nothing is held.
+    // Only the release is global. The press is bound to the timer's own box
+    // (see onTimerPointerDown) so clicking the scramble, the hints, or the
+    // stats doesn't start a solve — but a press that starts on the timer and
+    // releases anywhere else must still register, or the timer stays stuck
+    // holding. keyUp already no-ops when nothing is held.
     function onPointerUp() {
       keyUp();
     }
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointerup", onPointerUp);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
     };
   }, [booted, overlayOpen, handlePress, newScramble, keyUp]);
+
+  /** The timer's own surface is the only place a click arms the timer. */
+  function onTimerPointerDown(e: React.PointerEvent) {
+    if (!booted || overlayOpen) return;
+    // Primary button only: right-click opens a context menu, and a middle click
+    // has no business starting a solve.
+    if (e.button !== 0) return;
+    // Stops a hold from turning into a text-selection drag.
+    e.preventDefault();
+    handlePress();
+  }
 
   let display: string;
   if (phase === "solving") {
@@ -337,7 +329,7 @@ export default function TimerPage() {
           <div className="order-1 flex flex-col items-center lg:order-2">
             {/* Fixed height. The hint hugs the scramble; the rest of the block
                 is the gap down to the digits. */}
-            <div className="flex h-36 w-full flex-col items-center justify-start gap-2">
+            <div className="flex h-48 w-full flex-col items-center justify-start gap-2">
               <div className="scroll-thin flex max-h-[6.5rem] w-full justify-center overflow-y-auto">
                 <ScrambleLine
                   scramble={scramble}
@@ -348,7 +340,13 @@ export default function TimerPage() {
               <ScrambleHint hidden={dimmed} />
             </div>
 
-            <div className="flex h-32 items-center justify-center">
+            {/* The click target. Spans the column at the digits' height and
+                stops there, so the scramble, hints, and stats stay clickable
+                as ordinary content. */}
+            <div
+              onPointerDown={onTimerPointerDown}
+              className="flex h-32 w-full cursor-pointer select-none items-center justify-center"
+            >
               <TimerDisplay
                 display={display}
                 phase={phase}
@@ -359,7 +357,7 @@ export default function TimerPage() {
 
             {/* Mirrors the block above: same height, contents pushed to the far
                 edge, so the hint hugs the stats and the gap lands by the digits. */}
-            <div className="flex h-36 w-full flex-col items-center justify-end gap-2">
+            <div className="flex h-48 w-full flex-col items-center justify-end gap-2">
               <TimerHint hidden={dimmed} />
               <StatsRow solves={solves} />
             </div>

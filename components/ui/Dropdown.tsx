@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRegisterOverlay } from "@/lib/overlayState";
 
 export interface DropdownOption<T> {
@@ -114,6 +115,19 @@ export function Dropdown<T extends string | number>({
 
   return (
     <div ref={rootRef} className="relative">
+      {/*
+        Portalled to <body> on purpose. The bar that holds this dropdown is
+        position:fixed with a z-index, which makes it a stacking context — a
+        scrim rendered inside it could never paint *behind* it, no matter how
+        low its z-index. At body level it sits at z-20, under the bar at z-30,
+        so the page blurs while the bar and this panel stay sharp.
+      */}
+      {open &&
+        createPortal(
+          <div className="scrim-page animate-scrim-in" aria-hidden="true" />,
+          document.body
+        )}
+
       <button
         type="button"
         disabled={disabled}

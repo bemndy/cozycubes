@@ -122,7 +122,7 @@ function SessionReadout({ solveCount }: { solveCount: number }) {
       <span
         aria-hidden="true"
         className="size-1.5 shrink-0 rounded-full"
-        style={{ background: "var(--accent)", boxShadow: "0 0 8px -1px var(--accent)" }}
+        style={{ background: "var(--accent)" }}
       />
       {/* tabular-nums keeps the counter from reflowing as digits change. */}
       <span className="tabular-nums" style={{ color: "var(--ink-dim)" }}>

@@ -74,8 +74,7 @@ export function Dialog({ open, onClose, title, subtitle, children }: DialogProps
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-5"
-      style={{ background: "var(--scrim)" }}
+      className="scrim-modal animate-scrim-in z-50 flex items-center justify-center p-5"
       onClick={onClose}
     >
       <div

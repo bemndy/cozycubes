@@ -44,9 +44,7 @@
   --tooltip-ink: rgba(255, 255, 255, 0.85);
 
   --glass-bg: rgba(28, 28, 30, 0.68);
-  --glass-blur: blur(30px) saturate(180%);
-  --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(64px) saturate(190%);
   --scrim: rgba(0, 0, 0, 0.4);
 }
 
@@ -80,9 +78,7 @@
   --tooltip-ink: rgba(20, 16, 14, 0.85);
 
   --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-blur: blur(30px) saturate(180%);
-  --glass-shadow: 0 24px 60px -12px rgba(20, 16, 14, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(64px) saturate(190%);
   --scrim: rgba(20, 16, 14, 0.18);
 }
 
@@ -119,7 +115,6 @@
      high-contrast identity these two themes exist for. --edge draws the rule. */
   --glass-bg: #000000;
   --glass-blur: none;
-  --glass-shadow: none;
   --scrim: rgba(0, 0, 0, 0.6);
 }
 
@@ -152,7 +147,6 @@
 
   --glass-bg: #ffffff;
   --glass-blur: none;
-  --glass-shadow: none;
   --scrim: rgba(0, 0, 0, 0.25);
 }
 
@@ -186,9 +180,7 @@
   --tooltip-ink: rgba(255, 255, 255, 0.85);
 
   --glass-bg: rgba(26, 18, 22, 0.74);
-  --glass-blur: blur(30px) saturate(180%);
-  --glass-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 77, 133, 0.18);
+  --glass-blur: blur(64px) saturate(190%);
   --scrim: rgba(0, 0, 0, 0.45);
 }
 
@@ -340,7 +332,55 @@ body {
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: 10px;
-  box-shadow: var(--glass-shadow);
+}
+
+/* ---------------------------------------------------------------------------
+   Scrims
+   ---------------------------------------------------------------------------
+   Two layers, at different depths, because the two kinds of overlay want
+   different things behind them.
+
+   .scrim-page sits below the header and footer, so opening a dropdown blurs
+   the page content while the bar holding that dropdown stays sharp.
+
+   .scrim-modal sits above everything, so a dialog blurs the bars too — the
+   dialog is the whole focus, and leaving the chrome crisp behind it would keep
+   pulling the eye back out.
+--------------------------------------------------------------------------- */
+
+.scrim-page,
+.scrim-modal {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  /* Deep enough that the page behind resolves into a soft field of colour
+     rather than a recognisable blurred layout — the iOS-7 treatment, where the
+     backdrop reads as a gradient rather than as out-of-focus content. */
+  backdrop-filter: blur(72px) saturate(180%);
+  -webkit-backdrop-filter: blur(72px) saturate(180%);
+}
+
+.scrim-page {
+  z-index: 20;
+}
+
+@keyframes scrimIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-scrim-in {
+  animation: scrimIn 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scrim-in {
+    animation: none;
+  }
 }
 
 @keyframes panelIn {
