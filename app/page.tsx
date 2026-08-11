@@ -234,6 +234,16 @@ export default function TimerPage() {
 
   const cubeSizeLocked = phase === "inspecting" || phase === "solving";
 
+  // A new PB only counts once there's a prior best to beat, and only for the
+  // solve that was actually just displayed — recomputing bestSingle after a
+  // penalty edit shouldn't retroactively badge an older solve.
+  const lastEffectiveMs = lastSolve ? effectiveTimeMs(lastSolve) : null;
+  const isNewPersonalBest =
+    phase === "stopped" &&
+    solves.length > 1 &&
+    lastEffectiveMs !== null &&
+    lastEffectiveMs === bestSingle(solves);
+
   return (
     <>
       {/* Kept mounted through the fade so the loader dissolves into a timer
@@ -284,6 +294,12 @@ export default function TimerPage() {
       >
         {display}
       </div>
+
+      {isNewPersonalBest && (
+        <p className="text-xs font-semibold text-amber-400 -mt-4">
+          🏆 new personal best
+        </p>
+      )}
 
       <button
         type="button"
