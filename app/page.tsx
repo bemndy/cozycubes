@@ -45,10 +45,22 @@ export default function TimerPage() {
   const [solves, setSolves] = useState<Solve[]>([]);
   const [scramblerReady, setScramblerReady] = useState(false);
   const [loaderMounted, setLoaderMounted] = useState(true);
+  const [scrambleCopied, setScrambleCopied] = useState(false);
 
   const regenerateScramble = useCallback((size: SupportedCubeSize) => {
     setScramble(generateScrambleForSize(size));
   }, []);
+
+  const handleCopyScramble = useCallback(() => {
+    if (scramble.length === 0) return;
+    navigator.clipboard
+      .writeText(scrambleToString(scramble))
+      .then(() => {
+        setScrambleCopied(true);
+        setTimeout(() => setScrambleCopied(false), 1500);
+      })
+      .catch(() => {});
+  }, [scramble]);
 
   // Unmount the loader only once its fade has finished, so it cross-fades over
   // the timer instead of being cut away.
@@ -267,9 +279,18 @@ export default function TimerPage() {
           ))}
         </div>
 
-        <p className="font-mono text-center text-lg md:text-xl tracking-wide text-slate-100">
-          {scrambleToString(scramble)}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="font-mono text-center text-lg md:text-xl tracking-wide text-slate-100">
+            {scrambleToString(scramble)}
+          </p>
+          <button
+            type="button"
+            onClick={handleCopyScramble}
+            className="text-[10px] uppercase tracking-wide text-slate-500 hover:text-slate-300 border border-slate-800 rounded-full px-2 py-0.5 shrink-0"
+          >
+            {scrambleCopied ? "copied!" : "copy"}
+          </button>
+        </div>
         <p className="text-[11px] text-slate-600">
           press <kbd className="px-1 border border-slate-700 rounded">tab</kbd> for a new scramble
           {inspectionEnabled ? " (disabled during inspection/solve)" : " (disabled while solving)"}
