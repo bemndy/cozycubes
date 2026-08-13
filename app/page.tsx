@@ -8,6 +8,7 @@ import { generateScrambleForSize, initScrambler } from "@/lib/scrambler";
 import { ColorfulLoader, LOADER_EXIT_MS } from "@/components/ColorfulLoader";
 import {
   allTimeMean,
+  ao100,
   ao12,
   ao5,
   bestSingle,
@@ -302,10 +303,11 @@ export default function TimerPage() {
       <div className="flex-1" />
 
       <div className="w-full max-w-3xl border-t border-slate-900 pt-4 pb-8 flex flex-col gap-4">
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 text-center">
           <Stat label="best" value={formatStat(bestSingle(solves))} />
           <Stat label="ao5" value={formatStat(ao5(solves))} />
           <Stat label="ao12" value={formatStat(ao12(solves))} />
+          <Stat label="ao100" value={formatStat(ao100(solves))} />
           <Stat label="mean" value={formatStat(allTimeMean(solves))} />
           <Stat label="solves" value={String(solves.length)} />
         </div>

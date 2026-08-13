@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   allTimeMean,
+  ao100,
   ao12,
   ao5,
   bestOfN,
@@ -130,6 +131,20 @@ describe("ao12", () => {
   it("returns null with fewer than 12 solves", () => {
     const solves = Array.from({ length: 11 }, (_, i) => solve((i + 1) * 1000));
     expect(ao12(solves)).toBeNull();
+  });
+});
+
+describe("ao100", () => {
+  it("drops best and worst, averages remaining 98", () => {
+    const times = Array.from({ length: 100 }, (_, i) => (i + 1) * 1000);
+    // drop 1000 and 100000, average of 2000..99000 = 50500
+    const solves = times.map((t) => solve(t));
+    expect(ao100(solves)).toBe(50500);
+  });
+
+  it("returns null with fewer than 100 solves", () => {
+    const solves = Array.from({ length: 99 }, (_, i) => solve((i + 1) * 1000));
+    expect(ao100(solves)).toBeNull();
   });
 });
 

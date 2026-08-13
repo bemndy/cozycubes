@@ -69,6 +69,10 @@ export function ao12(solves: Solve[]): number | null {
   return average(solves, 12);
 }
 
+export function ao100(solves: Solve[]): number | null {
+  return average(solves, 100);
+}
+
 /** Arithmetic mean of every non-DNF solve. null if there are no valid solves. */
 export function allTimeMean(solves: Solve[]): number | null {
   const times = solves
