@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { addSolve, deleteSolve, getSolvesByCubeSize, updateSolve } from "@/lib/db";
+import { downloadTextFile, solvesToCsv } from "@/lib/export";
 import { formatTimeMs } from "@/lib/format";
 import { scrambleToString, type SupportedCubeSize } from "@/lib/scramble-gen";
 import { generateScrambleForSize, initScrambler } from "@/lib/scrambler";
@@ -102,6 +103,10 @@ export default function TimerPage() {
     setSolves((prev) => prev.filter((s) => s.id !== id));
     void deleteSolve(id);
   }, []);
+
+  const exportSolves = useCallback(() => {
+    downloadTextFile(`cozycubes-${cubeSize}x${cubeSize}-solves.csv`, solvesToCsv(solves));
+  }, [cubeSize, solves]);
 
   const {
     phase,
@@ -309,6 +314,15 @@ export default function TimerPage() {
           <Stat label="mean" value={formatStat(allTimeMean(solves))} />
           <Stat label="solves" value={String(solves.length)} />
         </div>
+
+        <button
+          type="button"
+          onClick={exportSolves}
+          disabled={solves.length === 0}
+          className="self-center text-[11px] uppercase tracking-wide text-slate-500 hover:text-slate-300 border border-slate-800 rounded-full px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          export csv
+        </button>
 
         <div className="flex flex-col-reverse gap-1 max-h-40 overflow-y-auto text-xs font-mono text-slate-400">
           {solves
