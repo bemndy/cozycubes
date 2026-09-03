@@ -217,19 +217,19 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
     }
   }, [mode, inspectionDurationMs, commitPhase, stopRaf, runTick]);
 
-  // Re-arm on a mode switch so the phase always matches the active mode.
-  // Each mode's keyDown only handles its own waiting phase ("idle" for
-  // standard, "inspecting" for inspection), so a switch that leaves the
-  // machine in the other one strands it: toggling inspection on while idle
-  // makes the timer stop responding entirely, and toggling it off while
-  // inspecting starts the next solve against a stale inspection clock,
-  // applying a penalty from a countdown that's no longer running.
+  // Re-arm on a mode switch only to cancel a countdown that's actually
+  // running. Toggling inspection off mid-countdown must not leave a stale
+  // inspection clock behind for the next keyUp to score a penalty against.
+  //
+  // Deliberately *not* re-armed from "idle": that would have the toggle
+  // itself start the 15s countdown before the user has pressed anything.
+  // "idle" and "stopped" are both handled by keyDown/handlePress the same
+  // way (see canHoldFrom and page.tsx's handlePress), so the phase already
+  // matches whichever mode is active next time a press arms it.
   useEffect(() => {
     if (modeRef.current === mode) return;
     modeRef.current = mode;
-    // "stopped" is handled by both modes, and "solving" must never be
-    // interrupted mid-solve — only the waiting phases need re-arming.
-    if (phaseRef.current === "idle" || phaseRef.current === "inspecting") {
+    if (phaseRef.current === "inspecting") {
       prepareNextSolve();
     }
   }, [mode, prepareNextSolve]);

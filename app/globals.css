@@ -1,26 +1,998 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Chonky Bits — self-hosted rather than linked to fontspace.com's own asset
+   host, which isn't a stable CDN for production use. Personal-use license per
+   fontspace.com/chonky-bits-font-f140385; a commercial license is required
+   before this app ships for anything beyond that. Kept as the one deliberate
+   exception to the app's two-family (sans/mono) font system — the timer's
+   hero digits are meant to read as a distinct, pixel-flavoured display face,
+   not just bold body text. */
+@font-face {
+  font-family: "Chonky Bits";
+  src: url("/fonts/chonky-bits-bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
+/* ---------------------------------------------------------------------------
+   Themes
+   ---------------------------------------------------------------------------
+   Twenty-five of them. Each defines only what is genuinely its own: a surface, an ink
+   colour, and a five-colour palette (--p1..--p5). Everything else — the ink
+   ramp, hover tints, solve-quality colours, the shader's mixing colours, the
+   scrim and vignette — is derived from those once, in the DERIVED block below.
+
+   That indirection is the point. It means a new theme is eight values rather
+   than thirty, the five palette colours are guaranteed to actually appear
+   across the UI rather than sitting unused, and no component ever branches on
+   which theme is active.
+
+   Ink is stored as bare RGB channels so the ramp can build alpha variants from
+   it without a colour-mix per level.
+
+   color-scheme makes native UI (scrollbars, focus rings, form controls) follow
+   the theme instead of always rendering light.
+--------------------------------------------------------------------------- */
+
+/* Charred black under peach, rose and amber — the palette the app was designed against.
+   No bare :root fallback here: data-theme is always set server-side (see
+   layout.tsx), and a bare :root rule would apply --logo-on-dark unconditionally
+   to every theme, including light ones, showing both logo SVGs at once. */
+[data-theme="ember"] {
+  color-scheme: dark;
+
+  --surface: #000000;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #f2b78c;
+  --p2: #ff9ebb;
+  --p3: #ffd9a0;
+  --p4: #e5738f;
+  --p5: #c98a5e;
+
+  --shader-bg: #000000;
+  --logo-on-dark: block;
+  --cube-ink: #f2b78c;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Deep indigo with periwinkle, lavender and a cold aqua. */
+[data-theme="nocturne"] {
+  color-scheme: dark;
+
+  --surface: #07070f;
+  --ink-rgb: 234, 238, 255;
+
+  --p1: #8b9cf7;
+  --p2: #c3a6f5;
+  --p3: #7de3e8;
+  --p4: #f2a0c8;
+  --p5: #5f6bbf;
+
+  --shader-bg: #07070f;
+  --logo-on-dark: block;
+  --cube-ink: #a9b6ff;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Underwater greens — seafoam, mint and pale lime over near-black teal. */
+[data-theme="kelp"] {
+  color-scheme: dark;
+
+  --surface: #04100e;
+  --ink-rgb: 228, 255, 246;
+
+  --p1: #5fd3b2;
+  --p2: #9ae6b4;
+  --p3: #cfe8a9;
+  --p4: #4fb3a3;
+  --p5: #e8d9a0;
+
+  --shader-bg: #04100e;
+  --logo-on-dark: block;
+  --cube-ink: #7fe3c4;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Warm white with terracotta and peach. */
+[data-theme="linen"] {
+  color-scheme: light;
+
+  --surface: #fdf8f4;
+  --ink-rgb: 38, 30, 26;
+
+  --p1: #e08d6f;
+  --p2: #f0b49a;
+  --p3: #d9a05b;
+  --p4: #c96f7a;
+  --p5: #a8836b;
+
+  --shader-bg: #fdf8f4;
+  --logo-on-light: block;
+  --cube-ink: #c9765a;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 40, 30, 0.22);
+}
+
+/* Cool white with mint, aqua and a deeper sea green. */
+[data-theme="seaglass"] {
+  color-scheme: light;
+
+  --surface: #f4faf8;
+  --ink-rgb: 20, 38, 36;
+
+  --p1: #5fb8a6;
+  --p2: #92d5c4;
+  --p3: #7fc3d9;
+  --p4: #b6dfc9;
+  --p5: #4a8f92;
+
+  --shader-bg: #f4faf8;
+  --logo-on-light: block;
+  --cube-ink: #3f9b89;
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 50, 48, 0.2);
+}
+
+/* White with a pink cast — rose, lilac and a warm apricot. */
+[data-theme="blossom"] {
+  color-scheme: light;
+
+  --surface: #fdf5f9;
+  --ink-rgb: 42, 26, 38;
+
+  --p1: #e58bb0;
+  --p2: #f3b6cf;
+  --p3: #bfa3e8;
+  --p4: #f7cfa0;
+  --p5: #b0688f;
+
+  --shader-bg: #fdf5f9;
+  --logo-on-light: block;
+  --cube-ink: #d1699a;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 30, 50, 0.2);
+}
+
+/* The light theme that isn't white: parchment, clay, ochre and olive. */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --surface: #f2e9d8;
+  --ink-rgb: 48, 38, 28;
+
+  --p1: #c4703f;
+  --p2: #d9a05b;
+  --p3: #8a9a5b;
+  --p4: #b5523f;
+  --p5: #6b5b45;
+
+  --shader-bg: #f2e9d8;
+  --logo-on-light: block;
+  --cube-ink: #8a5a3c;
+  --overlay-shadow: 0 12px 32px -12px rgba(70, 55, 35, 0.24);
+}
+
+/* The wordmark's pinks and peaches over the loader's hot pink. */
+[data-theme="loader"] {
+  color-scheme: dark;
+
+  --surface: #0b0709;
+  --ink-rgb: 255, 240, 246;
+
+  --p1: #ff4d85;
+  --p2: #ffc0cb;
+  --p3: #ffdab9;
+  --p4: #ff9ebb;
+  --p5: #f2b78c;
+
+  --shader-bg: #0b0709;
+  --logo-on-dark: block;
+  --cube-ink: #ff4d85;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/*
+   The mono pair. No palette — black and white only, and the one place in the
+   system that draws borders: --edge-width goes non-zero, so every div that
+   carries a rectangular background (hint chips, dropdown and dialog panels)
+   gains a high-contrast rule. That structural line is the entire identity of
+   these two themes, which is why nothing else has one.
+*/
+[data-theme="mono-dark"] {
+  color-scheme: dark;
+
+  --surface: #000000;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #ffffff;
+  --p2: #e0e0e0;
+  --p3: #bdbdbd;
+  --p4: #8a8a8a;
+  --p5: #5a5a5a;
+
+  --shader-bg: #000000;
+  --logo-on-dark: block;
+  --cube-ink: #ffffff;
+  --overlay-shadow: none;
+
+  --edge: #ffffff;
+  --edge-width: 2px;
+}
+
+[data-theme="mono-light"] {
+  color-scheme: light;
+
+  --surface: #ffffff;
+  --ink-rgb: 0, 0, 0;
+
+  --p1: #000000;
+  --p2: #2b2b2b;
+  --p3: #4f4f4f;
+  --p4: #7a7a7a;
+  --p5: #a8a8a8;
+
+  --shader-bg: #ffffff;
+  --logo-on-light: block;
+  --cube-ink: #000000;
+  --overlay-shadow: none;
+
+  --edge: #000000;
+  --edge-width: 2px;
+}
+
+/* Near-black violet with lilac, orchid pink and cool sky blue. */
+[data-theme="dusk"] {
+  color-scheme: dark;
+
+  --surface: #0d0a14;
+  --ink-rgb: 240, 235, 255;
+
+  --p1: #a78bfa;
+  --p2: #f472b6;
+  --p3: #7dd3fc;
+  --p4: #c084fc;
+  --p5: #6d28d9;
+
+  --shader-bg: #0d0a14;
+  --logo-on-dark: block;
+  --cube-ink: #a78bfa;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Near-black brown under copper, warm gold and pale tan. */
+[data-theme="copper"] {
+  color-scheme: dark;
+
+  --surface: #120b08;
+  --ink-rgb: 255, 235, 220;
+
+  --p1: #d97757;
+  --p2: #f2a65a;
+  --p3: #e8c39e;
+  --p4: #b5651d;
+  --p5: #8a4a2a;
+
+  --shader-bg: #120b08;
+  --logo-on-dark: block;
+  --cube-ink: #d97757;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Icy pale teal-white — a light theme that leans blue rather than warm cream. */
+[data-theme="glacier"] {
+  color-scheme: light;
+
+  --surface: #eef5f7;
+  --ink-rgb: 20, 35, 40;
+
+  --p1: #4fb0c9;
+  --p2: #8fd3e8;
+  --p3: #b8e0d2;
+  --p4: #2f7a94;
+  --p5: #6f9cae;
+
+  --shader-bg: #eef5f7;
+  --logo-on-light: block;
+  --cube-ink: #2f95b3;
+  --overlay-shadow: 0 12px 32px -12px rgba(15, 45, 55, 0.2);
+}
+
+/* Warm clay and sand — a light theme with a dusty terracotta background. */
+[data-theme="terra"] {
+  color-scheme: light;
+
+  --surface: #f0e3d3;
+  --ink-rgb: 45, 32, 20;
+
+  --p1: #b5651d;
+  --p2: #d98c4a;
+  --p3: #8a9a5b;
+  --p4: #c96f4a;
+  --p5: #6b4a2f;
+
+  --shader-bg: #f0e3d3;
+  --logo-on-light: block;
+  --cube-ink: #b5651d;
+  --overlay-shadow: 0 12px 32px -12px rgba(70, 45, 25, 0.24);
+}
+
+/* Pale lavender background — a light theme that leans cool purple. */
+[data-theme="orchid"] {
+  color-scheme: light;
+
+  --surface: #f5eefc;
+  --ink-rgb: 40, 28, 50;
+
+  --p1: #9b6bd9;
+  --p2: #c9a0ec;
+  --p3: #e8a8d8;
+  --p4: #7a4fb0;
+  --p5: #a887c9;
+
+  --shader-bg: #f5eefc;
+  --logo-on-light: block;
+  --cube-ink: #9b6bd9;
+  --overlay-shadow: 0 12px 32px -12px rgba(50, 30, 70, 0.2);
+}
+
+/* Near-black forest green under moss, sage and lichen. */
+[data-theme="moss"] {
+  color-scheme: dark;
+
+  --surface: #08120a;
+  --ink-rgb: 225, 240, 220;
+
+  --p1: #6fae5f;
+  --p2: #a3c97a;
+  --p3: #4f8a5e;
+  --p4: #8fbf6a;
+  --p5: #3c6b3f;
+
+  --shader-bg: #08120a;
+  --logo-on-dark: block;
+  --cube-ink: #6fae5f;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Pale butter-yellow background — a light theme with citrus and olive. */
+[data-theme="citrus"] {
+  color-scheme: light;
+
+  --surface: #fbf6e3;
+  --ink-rgb: 45, 38, 10;
+
+  --p1: #e0a832;
+  --p2: #f0c95f;
+  --p3: #8a9a3f;
+  --p4: #d9862f;
+  --p5: #a88a2f;
+
+  --shader-bg: #fbf6e3;
+  --logo-on-light: block;
+  --cube-ink: #d9862f;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 50, 15, 0.2);
+}
+
+/* Near-black blue-grey — a cooler, desaturated counterpart to nocturne. */
+[data-theme="slate"] {
+  color-scheme: dark;
+
+  --surface: #0a0e14;
+  --ink-rgb: 220, 230, 240;
+
+  --p1: #6b93b0;
+  --p2: #8fb0c9;
+  --p3: #5f7a94;
+  --p4: #a3c3d9;
+  --p5: #3f5a70;
+
+  --shader-bg: #0a0e14;
+  --logo-on-dark: block;
+  --cube-ink: #6b93b0;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Pale coral-pink background — a light theme distinct from blossom's cooler pink. */
+[data-theme="coral"] {
+  color-scheme: light;
+
+  --surface: #fdece6;
+  --ink-rgb: 50, 25, 20;
+
+  --p1: #e8735a;
+  --p2: #f2a08a;
+  --p3: #d9917a;
+  --p4: #c9553f;
+  --p5: #a8654f;
+
+  --shader-bg: #fdece6;
+  --logo-on-light: block;
+  --cube-ink: #e8735a;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 25, 15, 0.22);
+}
+
+/* Near-black plum and wine under muted rose. */
+[data-theme="plum"] {
+  color-scheme: dark;
+
+  --surface: #14080f;
+  --ink-rgb: 245, 225, 235;
+
+  --p1: #b0568f;
+  --p2: #d98cb0;
+  --p3: #8a4f6b;
+  --p4: #e8a3c4;
+  --p5: #6b3050;
+
+  --shader-bg: #14080f;
+  --logo-on-dark: block;
+  --cube-ink: #b0568f;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Royal blue, full strength — the same blue as the favicon, worn as the whole
+   surface rather than a background it sits on. */
+[data-theme="royale"] {
+  color-scheme: dark;
+
+  --surface: #0800ff;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #8fa0ff;
+  --p2: #c2ccff;
+  --p3: #5567ff;
+  --p4: #b8c4ff;
+  --p5: #3344cc;
+
+  --shader-bg: #0800ff;
+  --logo-on-dark: block;
+  --cube-ink: #8fa0ff;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 20, 0.85);
+}
+
+/* Hot pink, full strength. Same treatment as royale: the saturated colour
+   itself is the surface, not a tint of one. */
+[data-theme="flamingo"] {
+  color-scheme: dark;
+
+  --surface: #ff1493;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #ffb3d9;
+  --p2: #ff70b8;
+  --p3: #ffe0f0;
+  --p4: #c2107a;
+  --p5: #ff8fc7;
+
+  --shader-bg: #ff1493;
+  --logo-on-dark: block;
+  --cube-ink: #ffb3d9;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 0, 30, 0.5);
+}
+
+/* Evening-star blue — cooler and greyer than dusk's violet or nocturne's
+   indigo, with a single warm point of pale gold standing in for Venus low
+   over a dusk skyline. */
+[data-theme="vesper"] {
+  color-scheme: dark;
+
+  --surface: #0a0e18;
+  --ink-rgb: 230, 235, 245;
+
+  --p1: #7ea8d8;
+  --p2: #b8cbe8;
+  --p3: #e8c988;
+  --p4: #4a6fa5;
+  --p5: #9b8fc4;
+
+  --shader-bg: #0a0e18;
+  --logo-on-dark: block;
+  --cube-ink: #e8c988;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 10, 0.85);
+}
+
+/* Pastel green — soft mint over fresh and leaf greens. */
+[data-theme="sprout"] {
+  color-scheme: light;
+
+  --surface: #d7f5df;
+  --ink-rgb: 20, 45, 28;
+
+  --p1: #6fcf8f;
+  --p2: #a8e6bd;
+  --p3: #4fae6f;
+  --p4: #8fd9a5;
+  --p5: #3f8f5b;
+
+  --shader-bg: #d7f5df;
+  --logo-on-light: block;
+  --cube-ink: #4fae6f;
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 60, 35, 0.2);
+}
+
+/* Orange peach — a warm pastel, closer to a Creamsicle than terra's clay. */
+[data-theme="peach"] {
+  color-scheme: light;
+
+  --surface: #ffd9b3;
+  --ink-rgb: 60, 35, 15;
+
+  --p1: #ff9d5c;
+  --p2: #ffc48a;
+  --p3: #ffb27a;
+  --p4: #e6793f;
+  --p5: #d98a4f;
+
+  --shader-bg: #ffd9b3;
+  --logo-on-light: block;
+  --cube-ink: #e6793f;
+  --overlay-shadow: 0 12px 32px -12px rgba(70, 40, 10, 0.22);
+}
+
+/* ---------------------------------------------------------------------------
+   DERIVED — written once, resolved per theme.
+
+   var() resolves against the element it lands on, and every theme sets its own
+   --p1..--p5 and --ink-rgb on the same <html>, so these definitions re-resolve
+   for free whenever data-theme changes.
+--------------------------------------------------------------------------- */
+
+/* :root, not just :root — a bare :root rule only ever computes these once,
+   against whichever theme is active on <html>. ThemePicker's swatches each
+   carry their own [data-theme] to preview the OTHER themes' raw tokens
+   (--ink-rgb, --surface, --p1..--p5, all set directly per theme) without
+   switching the real one, but --ink itself was only ever derived at the
+   root — so every swatch's text inherited the *active* theme's --ink
+   instead of recomputing its own, and on a dark active theme every swatch
+   read as white text regardless of how light its own background was.
+   Matching [data-theme] here re-runs the derivation on any element that
+   carries the attribute, root or nested, so each swatch gets its own. */
+:root,
+[data-theme] {
+  --ink: rgba(var(--ink-rgb), 0.92);
+  --ink-dim: rgba(var(--ink-rgb), 0.72);
+  --ink-dimmer: rgba(var(--ink-rgb), 0.42);
+  --ink-faint: rgba(var(--ink-rgb), 0.16);
+  --hover-tint: rgba(var(--ink-rgb), 0.06);
+  --tooltip-ink: var(--ink);
+
+  /* The palette, spread across the UI so all five colours earn their place. */
+  --accent: var(--p1);
+  --accent-soft: var(--p2);
+  --quality-good: var(--p3);
+  --quality-mid: var(--ink-dimmer);
+  --quality-slow: var(--p5);
+  --quality-warn: var(--p4);
+
+  /* The gradient reads --p1..--p3 straight off the theme rather than through
+     aliases here — the shader parses those values as hex in JS, and an alias
+     would hand it an unresolved token to choke on. */
+
+  --wash: color-mix(in srgb, var(--p1) 10%, transparent);
+  /* Built from the surface, so a dark theme fades to black and a light one
+     fades to its own paper colour rather than to grey. */
+  --vignette: color-mix(in srgb, var(--surface) 78%, transparent);
+  --scrim: color-mix(in srgb, var(--surface) 55%, transparent);
+
+  /* Borders exist only in the mono pair; everywhere else this is a no-op. */
+  --edge: transparent;
+  --edge-width: 0px;
+}
+
+/* Expose tokens to Tailwind as utilities. `inline` keeps the utility
+   referencing the var, so it re-resolves when data-theme changes rather than
+   baking in the default theme's value. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-dimmer: var(--ink-dimmer);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Exactly three font families in the whole app, each its own token — no
+     --font-ui/--font-chonky layer of indirection behind them. Every one of
+     these three is used directly, nowhere else, by name. */
+
+  /* BlinkMacSystemFont costs nothing on Apple devices (it's a system
+     keyword, not a download), so it leads. Inter is the one real fallback
+     webfont, then exactly one generic keyword — not a long tail of
+     redundant system-font aliases behind it. */
+  --font-sans: BlinkMacSystemFont, var(--font-inter), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), var(--font-courier-prime), monospace;
+  /* The one deliberate exception to plain sans/mono text — the timer's hero
+     digits are meant to read as a distinct, pixel-flavoured display face.
+     Falls back to --font-sans (not a bare generic) if it fails to load. */
+  --font-pixel: "Chonky Bits", var(--font-sans), sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  /* Neither --font-sans nor --font-mono pin their own weight, so this one
+     rule lightens both at once — down from each face's default 400 to 300.
+     An element that wants heavier than that (TimerDisplay's font-bold, on
+     the unrelated --font-pixel face) overrides it same as any other
+     inherited property. */
+  font-weight: 300;
+}
+
+/* ---------------------------------------------------------------------------
+   Page widths
+   ---------------------------------------------------------------------------
+   Three sections: net left, scramble and timer middle, solves right.
+
+   The middle column is a fixed width and the flanks are equal fractions of
+   what's left. Two consequences worth stating, because the layout leans on
+   both: the middle is centred on the page by construction at any viewport, and
+   the flanks absorb all the extra width rather than the timer stack stretching.
+
+   --mid-width is deliberately narrower than --bar-width. The header and footer
+   sit on the wider measure, so the space between the two — a few rem on each
+   side — is left over for the net and the solve list to spread into rather
+   than being claimed by the timer column.
+--------------------------------------------------------------------------- */
+
+:root {
+  /* Nudged up alongside the wider column gap, so the extra padding comes out of
+     the page's own margins rather than out of the flanks. */
+  --page-max: 94rem;
+  --bar-width: 40rem;
+  /* Narrowing the middle widens both flanks: each gets half of whatever the
+     timer column gives up, which is where the solve list's extra room and the
+     net's larger box come from. */
+  --mid-width: 32rem;
+}
+
+/* On desktop the header/footer measure widens past the timer column's own
+   width — deliberately: on a small viewport the two staying equal keeps the
+   bars from crowding the timer, but on a wide desktop screen that same width
+   reads as everything huddled in the middle. Widening only --bar-width here
+   pushes the wordmark and the session readout out toward the edges while the
+   timer column (--mid-width, driving .page-grid) stays put. */
+@media (min-width: 1024px) {
+  :root {
+    --bar-width: 62rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --bar-width: 78rem;
+  }
+}
+
+.page-grid {
+  display: grid;
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+  /* The breathing room on either side of the timer column. Widening this pushes
+     the net and the solve list outward; since the flanks are equal fractions of
+     whatever the middle leaves, they each give up half the increase. */
+  column-gap: 4rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) {
+  .page-grid {
+    grid-template-columns: minmax(0, 1fr) var(--mid-width) minmax(0, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Wordmark
+   ---------------------------------------------------------------------------
+   Two marks, identical but for their frame — black on one, white on the other.
+   Which one shows is decided in CSS off [data-theme] rather than in React,
+   because the inline script in layout.tsx stamps that attribute before first
+   paint. Choosing in JS would mean the server rendering one mark and the client
+   swapping it after hydration, i.e. a visible flash of the wrong logo on every
+   load for anyone not on the default theme.
+--------------------------------------------------------------------------- */
+
+/*
+   Driven by a variable each theme sets for itself, not by a list of selectors
+   here. A list has to be edited every time a theme is added, and forgetting
+   leaves the wordmark invisible — which is exactly what happened when the
+   themes were renamed.
+*/
+.logo-for-dark {
+  display: var(--logo-on-dark, none);
+}
+
+.logo-for-light {
+  display: var(--logo-on-light, none);
+}
+
+/* ---------------------------------------------------------------------------
+   Icon button opacity
+   ---------------------------------------------------------------------------
+   The dimmed/lit opacity is per-instance (active vs. not), which has to come
+   in as an inline style — but an inline style always wins over every
+   stylesheet rule, hover states included, so a `hover:opacity-100` utility
+   class sitting next to it can never actually fire. Routing the per-instance
+   value through a custom property instead keeps it inline while leaving the
+   opacity itself, and its :hover override, in the stylesheet where hover can
+   win.
+--------------------------------------------------------------------------- */
+
+.icon-btn {
+  opacity: var(--icon-opacity, 1);
+  transition: opacity 200ms;
+}
+
+.icon-btn:hover:not(:disabled) {
+  opacity: 1;
+}
+
+/* The header and footer's own measure — wider than the timer column. */
+.bar-inner {
+  width: 100%;
+  max-width: var(--bar-width);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .bar-inner {
+    padding-inline: 2rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Background — static wash + vignette only.
+
+   The animated blurred-blob mesh from the design file is deliberately deferred
+   to its own design pass. A page whose job is millisecond timing should not be
+   paying for a continuous composite of seven 110px-blurred layers.
+--------------------------------------------------------------------------- */
+
+.bg-wash,
+.bg-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bg-wash {
+  z-index: 0;
+  background: radial-gradient(circle at 50% 40%, var(--wash), transparent 65%);
+}
+
+.bg-vignette {
+  z-index: 1;
+  background: radial-gradient(circle at 50% 46%, transparent 34%, var(--vignette) 88%);
+}
+
+/* ---------------------------------------------------------------------------
+   Hint chips
+   ---------------------------------------------------------------------------
+   Inverted against the rest of the theme: the surface's ink colour becomes the
+   chip's background and vice versa. That is what makes them read as physical
+   keycaps rather than as more dim body text, which is the one thing every other
+   label on the page already is.
+--------------------------------------------------------------------------- */
+
+.hint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 5px;
+  /* Zero-width and transparent in every theme but the mono pair. */
+  border: var(--edge-width) solid var(--edge);
+  /* Went fully opaque at one point, then back down past var(--ink)'s usual
+     0.92 alpha to noticeably more transparent than that — 0.65, chosen
+     directly rather than derived from --ink. */
+  background: rgba(var(--ink-rgb), 0.65);
+  color: var(--surface);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* The body text sits back; the key name stays solid. */
+.hint-chip > .hint-text {
+  opacity: 0.65;
+}
+
+/* ---------------------------------------------------------------------------
+   Overlays
+   ---------------------------------------------------------------------------
+   Everything that pops over the page — dropdown panels, dialogs, tooltips —
+   is portalled to <body> and layered here.
+
+   Portalling is not cosmetic. The app wrapper carries both a z-index and a
+   transform, each of which opens a stacking context, so an overlay rendered
+   inside it can never rise above a sibling of that wrapper no matter what
+   z-index it is given. Rendering to <body> is what puts these on the real top
+   layer.
+
+   The panel is opaque, in the theme's own surface colour.
+
+   The blur is applied to the app content itself (.app-content below), not as a
+   backdrop-filter on the scrim. backdrop-filter has to sample a "backdrop root",
+   and the app wrapper carries a transform and its own stacking context, which
+   is exactly the situation where that sampling silently yields nothing — the
+   tint would land while the content behind stayed sharp. Filtering the content
+   directly has no such dependency: it always renders.
+--------------------------------------------------------------------------- */
+
+.overlay-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--scrim);
+}
+
+/*
+   Blurred while any overlay is open. The overlays themselves are portalled to
+   <body>, outside this element, so they stay perfectly sharp.
+
+   Note: `filter` makes this a containing block for position:fixed descendants,
+   so the header and footer anchor to it rather than the viewport while it is
+   active. That is only true for the moment an overlay is open — the property is
+   absent otherwise — and the page is static in that moment.
+*/
+.app-content {
+  transition: filter 220ms ease, opacity 220ms ease;
+}
+
+.app-content[data-blurred="true"] {
+  filter: blur(12px);
+}
+
+/* Surface only. Positioning is left to each caller: the dialog's panel is
+   centred by its scrim's flex box, while the dropdown's is pinned to its
+   trigger, and baking `position` in here would break the former. */
+.overlay-panel {
+  background: var(--surface);
+  border-radius: 10px;
+  border: var(--edge-width) solid var(--edge);
+  box-shadow: var(--overlay-shadow);
+}
+
+@keyframes scrimIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-scrim-in {
+  animation: scrimIn 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scrim-in {
+    animation: none;
+  }
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-panel-in {
+  animation: panelIn 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-panel-in {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Keyframes — only the two still in use. driftA/B/C and asciiGlow belong to
+   the deferred background pass.
+--------------------------------------------------------------------------- */
+
+@keyframes softFlash {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-soft-flash {
+  animation: softFlash 3.2s ease-in-out infinite;
+}
+
+.animate-blink {
+  animation: blink 1.1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-soft-flash,
+  .animate-blink {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Thin scrollbar for the horizontally-scrolling solve panel
+--------------------------------------------------------------------------- */
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-faint) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: var(--ink-faint);
+  border-radius: 999px;
+}
+
+.scroll-thin:hover::-webkit-scrollbar-thumb {
+  background: var(--ink-dimmer);
+}
+
+/* ---------------------------------------------------------------------------
+   Boot cube shimmer
+   ---------------------------------------------------------------------------
+   Each row of the ASCII cube is its own element running the same keyframe, with
+   a negative animation-delay proportional to its row index. Offsetting the
+   phase per row turns one animation into a wave travelling down the cube.
+
+   Done in CSS rather than by varying colour per row in JS: the cube already
+   repaints every 80ms, and computing a brightness per row per frame would put
+   that work on the main thread for something the compositor does for free.
+--------------------------------------------------------------------------- */
+
+@keyframes cubeShimmer {
+  0%,
+  100% {
+    opacity: 0.42;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.cube-line {
+  display: block;
+  min-height: 1em;
+  color: var(--cube-ink);
+  animation: cubeShimmer 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cube-line {
+    animation: none;
+    opacity: 0.85;
+  }
 }
