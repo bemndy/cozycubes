@@ -39,7 +39,7 @@ export function ChangelogDialog({ open, onClose }: { open: boolean; onClose: () 
     <Dialog
       open={open}
       onClose={onClose}
-      title="Changelog"
+      title="📝 Changelog"
       subtitle={
         latest ? `${latest.tag} · ${formatReleaseDate(latest.publishedAt)}` : undefined
       }

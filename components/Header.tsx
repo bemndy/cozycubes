@@ -61,7 +61,9 @@ export function Header({
       // accessibility tree together.
       inert={dimmed}
       className="fixed inset-x-0 top-0 z-30 flex h-24 items-center transition-opacity duration-500"
-      style={{ opacity: dimmed ? 0 : 1 }}
+      // Back to 400 from the body's inherited 300 — the header/footer read
+      // too light at 300 against the rest of the chrome.
+      style={{ opacity: dimmed ? 0 : 1, fontWeight: 400 }}
     >
       {/* The bar's own measure, wider than the timer column it sits above. The
           few rem of difference on each side is what the net and the solve list

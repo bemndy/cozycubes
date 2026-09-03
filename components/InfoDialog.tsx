@@ -16,7 +16,7 @@ export type InfoTopic = "contact" | "terms" | "privacy" | "security";
  */
 const CONTENT: Record<InfoTopic, { title: string; body: string[] }> = {
   contact: {
-    title: "Contact",
+    title: "📬 Contact",
     body: [
       "CozyCubes is an open-source hobby project.",
       "Bug reports and feature requests belong on the GitHub issue tracker, which is the fastest way to get a response.",
@@ -24,7 +24,7 @@ const CONTENT: Record<InfoTopic, { title: string; body: string[] }> = {
     ],
   },
   terms: {
-    title: "Terms",
+    title: "📄 Terms",
     body: [
       "CozyCubes is provided as-is, with no warranty, under the MIT licence.",
       "There are no accounts and no subscriptions. Nothing here is a paid service.",
@@ -32,7 +32,7 @@ const CONTENT: Record<InfoTopic, { title: string; body: string[] }> = {
     ],
   },
   privacy: {
-    title: "Privacy",
+    title: "🔒 Privacy",
     body: [
       "CozyCubes has no accounts, no analytics, and no servers holding your data.",
       "Your solves, settings, and theme live in this browser only — IndexedDB and localStorage on this device. Clearing site data erases them permanently, and nothing is synced anywhere.",
@@ -40,7 +40,7 @@ const CONTENT: Record<InfoTopic, { title: string; body: string[] }> = {
     ],
   },
   security: {
-    title: "Security",
+    title: "🛡️ Security",
     body: [
       "Everything runs client-side. Scramble generation, timing, and statistics never leave your device.",
       "If you find a security issue, please report it privately through the repository's security advisory form rather than opening a public issue.",

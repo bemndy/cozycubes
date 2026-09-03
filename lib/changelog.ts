@@ -26,9 +26,9 @@ export interface Release {
 }
 
 export const KIND_LABELS: Record<ReleaseNote["kind"], string> = {
-  added: "Added",
-  changed: "Changed",
-  fixed: "Fixed",
+  added: "✨ Added",
+  changed: "🔧 Changed",
+  fixed: "🐛 Fixed",
 };
 
 /**
