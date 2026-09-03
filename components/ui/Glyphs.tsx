@@ -19,7 +19,7 @@ function Svg({ children, className = "" }: GlyphProps & { children: React.ReactN
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`size-[17px] shrink-0 ${className}`}
+      className={`size-[19px] shrink-0 ${className}`}
     >
       {children}
     </svg>

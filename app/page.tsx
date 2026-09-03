@@ -188,7 +188,7 @@ export default function TimerPage() {
     // begins the next ready-hold, so one continuous hold-and-release goes from
     // "showing your last time" to "timing" without spending a separate press
     // just to reset the display.
-    if (phase === "stopped" && inspectionEnabled) {
+    if ((phase === "stopped" || phase === "idle") && inspectionEnabled) {
       prepareNextSolve();
       return;
     }
@@ -314,13 +314,25 @@ export default function TimerPage() {
         <BootScreen ready={scramblerReady} booted={booted} onBoot={handleBoot} />
       )}
 
+      {/*
+        Opacity only — no transform here. Header and Footer are position:fixed
+        and both live inside this wrapper; a `transform` on any ancestor of a
+        fixed element (even a no-op translateY(0)) makes CSS treat that
+        ancestor as the fixed element's containing block instead of the
+        viewport. That silently turned the boot-dismiss animation into
+        dragging the header and footer along with this wrapper's own
+        slide-up — the whole bar visibly sliding rather than staying pinned —
+        and, since a fixed element's extent then counts toward its
+        (now non-viewport) containing block's box instead of being excluded
+        from the document entirely, document.scrollHeight measurably
+        wobbled mid-transition too.
+      */}
       <div
         className="relative z-10 flex min-h-screen flex-col"
         style={{
           opacity: booted ? 1 : 0,
-          transform: booted ? "translateY(0)" : "translateY(16px)",
           pointerEvents: booted ? "auto" : "none",
-          transition: "opacity .8s ease .1s, transform .8s ease .1s",
+          transition: "opacity .8s ease .1s",
         }}
       >
         <Header
@@ -349,8 +361,22 @@ export default function TimerPage() {
           own box. Below lg it stacks to one column, timer block first.
         */}
         <main className="page-grid min-h-screen items-stretch gap-y-12 py-24">
+          {/* min-w-0: a grid item's default min-width is its content's
+              min-content size, not 0, even though the track itself is
+              minmax(0, 1fr) — without this override the item refuses to
+              shrink below the net's natural width and pushes the page wider
+              than the viewport on the desktop widths where the flank is
+              narrowest.
+
+              The translate is capped at 1.25rem/20px, not the 2.5rem it used
+              to be: .page-grid only ever has 1.5rem/24px of padding outside
+              the grid itself, so anything past ~24px pushes the aside past
+              the true viewport edge and forces a horizontal scrollbar on
+              exactly the desktop widths (1024–1503px) where the flank is
+              tight. 20px leaves a hair of margin rather than sitting flush
+              on the boundary. */}
           <aside
-            className="order-2 grid h-52 place-items-center self-center transition-opacity duration-500 lg:order-1 lg:-translate-x-10"
+            className="order-2 grid h-52 min-w-0 place-items-center self-center transition-opacity duration-500 lg:order-1 lg:-translate-x-5"
             style={{ opacity: dimmed ? 0 : 1 }}
             inert={dimmed}
           >
@@ -406,8 +432,9 @@ export default function TimerPage() {
             </div>
           </div>
 
+          {/* Same min-w-0 and translate cap as the net's aside above. */}
           <aside
-            className="order-3 grid place-items-center self-center transition-opacity duration-500 lg:translate-x-10"
+            className="order-3 grid min-w-0 place-items-center self-center transition-opacity duration-500 lg:translate-x-5"
             style={{ opacity: dimmed ? 0 : 1 }}
             // The list's +2/DNF/delete buttons would otherwise stay tabbable
             // while invisible.

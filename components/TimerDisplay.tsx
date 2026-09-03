@@ -60,7 +60,10 @@ export function TimerDisplay({
       <div
         role="timer"
         aria-live="off"
-        className="font-pixel text-[clamp(52px,9vw,132px)] leading-none font-normal tabular-nums tracking-[.02em] transition-colors duration-150"
+        // VT323's x-height runs noticeably smaller than DotGothic16's at the
+        // same font-size, so the clamp is scaled up to keep the same on-screen
+        // weight the digits had before the font swap.
+        className="font-pixel text-[clamp(62px,10.5vw,156px)] leading-none font-normal tabular-nums tracking-[.02em] transition-colors duration-150"
         style={{ color: phaseColor(phase, holdIntensity, isHolding) }}
       >
         {display}

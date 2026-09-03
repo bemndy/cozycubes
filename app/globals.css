@@ -3,7 +3,7 @@
 /* ---------------------------------------------------------------------------
    Themes
    ---------------------------------------------------------------------------
-   Ten of them. Each defines only what is genuinely its own: a surface, an ink
+   Twenty of them. Each defines only what is genuinely its own: a surface, an ink
    colour, and a five-colour palette (--p1..--p5). Everything else — the ink
    ramp, hover tints, solve-quality colours, the shader's mixing colours, the
    scrim and vignette — is derived from those once, in the DERIVED block below.
@@ -20,8 +20,10 @@
    the theme instead of always rendering light.
 --------------------------------------------------------------------------- */
 
-/* Charred black under peach, rose and amber — the palette the app was designed against. */
-:root,
+/* Charred black under peach, rose and amber — the palette the app was designed against.
+   No bare :root fallback here: data-theme is always set server-side (see
+   layout.tsx), and a bare :root rule would apply --logo-on-dark unconditionally
+   to every theme, including light ones, showing both logo SVGs at once. */
 [data-theme="ember"] {
   color-scheme: dark;
 
@@ -222,6 +224,196 @@
   --edge-width: 2px;
 }
 
+/* Near-black violet with lilac, orchid pink and cool sky blue. */
+[data-theme="dusk"] {
+  color-scheme: dark;
+
+  --surface: #0d0a14;
+  --ink-rgb: 240, 235, 255;
+
+  --p1: #a78bfa;
+  --p2: #f472b6;
+  --p3: #7dd3fc;
+  --p4: #c084fc;
+  --p5: #6d28d9;
+
+  --shader-bg: #0d0a14;
+  --logo-on-dark: block;
+  --cube-ink: #a78bfa;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Near-black brown under copper, warm gold and pale tan. */
+[data-theme="copper"] {
+  color-scheme: dark;
+
+  --surface: #120b08;
+  --ink-rgb: 255, 235, 220;
+
+  --p1: #d97757;
+  --p2: #f2a65a;
+  --p3: #e8c39e;
+  --p4: #b5651d;
+  --p5: #8a4a2a;
+
+  --shader-bg: #120b08;
+  --logo-on-dark: block;
+  --cube-ink: #d97757;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Icy pale teal-white — a light theme that leans blue rather than warm cream. */
+[data-theme="glacier"] {
+  color-scheme: light;
+
+  --surface: #eef5f7;
+  --ink-rgb: 20, 35, 40;
+
+  --p1: #4fb0c9;
+  --p2: #8fd3e8;
+  --p3: #b8e0d2;
+  --p4: #2f7a94;
+  --p5: #6f9cae;
+
+  --shader-bg: #eef5f7;
+  --logo-on-light: block;
+  --cube-ink: #2f95b3;
+  --overlay-shadow: 0 12px 32px -12px rgba(15, 45, 55, 0.2);
+}
+
+/* Warm clay and sand — a light theme with a dusty terracotta background. */
+[data-theme="terra"] {
+  color-scheme: light;
+
+  --surface: #f0e3d3;
+  --ink-rgb: 45, 32, 20;
+
+  --p1: #b5651d;
+  --p2: #d98c4a;
+  --p3: #8a9a5b;
+  --p4: #c96f4a;
+  --p5: #6b4a2f;
+
+  --shader-bg: #f0e3d3;
+  --logo-on-light: block;
+  --cube-ink: #b5651d;
+  --overlay-shadow: 0 12px 32px -12px rgba(70, 45, 25, 0.24);
+}
+
+/* Pale lavender background — a light theme that leans cool purple. */
+[data-theme="orchid"] {
+  color-scheme: light;
+
+  --surface: #f5eefc;
+  --ink-rgb: 40, 28, 50;
+
+  --p1: #9b6bd9;
+  --p2: #c9a0ec;
+  --p3: #e8a8d8;
+  --p4: #7a4fb0;
+  --p5: #a887c9;
+
+  --shader-bg: #f5eefc;
+  --logo-on-light: block;
+  --cube-ink: #9b6bd9;
+  --overlay-shadow: 0 12px 32px -12px rgba(50, 30, 70, 0.2);
+}
+
+/* Near-black forest green under moss, sage and lichen. */
+[data-theme="moss"] {
+  color-scheme: dark;
+
+  --surface: #08120a;
+  --ink-rgb: 225, 240, 220;
+
+  --p1: #6fae5f;
+  --p2: #a3c97a;
+  --p3: #4f8a5e;
+  --p4: #8fbf6a;
+  --p5: #3c6b3f;
+
+  --shader-bg: #08120a;
+  --logo-on-dark: block;
+  --cube-ink: #6fae5f;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Pale butter-yellow background — a light theme with citrus and olive. */
+[data-theme="citrus"] {
+  color-scheme: light;
+
+  --surface: #fbf6e3;
+  --ink-rgb: 45, 38, 10;
+
+  --p1: #e0a832;
+  --p2: #f0c95f;
+  --p3: #8a9a3f;
+  --p4: #d9862f;
+  --p5: #a88a2f;
+
+  --shader-bg: #fbf6e3;
+  --logo-on-light: block;
+  --cube-ink: #d9862f;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 50, 15, 0.2);
+}
+
+/* Near-black blue-grey — a cooler, desaturated counterpart to nocturne. */
+[data-theme="slate"] {
+  color-scheme: dark;
+
+  --surface: #0a0e14;
+  --ink-rgb: 220, 230, 240;
+
+  --p1: #6b93b0;
+  --p2: #8fb0c9;
+  --p3: #5f7a94;
+  --p4: #a3c3d9;
+  --p5: #3f5a70;
+
+  --shader-bg: #0a0e14;
+  --logo-on-dark: block;
+  --cube-ink: #6b93b0;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* Pale coral-pink background — a light theme distinct from blossom's cooler pink. */
+[data-theme="coral"] {
+  color-scheme: light;
+
+  --surface: #fdece6;
+  --ink-rgb: 50, 25, 20;
+
+  --p1: #e8735a;
+  --p2: #f2a08a;
+  --p3: #d9917a;
+  --p4: #c9553f;
+  --p5: #a8654f;
+
+  --shader-bg: #fdece6;
+  --logo-on-light: block;
+  --cube-ink: #e8735a;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 25, 15, 0.22);
+}
+
+/* Near-black plum and wine under muted rose. */
+[data-theme="plum"] {
+  color-scheme: dark;
+
+  --surface: #14080f;
+  --ink-rgb: 245, 225, 235;
+
+  --p1: #b0568f;
+  --p2: #d98cb0;
+  --p3: #8a4f6b;
+  --p4: #e8a3c4;
+  --p5: #6b3050;
+
+  --shader-bg: #14080f;
+  --logo-on-dark: block;
+  --cube-ink: #b0568f;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
+}
+
 /* ---------------------------------------------------------------------------
    DERIVED — written once, resolved per theme.
 
@@ -280,9 +472,13 @@
 
 :root {
   /* The platform's own text face — SF on Apple, sane fallbacks elsewhere.
-     Nothing to download, so chrome paints on the first frame with no swap. */
+     Nothing to download, so chrome paints on the first frame with no swap.
+     (Tried routing this through JetBrains Mono instead, as an all-mono
+     preview — swap the two lines below to bring that back.) */
   --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
     "Segoe UI", system-ui, sans-serif;
+  /* --font-ui: var(--font-jetbrains-mono), -apple-system, BlinkMacSystemFont,
+    "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif; */
   /* next/font exposes the face as --font-pixel-src. Kept distinct from the
      --font-pixel Tailwind token above: pointing a token at a var of its own
      name makes a reference cycle, which CSS resolves to nothing. */
@@ -320,6 +516,24 @@ body {
      timer column gives up, which is where the solve list's extra room and the
      net's larger box come from. */
   --mid-width: 32rem;
+}
+
+/* On desktop the header/footer measure widens past the timer column's own
+   width — deliberately: on a small viewport the two staying equal keeps the
+   bars from crowding the timer, but on a wide desktop screen that same width
+   reads as everything huddled in the middle. Widening only --bar-width here
+   pushes the wordmark and the session readout out toward the edges while the
+   timer column (--mid-width, driving .page-grid) stays put. */
+@media (min-width: 1024px) {
+  :root {
+    --bar-width: 56rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --bar-width: 70rem;
+  }
 }
 
 .page-grid {
@@ -372,6 +586,12 @@ body {
   max-width: var(--bar-width);
   margin-inline: auto;
   padding-inline: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .bar-inner {
+    padding-inline: 2rem;
+  }
 }
 
 /* ---------------------------------------------------------------------------

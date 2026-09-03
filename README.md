@@ -8,9 +8,9 @@
 
 # About
 
-A colorful, sound-rich Rubik's Cube speedsolving timer — the timing rigor of
-csTimer, the keyboard-first minimal feel of monkeytype. No accounts, no servers
-holding your data: every solve lives in your own browser.
+A colorful, sound-rich Rubik's Cube speedsolving timer. Customize this elegant UI for casual cubing sessions. 
+
+**MUSIC MODE COMING SOON**
 
 # Features
 

@@ -53,7 +53,13 @@ export function CubeNet({ cubeSize, scramble }: CubeNetProps) {
   return (
     <svg
       viewBox={`0 0 ${4 * n} ${3 * n}`}
-      className="h-full w-auto"
+      // w-full (not w-auto) so the diagram shrinks with its flank on
+      // narrower desktop widths instead of overflowing it — the aside's own
+      // grid track can shrink, but an auto-width SVG has no idea how wide its
+      // container actually is and just renders at its natural aspect-ratio
+      // width regardless. preserveAspectRatio (default: meet) keeps it from
+      // distorting once width, not height, becomes the binding constraint.
+      className="h-full w-full"
       role="img"
       aria-label={`Unfolded ${n}x${n} cube showing the current scramble`}
     >

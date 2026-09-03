@@ -61,7 +61,7 @@ export function Footer({ solveCount, dimmed }: FooterProps) {
             the gap between them carrying whatever width is left over. */}
         <div className="bar-inner">
           <div className="flex items-center justify-between gap-6">
-            <nav className="flex items-center gap-5">
+            <nav className="flex items-center gap-3 lg:gap-6">
               <IconButton
                 label="changelog"
                 showText
@@ -119,7 +119,7 @@ function SessionReadout({ solveCount }: { solveCount: number }) {
   const ss = String(elapsedSec % 60).padStart(2, "0");
 
   return (
-    <div className="flex shrink-0 items-center gap-3 font-mono text-[13px]">
+    <div className="flex shrink-0 items-center gap-3 font-mono text-[13px] lg:text-[15px]">
       <span
         aria-hidden="true"
         className="size-1.5 shrink-0 rounded-full"
