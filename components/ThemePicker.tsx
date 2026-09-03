@@ -54,7 +54,7 @@ export function ThemePicker({ open, onClose, value, onChange }: ThemePickerProps
                   />
                 ))}
               </span>
-              <span>{THEME_LABELS[id]}</span>
+              <span className="capitalize">{THEME_LABELS[id]}</span>
             </button>
           );
         })}

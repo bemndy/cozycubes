@@ -121,7 +121,7 @@ export function Dialog({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-0.5">
-            <h2 className="text-[15px] tracking-tight" style={{ color: "var(--ink)" }}>
+            <h2 className="capitalize text-[15px] tracking-tight" style={{ color: "var(--ink)" }}>
               {title}
             </h2>
             {subtitle && (

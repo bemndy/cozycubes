@@ -1,9 +1,21 @@
 @import "tailwindcss";
 
+/* Chonky Bits — self-hosted rather than linked to fontspace.com's own asset
+   host, which isn't a stable CDN for production use. Personal-use license per
+   fontspace.com/chonky-bits-font-f140385; a commercial license is required
+   before this app ships for anything beyond that. */
+@font-face {
+  font-family: "Chonky Bits";
+  src: url("/fonts/chonky-bits-bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ---------------------------------------------------------------------------
    Themes
    ---------------------------------------------------------------------------
-   Twenty of them. Each defines only what is genuinely its own: a surface, an ink
+   Twenty-four of them. Each defines only what is genuinely its own: a surface, an ink
    colour, and a five-colour palette (--p1..--p5). Everything else — the ink
    ramp, hover tints, solve-quality colours, the shader's mixing colours, the
    scrim and vignette — is derived from those once, in the DERIVED block below.
@@ -414,6 +426,84 @@
   --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
+/* Royal blue, full strength — the same blue as the favicon, worn as the whole
+   surface rather than a background it sits on. */
+[data-theme="royale"] {
+  color-scheme: dark;
+
+  --surface: #0800ff;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #8fa0ff;
+  --p2: #c2ccff;
+  --p3: #5567ff;
+  --p4: #b8c4ff;
+  --p5: #3344cc;
+
+  --shader-bg: #0800ff;
+  --logo-on-dark: block;
+  --cube-ink: #8fa0ff;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 20, 0.85);
+}
+
+/* Hot pink, full strength. Same treatment as royale: the saturated colour
+   itself is the surface, not a tint of one. */
+[data-theme="flamingo"] {
+  color-scheme: dark;
+
+  --surface: #ff1493;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #ffb3d9;
+  --p2: #ff70b8;
+  --p3: #ffe0f0;
+  --p4: #c2107a;
+  --p5: #ff8fc7;
+
+  --shader-bg: #ff1493;
+  --logo-on-dark: block;
+  --cube-ink: #ffb3d9;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 0, 30, 0.5);
+}
+
+/* Pastel green — soft mint over fresh and leaf greens. */
+[data-theme="sprout"] {
+  color-scheme: light;
+
+  --surface: #d7f5df;
+  --ink-rgb: 20, 45, 28;
+
+  --p1: #6fcf8f;
+  --p2: #a8e6bd;
+  --p3: #4fae6f;
+  --p4: #8fd9a5;
+  --p5: #3f8f5b;
+
+  --shader-bg: #d7f5df;
+  --logo-on-light: block;
+  --cube-ink: #4fae6f;
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 60, 35, 0.2);
+}
+
+/* Orange peach — a warm pastel, closer to a Creamsicle than terra's clay. */
+[data-theme="peach"] {
+  color-scheme: light;
+
+  --surface: #ffd9b3;
+  --ink-rgb: 60, 35, 15;
+
+  --p1: #ff9d5c;
+  --p2: #ffc48a;
+  --p3: #ffb27a;
+  --p4: #e6793f;
+  --p5: #d98a4f;
+
+  --shader-bg: #ffd9b3;
+  --logo-on-light: block;
+  --cube-ink: #e6793f;
+  --overlay-shadow: 0 12px 32px -12px rgba(70, 40, 10, 0.22);
+}
+
 /* ---------------------------------------------------------------------------
    DERIVED — written once, resolved per theme.
 
@@ -467,16 +557,15 @@
 
   --font-sans: var(--font-ui);
   --font-mono: var(--font-jetbrains-mono);
+  --font-chonky: "Chonky Bits", var(--font-ui), sans-serif;
 }
 
 :root {
-  /* Two faces across the whole app: Inter for UI chrome, including the
-     timer's own hero digits now (see TimerDisplay.tsx — the dedicated pixel
-     face is gone), and JetBrains Mono (--font-mono, above) for anything
-     data-shaped. next/font exposes Inter as --font-inter; the system stack
-     is the fallback while it loads. */
-  --font-ui: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  /* The platform's own text face — SF on Apple, sane fallbacks elsewhere.
+     Nothing to download, so chrome paints on the first frame with no swap.
+     (Tried Inter for a stretch — back to system.) */
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
+    "Segoe UI", system-ui, sans-serif;
 }
 
 body {

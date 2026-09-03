@@ -53,17 +53,19 @@ export function TimerDisplay({
   return (
     <div className="flex flex-col items-center">
       {/*
-        Inter, bold, at hero size — no dedicated pixel face anymore. Bold
-        rather than the UI's regular weight: at this size, regular Inter reads
-        as thin body text rather than a display number. tabular-nums is what
-        actually does the work a monospaced pixel face used to: Inter has real
-        tabular figures, so digit widths stay equal as they change without
-        needing the whole face to be fixed-width.
+        Chonky Bits for the hero digits — a dedicated display face again,
+        self-hosted from public/fonts (see the @font-face in globals.css).
+        It only ships a 700 weight, so font-bold is load-bearing here, not
+        decorative. It isn't a genuinely monospaced face, so digit widths can
+        still shift slightly as they change — tabular-nums has nothing to key
+        off without OpenType tabular-figure data, which this font doesn't
+        carry. Acceptable for a display face; revisit if the jitter reads as
+        a bug rather than character.
       */}
       <div
         role="timer"
         aria-live="off"
-        className="font-sans text-[clamp(56px,9.5vw,144px)] font-bold leading-none tabular-nums tracking-tight transition-colors duration-150"
+        className="font-chonky text-[clamp(56px,9.5vw,144px)] font-bold leading-none tabular-nums tracking-tight transition-colors duration-150"
         style={{ color: phaseColor(phase, holdIntensity, isHolding) }}
       >
         {display}

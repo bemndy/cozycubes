@@ -1,31 +1,23 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Inter } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { DEFAULT_THEME, THEME_IDS, THEME_STORAGE_KEY } from "@/lib/theme";
 
-// Two faces, everywhere:
-//   UI chrome + hero digits -> Inter, as the variable font ("Inter var") —
-//                     one file covering every weight instead of a static cut
-//                     per weight, so the timer's bold display weight and the
-//                     UI's regular text share a single download. This also
-//                     replaced the dedicated pixel face (DotGothic16, then
-//                     VT323) the timer digits used to run on; Inter's tabular
-//                     figures (the tabular-nums utility) cover the "digits
-//                     can't jitter width as they change" requirement that was
-//                     the whole reason a monospaced face was there.
+// Three faces:
+//   UI chrome      -> the platform's own system font (see --font-ui in
+//                     globals.css). Not loaded here; it's already on the
+//                     device. (Tried Inter for a stretch — back to system.)
 //   Technical data  -> JetBrains Mono: scramble notation, stat values, the
 //                     solve list, the ASCII boot art, the session readout,
-//                     and now the header's own controls too.
+//                     and the header's own controls.
+//   Hero digits     -> Chonky Bits, self-hosted (see the @font-face in
+//                     globals.css). Not a genuinely monospaced face, so
+//                     tabular-nums has nothing to key off — digit widths can
+//                     shift slightly as they change.
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  weight: "variable",
 });
 
 export const metadata: Metadata = {
@@ -61,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-theme={DEFAULT_THEME}
-      className={`${jetbrainsMono.variable} ${inter.variable} h-full antialiased`}
+      className={`${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
