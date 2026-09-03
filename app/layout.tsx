@@ -5,19 +5,27 @@ import { DEFAULT_THEME, THEME_IDS, THEME_STORAGE_KEY } from "@/lib/theme";
 
 // Three faces:
 //   UI chrome      -> the platform's own system font (see --font-ui in
-//                     globals.css). Not loaded here; it's already on the
-//                     device. (Tried Inter for a stretch — back to system.)
-//   Technical data  -> JetBrains Mono: scramble notation, stat values, the
-//                     solve list, the ASCII boot art, the session readout,
-//                     and the header's own controls.
+//                     globals.css) — San Francisco on Apple devices via the
+//                     -apple-system / BlinkMacSystemFont stack, sane
+//                     fallbacks elsewhere. Not loaded here; it's already on
+//                     the device. (Went to Inter and back twice now — this
+//                     is the one that's stuck.)
+//   Technical data  -> JetBrains Mono (also survived a Courier Prime
+//                     detour): scramble notation, stat values, the solve
+//                     list, the ASCII boot art, the session readout, and the
+//                     header's own controls. Both this and the UI face run
+//                     at 300 rather than their 400 default — see the body
+//                     rule in globals.css, which covers both since neither
+//                     pins its own weight.
 //   Hero digits     -> Chonky Bits, self-hosted (see the @font-face in
 //                     globals.css). Not a genuinely monospaced face, so
 //                     tabular-nums has nothing to key off — digit widths can
-//                     shift slightly as they change.
+//                     shift slightly as they change. font-bold overrides the
+//                     inherited 300, same as before.
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["300", "400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -53,7 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-theme={DEFAULT_THEME}
-      className={`${jetbrainsMono.variable} h-full antialiased`}
+      className={`${jetbrainsMono.variable} h-full`}
       suppressHydrationWarning
     >
       <head>

@@ -59,11 +59,11 @@ export function IconButton({
           labels, not the data-shaped values (Dropdown, ThemePicker) that
           earn mono. */}
       {showText ? (
-        <span className="capitalize text-[13px] tracking-tight lg:text-[15px]">{label}</span>
+        <span className="text-[13px] tracking-tight lg:text-[15px]">{label}</span>
       ) : (
         <span
           role="tooltip"
-          className="overlay-panel pointer-events-none absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2 -translate-y-1 whitespace-nowrap px-2 py-1 capitalize text-[11px] tracking-wide opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
+          className="overlay-panel pointer-events-none absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2 -translate-y-1 whitespace-nowrap px-2 py-1 text-[11px] tracking-wide opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
           style={{ color: "var(--tooltip-ink)" }}
         >
           {label}

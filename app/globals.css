@@ -562,8 +562,7 @@
 
 :root {
   /* The platform's own text face — SF on Apple, sane fallbacks elsewhere.
-     Nothing to download, so chrome paints on the first frame with no swap.
-     (Tried Inter for a stretch — back to system.) */
+     Nothing to download, so chrome paints on the first frame with no swap. */
   --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
     "Segoe UI", system-ui, sans-serif;
 }
@@ -572,6 +571,12 @@ body {
   background: var(--surface);
   color: var(--ink);
   font-family: var(--font-ui);
+  /* Neither the system font nor JetBrains Mono (--font-mono) pin their own
+     weight, so this one rule lightens both at once — down from each face's
+     default 400 to 300. An element that wants heavier than that
+     (TimerDisplay's font-bold, on the unrelated --font-chonky face)
+     overrides it same as any other inherited property. */
+  font-weight: 300;
 }
 
 /* ---------------------------------------------------------------------------

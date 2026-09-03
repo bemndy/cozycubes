@@ -11,12 +11,17 @@ interface SolveHistoryProps {
   onDelete: (id: string) => void;
 }
 
-/** Solves per row. Five, so a row is also an Ao5 window. */
-const PER_ROW = 5;
+/**
+ * Solves per row. Temporarily 3 rather than 5 (which made a row double as an
+ * Ao5 window) — the 5-wide layout has spacing issues to work out first;
+ * revisit PER_ROW once those are fixed.
+ */
+const PER_ROW = 3;
 
 /**
- * Width of the leading colour column: five 8px squares plus their 4px gaps,
- * held constant so short rows still line up with full ones.
+ * Width of the leading colour column. Still sized for the 5-wide layout
+ * PER_ROW was reduced from — wider than 3 squares actually need, which is
+ * part of the spacing this is standing in for until that pass happens.
  */
 const COLOR_COLUMN = "5rem";
 
@@ -43,13 +48,12 @@ const EXPANDED_MAX_HEIGHT = "20rem";
 const MAX_RENDERED = 250;
 
 /**
- * All-time solves, five to a row, newest first.
+ * All-time solves, PER_ROW to a row, newest first.
  *
  * Each row opens with a colour column carrying one square per solve in that
- * row, so the row reads as a unit: five squares is a glanceable shape for how
- * that group of five went, which is the same window an Ao5 covers. Rows near
- * the end of the history can hold fewer than five, and the column shrinks to
- * match rather than padding with blanks.
+ * row, so the row reads as a unit. Rows near the end of the history can hold
+ * fewer than PER_ROW, and the column shrinks to match rather than padding
+ * with blanks.
  *
  * Each solve reserves the height of its hover controls at all times, visible or
  * not. Revealing them on hover without reserved space would either overlap the
@@ -60,7 +64,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
 
   const baseline = useMemo(() => tierBaselineMs(solves), [solves]);
 
-  // Newest first, bounded, then grouped into rows of five.
+  // Newest first, bounded, then grouped into rows of PER_ROW.
   const rows = useMemo(() => {
     const start = Math.max(0, solves.length - MAX_RENDERED);
     const ordered = solves
@@ -98,9 +102,9 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
               key={row[0].solve.id}
               className="grid gap-x-2"
               style={{
-                // Fixed, not auto: a final row holding fewer than five solves
-                // would otherwise shrink its colour column and knock every time
-                // in that row out of line with the rows above it.
+                // Fixed, not auto: a final row holding fewer than PER_ROW
+                // solves would otherwise shrink its colour column and knock
+                // every time in that row out of line with the rows above it.
                 gridTemplateColumns: `${COLOR_COLUMN} repeat(${PER_ROW}, minmax(0, 1fr))`,
               }}
             >

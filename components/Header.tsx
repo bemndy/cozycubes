@@ -103,10 +103,10 @@ export function Header({
                 (size-10 = 2.5rem) and centering *within* that box makes both
                 center against the same 40px reference instead. */}
             <span
-              className="flex h-10 items-center leading-none capitalize"
+              className="flex h-10 items-center leading-none"
               style={{ color: "var(--ink)" }}
             >
-              cozycubes
+              CozyCubes
             </span>
           </div>
 
@@ -137,7 +137,7 @@ export function Header({
               onClick={() => setThemePickerOpen(true)}
               aria-haspopup="dialog"
               aria-expanded={themePickerOpen}
-              className="flex items-center gap-1.5 py-1 font-mono text-[16px] capitalize opacity-80 transition-opacity hover:opacity-100"
+              className="flex items-center gap-1.5 py-1 font-mono text-[16px] opacity-80 transition-opacity hover:opacity-100"
               style={{ color: "var(--ink)" }}
             >
               {THEME_LABELS[theme]}
