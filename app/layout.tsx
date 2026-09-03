@@ -1,46 +1,42 @@
 import type { Metadata } from "next";
-import { VT323, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { DEFAULT_THEME, THEME_IDS, THEME_STORAGE_KEY } from "@/lib/theme";
 
-// Three faces, three jobs:
-//   UI chrome      -> the platform's own system font (see --font-ui in
-//                     globals.css). Not loaded here; it's already on the device.
-//   Technical data -> JetBrains Mono: scramble notation, stat values, the solve
-//                     list, the ASCII boot art, the session readout.
-//   Hero digits    -> VT323, a scanline-CRT pixel face. It replaced DotGothic16
-//                     for the same reason DotGothic16 replaced Silkscreen: a
-//                     genuinely monospaced font, so digit widths are equal by
-//                     construction rather than by hoping tabular-nums has
-//                     something to key off, and it keeps legible at a glance
-//                     even though the pixel grid is coarser than DotGothic16's.
+// Two faces, everywhere:
+//   UI chrome + hero digits -> Inter, as the variable font ("Inter var") —
+//                     one file covering every weight instead of a static cut
+//                     per weight, so the timer's bold display weight and the
+//                     UI's regular text share a single download. This also
+//                     replaced the dedicated pixel face (DotGothic16, then
+//                     VT323) the timer digits used to run on; Inter's tabular
+//                     figures (the tabular-nums utility) cover the "digits
+//                     can't jitter width as they change" requirement that was
+//                     the whole reason a monospaced face was there.
+//   Technical data  -> JetBrains Mono: scramble notation, stat values, the
+//                     solve list, the ASCII boot art, the session readout,
+//                     and now the header's own controls too.
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
 });
 
-const pixelFace = VT323({
-  variable: "--font-pixel-src",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: "variable",
 });
 
 export const metadata: Metadata = {
   title: "CozyCubes",
   description: "A colorful, sound-rich Rubik's Cube speedsolving timer.",
-  // The black-framed mark is the default. The white-framed one takes over when
-  // the browser's own chrome is dark, since a black frame on a dark tab strip
-  // would leave only the pink monogram floating.
+  // Fixed royal-blue square, not theme-conditional — unlike the two wordmark
+  // SVGs, the tab icon has its own background baked in rather than sitting on
+  // the browser chrome's colour, so there's nothing for a theme to contrast
+  // against here.
   icons: {
-    icon: [
-      { url: "/cozycube_dark.svg", type: "image/svg+xml" },
-      {
-        url: "/cozycube_light.svg",
-        type: "image/svg+xml",
-        media: "(prefers-color-scheme: dark)",
-      },
-    ],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
 };
 
@@ -65,7 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-theme={DEFAULT_THEME}
-      className={`${jetbrainsMono.variable} ${pixelFace.variable} h-full antialiased`}
+      className={`${jetbrainsMono.variable} ${inter.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

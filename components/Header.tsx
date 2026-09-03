@@ -1,16 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { Dropdown, type DropdownOption } from "./ui/Dropdown";
 import { IconButton } from "./ui/IconButton";
 import { InspectionGlyph } from "./ui/Glyphs";
+import { ThemePicker } from "./ThemePicker";
 import { useTheme } from "@/lib/useTheme";
-import { THEME_IDS, THEME_LABELS, type ThemeId } from "@/lib/theme";
+import { THEME_LABELS } from "@/lib/theme";
 import type { SupportedCubeSize } from "@/lib/scramble-gen";
-
-const THEME_OPTIONS: readonly DropdownOption<ThemeId>[] = THEME_IDS.map((id) => ({
-  value: id,
-  label: THEME_LABELS[id],
-}));
 
 const CUBE_OPTIONS: readonly DropdownOption<SupportedCubeSize>[] = [
   { value: 2, label: "2x2" },
@@ -54,6 +51,7 @@ export function Header({
   dimmed,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
+  const [themePickerOpen, setThemePickerOpen] = useState(false);
 
   return (
     <header
@@ -73,7 +71,7 @@ export function Header({
           {/* Not a link. The timer is the only page, so a wordmark pointing at
               "/" would navigate to itself, remounting the tree and discarding
               the session's in-memory solves and timer phase. */}
-          <div className="group flex items-center gap-3 text-[23px] tracking-tight">
+          <div className="group flex items-center gap-3 text-[23px] tracking-tight opacity-85 transition-opacity duration-200 hover:opacity-100">
             {/*
               Both marks are always in the DOM; CSS shows whichever suits the
               active theme's background (see globals.css). Plain <img> rather
@@ -130,18 +128,45 @@ export function Header({
               <InspectionGlyph />
             </IconButton>
 
-            {/* Same control as cube size. Cycling through five themes with a
-                single button meant up to four clicks to reach one, and no way
-                to see what the options were. */}
-            <Dropdown
-              ariaLabel="Theme"
-              options={THEME_OPTIONS}
-              value={theme}
-              onChange={setTheme}
-            />
+            {/* Twenty themes is too many for the small listbox the cube-size
+                control uses — a fullscreen grid with a live-colour swatch per
+                theme (ThemePicker) makes picking one a glance instead of a
+                scroll through plain text. */}
+            <button
+              type="button"
+              onClick={() => setThemePickerOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={themePickerOpen}
+              className="flex items-center gap-1.5 py-1 font-mono text-[16px] opacity-80 transition-opacity hover:opacity-100"
+              style={{ color: "var(--ink)" }}
+            >
+              {THEME_LABELS[theme]}
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 10 6"
+                className="size-2.5"
+                style={{ color: "var(--ink-dimmer)" }}
+              >
+                <path
+                  d="M1 1L5 5L9 1"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
+
+      <ThemePicker
+        open={themePickerOpen}
+        onClose={() => setThemePickerOpen(false)}
+        value={theme}
+        onChange={setTheme}
+      />
     </header>
   );
 }

@@ -166,8 +166,8 @@ export function Dropdown<T extends string | number>({
             openList();
           }
         }}
-        className={`flex items-center gap-1.5 py-1 text-[16px] transition-opacity ${
-          disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer hover:opacity-100"
+        className={`flex items-center gap-1.5 py-1 font-mono text-[16px] transition-opacity ${
+          disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-80 hover:opacity-100"
         }`}
         style={{ color: "var(--ink)" }}
       >
@@ -218,7 +218,7 @@ export function Dropdown<T extends string | number>({
                     aria-selected={isSelected}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => commit(index)}
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-[6px] px-3 py-2 text-[16px]"
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-[6px] px-3 py-2 font-mono text-[16px]"
                     style={{
                       background: isActive ? "var(--hover-tint)" : "transparent",
                       color: isSelected ? "var(--ink)" : "var(--ink-dim)",

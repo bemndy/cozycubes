@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 interface IconButtonProps {
   /** The glyph. Kept as children so each control draws its own shape. */
@@ -45,17 +45,22 @@ export function IconButton({
       aria-label={label}
       aria-pressed={pressed}
       aria-expanded={expanded}
-      className="group relative flex items-center gap-2 transition-opacity duration-200 hover:opacity-100"
-      style={{ opacity: active ? 1 : 0.4, color: active ? "var(--accent)" : "var(--ink)" }}
+      className="icon-btn group relative flex items-center gap-2"
+      style={
+        {
+          "--icon-opacity": active ? 1 : 0.4,
+          color: active ? "var(--accent)" : "var(--ink)",
+        } as CSSProperties
+      }
     >
       {children}
 
       {showText ? (
-        <span className="text-[13px] tracking-tight lg:text-[15px]">{label}</span>
+        <span className="font-mono text-[13px] tracking-tight lg:text-[15px]">{label}</span>
       ) : (
         <span
           role="tooltip"
-          className="overlay-panel pointer-events-none absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2 -translate-y-1 whitespace-nowrap px-2 py-1 text-[11px] tracking-wide opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
+          className="overlay-panel pointer-events-none absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2 -translate-y-1 whitespace-nowrap px-2 py-1 font-mono text-[11px] tracking-wide opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
           style={{ color: "var(--tooltip-ink)" }}
         >
           {label}

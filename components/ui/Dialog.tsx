@@ -11,6 +11,10 @@ interface DialogProps {
   /** Optional line under the title — version, date, that sort of thing. */
   subtitle?: string;
   children: ReactNode;
+  /** Fills almost the whole viewport instead of a centred card. For content
+   *  that wants room to breathe — a grid of options rather than a page of
+   *  prose. */
+  fullBleed?: boolean;
 }
 
 /**
@@ -22,7 +26,14 @@ interface DialogProps {
  * up. It also registers with the overlay store, which is what stops Space and
  * Tab from reaching the timer underneath.
  */
-export function Dialog({ open, onClose, title, subtitle, children }: DialogProps) {
+export function Dialog({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  fullBleed = false,
+}: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
@@ -102,7 +113,11 @@ export function Dialog({ open, onClose, title, subtitle, children }: DialogProps
         tabIndex={-1}
         // The scrim closes on click; the panel must not pass its own clicks up.
         onClick={(e) => e.stopPropagation()}
-        className="overlay-panel animate-panel-in flex max-h-[70vh] w-full max-w-md flex-col gap-4 p-5 outline-none"
+        className={`overlay-panel animate-panel-in flex flex-col gap-4 p-5 outline-none ${
+          fullBleed
+            ? "h-[calc(100vh-2.5rem)] w-[calc(100vw-2.5rem)] max-w-none"
+            : "max-h-[70vh] w-full max-w-md"
+        }`}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-0.5">
@@ -126,7 +141,7 @@ export function Dialog({ open, onClose, title, subtitle, children }: DialogProps
           </button>
         </div>
 
-        <div className="scroll-thin overflow-y-auto text-[13px] leading-relaxed">
+        <div className="scroll-thin min-h-0 flex-1 overflow-y-auto text-[13px] leading-relaxed">
           {children}
         </div>
       </div>

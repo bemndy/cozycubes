@@ -467,22 +467,16 @@
 
   --font-sans: var(--font-ui);
   --font-mono: var(--font-jetbrains-mono);
-  --font-pixel: var(--font-pixel-face);
 }
 
 :root {
-  /* The platform's own text face — SF on Apple, sane fallbacks elsewhere.
-     Nothing to download, so chrome paints on the first frame with no swap.
-     (Tried routing this through JetBrains Mono instead, as an all-mono
-     preview — swap the two lines below to bring that back.) */
-  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
-    "Segoe UI", system-ui, sans-serif;
-  /* --font-ui: var(--font-jetbrains-mono), -apple-system, BlinkMacSystemFont,
-    "SF Pro Text", "Helvetica Neue", "Segoe UI", system-ui, sans-serif; */
-  /* next/font exposes the face as --font-pixel-src. Kept distinct from the
-     --font-pixel Tailwind token above: pointing a token at a var of its own
-     name makes a reference cycle, which CSS resolves to nothing. */
-  --font-pixel-face: var(--font-pixel-src), "Courier New", monospace;
+  /* Two faces across the whole app: Inter for UI chrome, including the
+     timer's own hero digits now (see TimerDisplay.tsx — the dedicated pixel
+     face is gone), and JetBrains Mono (--font-mono, above) for anything
+     data-shaped. next/font exposes Inter as --font-inter; the system stack
+     is the fallback while it loads. */
+  --font-ui: var(--font-inter), -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
 }
 
 body {
@@ -580,6 +574,27 @@ body {
   display: var(--logo-on-light, none);
 }
 
+/* ---------------------------------------------------------------------------
+   Icon button opacity
+   ---------------------------------------------------------------------------
+   The dimmed/lit opacity is per-instance (active vs. not), which has to come
+   in as an inline style — but an inline style always wins over every
+   stylesheet rule, hover states included, so a `hover:opacity-100` utility
+   class sitting next to it can never actually fire. Routing the per-instance
+   value through a custom property instead keeps it inline while leaving the
+   opacity itself, and its :hover override, in the stylesheet where hover can
+   win.
+--------------------------------------------------------------------------- */
+
+.icon-btn {
+  opacity: var(--icon-opacity, 1);
+  transition: opacity 200ms;
+}
+
+.icon-btn:hover {
+  opacity: 1;
+}
+
 /* The header and footer's own measure — wider than the timer column. */
 .bar-inner {
   width: 100%;
@@ -636,7 +651,11 @@ body {
   border-radius: 5px;
   /* Zero-width and transparent in every theme but the mono pair. */
   border: var(--edge-width) solid var(--edge);
-  background: var(--ink);
+  /* Fully opaque rather than var(--ink)'s usual 0.92 alpha — this chip sits
+     directly over the shader/gradient backdrop, where that last 8% of
+     transparency read as visibly washed-out rather than as a deliberate
+     translucency. */
+  background: rgb(var(--ink-rgb));
   color: var(--surface);
   font-size: 11px;
   white-space: nowrap;

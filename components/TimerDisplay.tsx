@@ -53,17 +53,17 @@ export function TimerDisplay({
   return (
     <div className="flex flex-col items-center">
       {/*
-        Pixel face for the hero digits. No negative tracking here — pixel
-        letterforms are built on a grid, and pulling them together collapses the
-        gaps the glyphs are drawn around. A little positive tracking instead.
+        Inter, bold, at hero size — no dedicated pixel face anymore. Bold
+        rather than the UI's regular weight: at this size, regular Inter reads
+        as thin body text rather than a display number. tabular-nums is what
+        actually does the work a monospaced pixel face used to: Inter has real
+        tabular figures, so digit widths stay equal as they change without
+        needing the whole face to be fixed-width.
       */}
       <div
         role="timer"
         aria-live="off"
-        // VT323's x-height runs noticeably smaller than DotGothic16's at the
-        // same font-size, so the clamp is scaled up to keep the same on-screen
-        // weight the digits had before the font swap.
-        className="font-pixel text-[clamp(62px,10.5vw,156px)] leading-none font-normal tabular-nums tracking-[.02em] transition-colors duration-150"
+        className="font-sans text-[clamp(56px,9.5vw,144px)] font-bold leading-none tabular-nums tracking-tight transition-colors duration-150"
         style={{ color: phaseColor(phase, holdIntensity, isHolding) }}
       >
         {display}
