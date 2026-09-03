@@ -38,20 +38,25 @@ interface TimerDisplayProps {
   phase: TimerPhase;
   holdIntensity: number;
   isHolding: boolean;
+  /** The time just shown is a new all-time best for this cube size. */
+  isNewPersonalBest: boolean;
 }
 
 /**
- * The hero digits, and nothing else. The keybind hints moved out to their own
- * component so they can hide in focus mode while the digits stay.
+ * The hero digits, plus the personal-best badge that sits right under them.
+ * The keybind hints moved out to their own component so they can hide in
+ * focus mode while the digits stay; the PB badge stays here because it's
+ * about this specific result, not a standing hint.
  */
 export function TimerDisplay({
   display,
   phase,
   holdIntensity,
   isHolding,
+  isNewPersonalBest,
 }: TimerDisplayProps) {
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center gap-2">
       {/*
         Chonky Bits for the hero digits — a dedicated display face again,
         self-hosted from public/fonts (see the @font-face in globals.css).
@@ -69,6 +74,22 @@ export function TimerDisplay({
         style={{ color: phaseColor(phase, holdIntensity, isHolding) }}
       >
         {display}
+      </div>
+
+      {/*
+        Always rendered, height always reserved — only opacity toggles.
+        The digits sit in a fixed-height click target precisely so nothing
+        about the result shifts them off-centre (see app/page.tsx); a badge
+        that mounts/unmounts would defeat that the moment someone hits a PB.
+        Same pattern Hints.tsx uses for the space/tab hints.
+      */}
+      <div
+        role="status"
+        aria-live="polite"
+        className="h-4 font-mono text-[11px] tracking-[.14em] uppercase transition-opacity duration-300"
+        style={{ color: "var(--accent)", opacity: isNewPersonalBest ? 1 : 0 }}
+      >
+        {isNewPersonalBest ? "new personal best" : ""}
       </div>
     </div>
   );

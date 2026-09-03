@@ -16,7 +16,7 @@ import { ScrambleLine } from "@/components/ScrambleLine";
 import { SolveHistory } from "@/components/SolveHistory";
 import { StatsRow } from "@/components/StatsRow";
 import { TimerDisplay } from "@/components/TimerDisplay";
-import { effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
+import { bestSingle, effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 import { useMouseIdle } from "@/lib/useMouseIdle";
 import { useAnyOverlayOpen } from "@/lib/overlayState";
@@ -288,6 +288,16 @@ export default function TimerPage() {
     display = "0.00";
   }
 
+  // A new PB only counts once there's a prior best to beat, and only for the
+  // solve that was actually just displayed — recomputing bestSingle after a
+  // penalty edit shouldn't retroactively badge an older solve.
+  const lastEffectiveMs = lastSolve ? effectiveTimeMs(lastSolve) : null;
+  const isNewPersonalBest =
+    phase === "stopped" &&
+    solves.length > 1 &&
+    lastEffectiveMs !== null &&
+    lastEffectiveMs === bestSingle(solves);
+
   // Focus mode: the chrome, the hints, the net, and the solve list recede when
   // the pointer is at rest, and outright while inspecting or solving — the
   // "serious state". What survives is the scramble text, the digits, and the
@@ -411,16 +421,23 @@ export default function TimerPage() {
 
             {/* The click target. Spans the column at the digits' height and
                 stops there, so the scramble, hints, and stats stay clickable
-                as ordinary content. */}
+                as ordinary content. h-40 rather than the digits' own h-32:
+                TimerDisplay always reserves a line for the personal-best
+                badge under the digits, so the box has to be tall enough to
+                hold that reserved line too — otherwise the badge would
+                either get clipped or push the digits off-centre exactly
+                when it appears, which is the one thing this fixed height
+                exists to prevent. */}
             <div
               onPointerDown={onTimerPointerDown}
-              className="flex h-32 w-full cursor-pointer select-none items-center justify-center"
+              className="flex h-40 w-full cursor-pointer select-none items-center justify-center"
             >
               <TimerDisplay
                 display={display}
                 phase={phase}
                 holdIntensity={holdIntensity}
                 isHolding={isHolding}
+                isNewPersonalBest={isNewPersonalBest}
               />
             </div>
 
