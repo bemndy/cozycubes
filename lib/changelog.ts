@@ -42,7 +42,7 @@ export const KIND_LABELS: Record<ReleaseNote["kind"], string> = {
  */
 const PLACEHOLDER_RELEASES: Release[] = [
   {
-    tag: "v1.0.0-beta.1",
+    tag: "v1.0-beta",
     title: "Beta 1.0",
     publishedAt: "2026-09-03T00:00:00Z",
     notes: [
