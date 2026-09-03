@@ -1,7 +1,7 @@
 /**
  * Theme identity and persistence key.
  *
- * Twenty-four themes. Every visual value lives in CSS custom properties under
+ * Twenty-five themes. Every visual value lives in CSS custom properties under
  * `[data-theme="…"]` in globals.css — this module only knows the *names*.
  * Components read tokens and never branch on the active theme, which is what
  * lets the mono pair carry borders nothing else has without a single component
@@ -29,6 +29,7 @@ export const THEME_IDS = [
   "plum",
   "royale",
   "flamingo",
+  "vesper",
   // Light
   "linen",
   "seaglass",
@@ -67,6 +68,7 @@ export const THEME_LABELS: Record<ThemeId, string> = {
   plum: "plum",
   royale: "royale",
   flamingo: "flamingo",
+  vesper: "vesper",
   linen: "linen",
   seaglass: "seaglass",
   blossom: "blossom",

@@ -1,29 +1,43 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { Courier_Prime, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { DEFAULT_THEME, THEME_IDS, THEME_STORAGE_KEY } from "@/lib/theme";
 
-// Three faces:
-//   UI chrome      -> the platform's own system font (see --font-ui in
-//                     globals.css) — San Francisco on Apple devices via the
-//                     -apple-system / BlinkMacSystemFont stack, sane
-//                     fallbacks elsewhere. Not loaded here; it's already on
-//                     the device. (Went to Inter and back twice now — this
-//                     is the one that's stuck.)
-//   Technical data  -> JetBrains Mono (also survived a Courier Prime
-//                     detour): scramble notation, stat values, the solve
-//                     list, the ASCII boot art, the session readout, and the
-//                     header's own controls. Both this and the UI face run
-//                     at 300 rather than their 400 default — see the body
-//                     rule in globals.css, which covers both since neither
-//                     pins its own weight.
-//   Hero digits     -> Chonky Bits, self-hosted (see the @font-face in
-//                     globals.css). Not a genuinely monospaced face, so
-//                     tabular-nums has nothing to key off — digit widths can
-//                     shift slightly as they change. font-bold overrides the
-//                     inherited 300, same as before.
+// Exactly three fonts in the whole app, each its own token defined directly
+// in globals.css (--font-sans, --font-mono, --font-pixel — no --font-ui or
+// --font-chonky layer of indirection behind them), each kept to a short,
+// deliberate chain rather than a long tail of redundant generic fallbacks:
+//   --font-sans (UI chrome, body text)
+//     BlinkMacSystemFont -> Inter -> sans-serif. BlinkMacSystemFont costs
+//     nothing on Apple devices since it's just a system keyword; Inter is
+//     the one real webfont loaded here, then exactly one generic keyword —
+//     not several near-duplicate system-font aliases behind it.
+//   --font-mono (technical data: scramble notation, stats, the solve list,
+//   the header's own controls)
+//     JetBrains Mono -> Courier Prime -> monospace, same idea: one real
+//     second webfont before the single generic fallback.
+//   --font-pixel (the timer's hero digits only)
+//     Chonky Bits, self-hosted (see the @font-face in globals.css) — the one
+//     deliberate exception to plain sans/mono text, since the digits are
+//     meant to read as a distinct pixel-flavoured display face rather than
+//     just bold body text.
+//   All three run at 300 rather than each face's own 400 default — see the
+//   body rule in globals.css. font-bold (TimerDisplay) overrides that
+//   inherited 300 same as any other property.
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+});
+
+const courierPrime = Courier_Prime({
+  variable: "--font-courier-prime",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   weight: ["300", "400", "500"],
 });
@@ -61,7 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       data-theme={DEFAULT_THEME}
-      className={`${jetbrainsMono.variable} h-full`}
+      className={`${jetbrainsMono.variable} ${courierPrime.variable} ${inter.variable} h-full`}
       suppressHydrationWarning
     >
       <head>

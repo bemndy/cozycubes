@@ -3,7 +3,10 @@
 /* Chonky Bits — self-hosted rather than linked to fontspace.com's own asset
    host, which isn't a stable CDN for production use. Personal-use license per
    fontspace.com/chonky-bits-font-f140385; a commercial license is required
-   before this app ships for anything beyond that. */
+   before this app ships for anything beyond that. Kept as the one deliberate
+   exception to the app's two-family (sans/mono) font system — the timer's
+   hero digits are meant to read as a distinct, pixel-flavoured display face,
+   not just bold body text. */
 @font-face {
   font-family: "Chonky Bits";
   src: url("/fonts/chonky-bits-bold.woff") format("woff");
@@ -15,7 +18,7 @@
 /* ---------------------------------------------------------------------------
    Themes
    ---------------------------------------------------------------------------
-   Twenty-four of them. Each defines only what is genuinely its own: a surface, an ink
+   Twenty-five of them. Each defines only what is genuinely its own: a surface, an ink
    colour, and a five-colour palette (--p1..--p5). Everything else — the ink
    ramp, hover tints, solve-quality colours, the shader's mixing colours, the
    scrim and vignette — is derived from those once, in the DERIVED block below.
@@ -466,6 +469,27 @@
   --overlay-shadow: 0 12px 32px -12px rgba(60, 0, 30, 0.5);
 }
 
+/* Evening-star blue — cooler and greyer than dusk's violet or nocturne's
+   indigo, with a single warm point of pale gold standing in for Venus low
+   over a dusk skyline. */
+[data-theme="vesper"] {
+  color-scheme: dark;
+
+  --surface: #0a0e18;
+  --ink-rgb: 230, 235, 245;
+
+  --p1: #7ea8d8;
+  --p2: #b8cbe8;
+  --p3: #e8c988;
+  --p4: #4a6fa5;
+  --p5: #9b8fc4;
+
+  --shader-bg: #0a0e18;
+  --logo-on-dark: block;
+  --cube-ink: #e8c988;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 10, 0.85);
+}
+
 /* Pastel green — soft mint over fresh and leaf greens. */
 [data-theme="sprout"] {
   color-scheme: light;
@@ -512,7 +536,18 @@
    for free whenever data-theme changes.
 --------------------------------------------------------------------------- */
 
-:root {
+/* :root, not just :root — a bare :root rule only ever computes these once,
+   against whichever theme is active on <html>. ThemePicker's swatches each
+   carry their own [data-theme] to preview the OTHER themes' raw tokens
+   (--ink-rgb, --surface, --p1..--p5, all set directly per theme) without
+   switching the real one, but --ink itself was only ever derived at the
+   root — so every swatch's text inherited the *active* theme's --ink
+   instead of recomputing its own, and on a dark active theme every swatch
+   read as white text regardless of how light its own background was.
+   Matching [data-theme] here re-runs the derivation on any element that
+   carries the attribute, root or nested, so each swatch gets its own. */
+:root,
+[data-theme] {
   --ink: rgba(var(--ink-rgb), 0.92);
   --ink-dim: rgba(var(--ink-rgb), 0.72);
   --ink-dimmer: rgba(var(--ink-rgb), 0.42);
@@ -555,27 +590,31 @@
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
 
-  --font-sans: var(--font-ui);
-  --font-mono: var(--font-jetbrains-mono);
-  --font-chonky: "Chonky Bits", var(--font-ui), sans-serif;
-}
+  /* Exactly three font families in the whole app, each its own token — no
+     --font-ui/--font-chonky layer of indirection behind them. Every one of
+     these three is used directly, nowhere else, by name. */
 
-:root {
-  /* The platform's own text face — SF on Apple, sane fallbacks elsewhere.
-     Nothing to download, so chrome paints on the first frame with no swap. */
-  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue",
-    "Segoe UI", system-ui, sans-serif;
+  /* BlinkMacSystemFont costs nothing on Apple devices (it's a system
+     keyword, not a download), so it leads. Inter is the one real fallback
+     webfont, then exactly one generic keyword — not a long tail of
+     redundant system-font aliases behind it. */
+  --font-sans: BlinkMacSystemFont, var(--font-inter), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), var(--font-courier-prime), monospace;
+  /* The one deliberate exception to plain sans/mono text — the timer's hero
+     digits are meant to read as a distinct, pixel-flavoured display face.
+     Falls back to --font-sans (not a bare generic) if it fails to load. */
+  --font-pixel: "Chonky Bits", var(--font-sans), sans-serif;
 }
 
 body {
   background: var(--surface);
   color: var(--ink);
-  font-family: var(--font-ui);
-  /* Neither the system font nor JetBrains Mono (--font-mono) pin their own
-     weight, so this one rule lightens both at once — down from each face's
-     default 400 to 300. An element that wants heavier than that
-     (TimerDisplay's font-bold, on the unrelated --font-chonky face)
-     overrides it same as any other inherited property. */
+  font-family: var(--font-sans);
+  /* Neither --font-sans nor --font-mono pin their own weight, so this one
+     rule lightens both at once — down from each face's default 400 to 300.
+     An element that wants heavier than that (TimerDisplay's font-bold, on
+     the unrelated --font-pixel face) overrides it same as any other
+     inherited property. */
   font-weight: 300;
 }
 
@@ -614,13 +653,13 @@ body {
    timer column (--mid-width, driving .page-grid) stays put. */
 @media (min-width: 1024px) {
   :root {
-    --bar-width: 56rem;
+    --bar-width: 62rem;
   }
 }
 
 @media (min-width: 1440px) {
   :root {
-    --bar-width: 70rem;
+    --bar-width: 78rem;
   }
 }
 
@@ -745,11 +784,10 @@ body {
   border-radius: 5px;
   /* Zero-width and transparent in every theme but the mono pair. */
   border: var(--edge-width) solid var(--edge);
-  /* Fully opaque rather than var(--ink)'s usual 0.92 alpha — this chip sits
-     directly over the shader/gradient backdrop, where that last 8% of
-     transparency read as visibly washed-out rather than as a deliberate
-     translucency. */
-  background: rgb(var(--ink-rgb));
+  /* Went fully opaque at one point, then back down past var(--ink)'s usual
+     0.92 alpha to noticeably more transparent than that — 0.65, chosen
+     directly rather than derived from --ink. */
+  background: rgba(var(--ink-rgb), 0.65);
   color: var(--surface);
   font-size: 11px;
   white-space: nowrap;
