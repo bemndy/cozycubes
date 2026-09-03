@@ -31,6 +31,7 @@ import { useAnyOverlayOpen } from "@/lib/overlayState";
 
 const TIMER_KEY = "Space";
 const NEW_SCRAMBLE_KEY = "Tab";
+const DELETE_LAST_SOLVE_KEYS = ["Backspace", "Delete"];
 
 /**
  * Composition root for the timer.
@@ -206,6 +207,20 @@ export default function TimerPage() {
     regenerateScramble(cubeSize);
   }, [phase, cubeSize, regenerateScramble]);
 
+  // Mirrors the solve list's own "del" button, for the most recent solve —
+  // undoing a misclick or a solve you didn't mean to keep without reaching
+  // for the mouse. Guarded the same way newScramble is: never mid-solve.
+  const deleteLastSolve = useCallback(() => {
+    if (phase === "inspecting" || phase === "solving") return;
+    setSolves((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      void deleteSolve(last.id);
+      if (lastSolve?.id === last.id) setLastSolve(null);
+      return prev.slice(0, -1);
+    });
+  }, [phase, lastSolve]);
+
   // Press and release, shared verbatim by the spacebar and the pointer so the
   // two bindings cannot drift apart.
   const handlePress = useCallback(() => {
@@ -243,6 +258,10 @@ export default function TimerPage() {
         e.preventDefault();
         newScramble();
       }
+      if (DELETE_LAST_SOLVE_KEYS.includes(e.code)) {
+        e.preventDefault();
+        deleteLastSolve();
+      }
     }
     function onKeyUp(e: KeyboardEvent) {
       if (e.code !== TIMER_KEY) return;
@@ -276,7 +295,7 @@ export default function TimerPage() {
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
     };
-  }, [booted, overlayOpen, handlePress, newScramble, keyUp, phase]);
+  }, [booted, overlayOpen, handlePress, newScramble, deleteLastSolve, keyUp, phase]);
 
   /**
    * Starting is restricted to the timer's own surface; stopping is not.
