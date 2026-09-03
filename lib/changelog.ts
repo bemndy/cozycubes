@@ -42,6 +42,16 @@ export const KIND_LABELS: Record<ReleaseNote["kind"], string> = {
  */
 const PLACEHOLDER_RELEASES: Release[] = [
   {
+    tag: "v1.0.0-beta.1",
+    title: "Beta 1.0",
+    publishedAt: "2026-09-03T00:00:00Z",
+    notes: [
+      { kind: "added", text: "First public beta — the full visual refresh: themes, fonts, and layout." },
+      { kind: "added", text: "Ao100 stat, a personal-best badge, and occasional solve commentary." },
+      { kind: "added", text: "Clear-session action in the footer." },
+    ],
+  },
+  {
     tag: "v0.3.0",
     title: "Visual refresh",
     publishedAt: "2026-08-09T00:00:00Z",
