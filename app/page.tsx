@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { addSolve, deleteSolve, getSolvesByCubeSize, updateSolve } from "@/lib/db";
+import {
+  addSolve,
+  clearSolvesByCubeSize,
+  deleteSolve,
+  getSolvesByCubeSize,
+  updateSolve,
+} from "@/lib/db";
 import { formatTimeMs } from "@/lib/format";
 import { type SupportedCubeSize } from "@/lib/scramble-gen";
 import { generateScrambleForSize, initScrambler } from "@/lib/scrambler";
@@ -94,6 +100,14 @@ export default function TimerPage() {
     setSolves((prev) => prev.filter((s) => s.id !== id));
     void deleteSolve(id);
   }, []);
+
+  // Confirmation lives in the footer's ClearSessionConfirm dialog, not here —
+  // by the time this runs the user has already agreed.
+  const clearSession = useCallback(() => {
+    setSolves([]);
+    setLastSolve(null);
+    void clearSolvesByCubeSize(cubeSize);
+  }, [cubeSize]);
 
   const {
     phase,
@@ -469,7 +483,12 @@ export default function TimerPage() {
           </aside>
         </main>
 
-        <Footer solveCount={solves.length} dimmed={dimmed} />
+        <Footer
+          cubeSize={cubeSize}
+          solveCount={solves.length}
+          onClearSession={clearSession}
+          dimmed={dimmed}
+        />
       </div>
     </div>
   );

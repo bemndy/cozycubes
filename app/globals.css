@@ -685,7 +685,7 @@ body {
   transition: opacity 200ms;
 }
 
-.icon-btn:hover {
+.icon-btn:hover:not(:disabled) {
   opacity: 1;
 }
 

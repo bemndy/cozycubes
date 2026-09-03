@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { IconButton } from "./ui/IconButton";
 import {
+  ClearGlyph,
   GitGlyph,
   ContactGlyph,
   PrivacyGlyph,
@@ -10,16 +11,20 @@ import {
   TermsGlyph,
 } from "./ui/Glyphs";
 import { ChangelogDialog } from "./ChangelogDialog";
+import { ClearSessionConfirm } from "./ClearSessionConfirm";
 import { InfoDialog, type InfoTopic } from "./InfoDialog";
 import type { ComponentType } from "react";
+import type { SupportedCubeSize } from "@/lib/scramble-gen";
 
 interface FooterProps {
+  cubeSize: SupportedCubeSize;
   solveCount: number;
+  onClearSession: () => void;
   /** Focus mode — the chrome recedes while the pointer is at rest. */
   dimmed: boolean;
 }
 
-type OpenPanel = "changelog" | InfoTopic | null;
+type OpenPanel = "changelog" | "clear-session" | InfoTopic | null;
 
 const INFO_ITEMS: {
   topic: InfoTopic;
@@ -45,7 +50,7 @@ const INFO_ITEMS: {
  * the point, and the alternative today would be four links to routes that don't
  * exist yet.
  */
-export function Footer({ solveCount, dimmed }: FooterProps) {
+export function Footer({ cubeSize, solveCount, onClearSession, dimmed }: FooterProps) {
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
   const close = () => setOpenPanel(null);
 
@@ -82,6 +87,16 @@ export function Footer({ solveCount, dimmed }: FooterProps) {
                   <Glyph />
                 </IconButton>
               ))}
+
+              <IconButton
+                label="clear session"
+                showText
+                onClick={() => setOpenPanel("clear-session")}
+                expanded={openPanel === "clear-session"}
+                disabled={solveCount === 0}
+              >
+                <ClearGlyph />
+              </IconButton>
             </nav>
 
             <SessionReadout solveCount={solveCount} />
@@ -98,6 +113,13 @@ export function Footer({ solveCount, dimmed }: FooterProps) {
           onClose={close}
         />
       ))}
+      <ClearSessionConfirm
+        open={openPanel === "clear-session"}
+        onClose={close}
+        onConfirm={onClearSession}
+        cubeSize={cubeSize}
+        solveCount={solveCount}
+      />
     </>
   );
 }

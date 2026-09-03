@@ -18,6 +18,8 @@ interface IconButtonProps {
   active?: boolean;
   pressed?: boolean;
   expanded?: boolean;
+  /** Nothing to do yet — clear-session with an empty history, say. */
+  disabled?: boolean;
 }
 
 /**
@@ -37,18 +39,22 @@ export function IconButton({
   active = false,
   pressed,
   expanded,
+  disabled = false,
 }: IconButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={label}
       aria-pressed={pressed}
       aria-expanded={expanded}
-      className="icon-btn group relative flex items-center gap-2"
+      className={`icon-btn group relative flex items-center gap-2 ${
+        disabled ? "cursor-not-allowed" : ""
+      }`}
       style={
         {
-          "--icon-opacity": active ? 1 : 0.4,
+          "--icon-opacity": disabled ? 0.25 : active ? 1 : 0.4,
           color: active ? "var(--accent)" : "var(--ink)",
         } as CSSProperties
       }

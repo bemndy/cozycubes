@@ -104,3 +104,15 @@ export function SecurityGlyph(props: GlyphProps) {
     </Svg>
   );
 }
+
+/** Trash can — clear session. */
+export function ClearGlyph(props: GlyphProps) {
+  return (
+    <Svg {...props}>
+      <path d="M6.5 4.25V3a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1.25" />
+      <path d="M3 4.25h10" />
+      <path d="M4.25 4.25 5 13.25a1 1 0 0 0 1 .9h4a1 1 0 0 0 1-.9l.75-9" />
+      <path d="M6.5 6.75v5M9.5 6.75v5" />
+    </Svg>
+  );
+}
