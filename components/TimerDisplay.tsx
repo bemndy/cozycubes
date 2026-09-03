@@ -38,58 +38,41 @@ interface TimerDisplayProps {
   phase: TimerPhase;
   holdIntensity: number;
   isHolding: boolean;
-  /** The time just shown is a new all-time best for this cube size. */
-  isNewPersonalBest: boolean;
 }
 
 /**
- * The hero digits, plus the personal-best badge that sits right under them.
- * The keybind hints moved out to their own component so they can hide in
- * focus mode while the digits stay; the PB badge stays here because it's
- * about this specific result, not a standing hint.
+ * The hero digits, and nothing else. The keybind hints moved out to their own
+ * component so they can hide in focus mode while the digits stay; the solve
+ * badge (SolveBadge.tsx) lives in the gap below the click target instead of
+ * here, since it's positioned relative to the hint/stats block beneath it,
+ * not to the digits themselves.
  */
 export function TimerDisplay({
   display,
   phase,
   holdIntensity,
   isHolding,
-  isNewPersonalBest,
 }: TimerDisplayProps) {
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center">
       {/*
-        Chonky Bits for the hero digits — a dedicated display face again,
-        self-hosted from public/fonts (see the @font-face in globals.css).
-        It only ships a 700 weight, so font-bold is load-bearing here, not
-        decorative. It isn't a genuinely monospaced face, so digit widths can
-        still shift slightly as they change — tabular-nums has nothing to key
-        off without OpenType tabular-figure data, which this font doesn't
-        carry. Acceptable for a display face; revisit if the jitter reads as
-        a bug rather than character.
+        Chonky Bits for the hero digits — a dedicated display face, self-
+        hosted from public/fonts (see the @font-face in globals.css), kept
+        as the one deliberate exception to the app's two-family (sans/mono)
+        font system. It only ships a 700 weight, so font-bold is load-
+        bearing here, not decorative. It isn't a genuinely monospaced face,
+        so digit widths can still shift slightly as they change —
+        tabular-nums has nothing to key off without OpenType tabular-figure
+        data, which this font doesn't carry. Acceptable for a display face;
+        revisit if the jitter reads as a bug rather than character.
       */}
       <div
         role="timer"
         aria-live="off"
-        className="font-chonky text-[clamp(56px,9.5vw,144px)] font-bold leading-none tabular-nums tracking-tight transition-colors duration-150"
+        className="font-pixel text-[clamp(50px,8.5vw,130px)] font-bold leading-none tabular-nums tracking-tight transition-colors duration-150"
         style={{ color: phaseColor(phase, holdIntensity, isHolding) }}
       >
         {display}
-      </div>
-
-      {/*
-        Always rendered, height always reserved — only opacity toggles.
-        The digits sit in a fixed-height click target precisely so nothing
-        about the result shifts them off-centre (see app/page.tsx); a badge
-        that mounts/unmounts would defeat that the moment someone hits a PB.
-        Same pattern Hints.tsx uses for the space/tab hints.
-      */}
-      <div
-        role="status"
-        aria-live="polite"
-        className="h-4 font-mono text-[11px] tracking-[.14em] uppercase transition-opacity duration-300"
-        style={{ color: "var(--accent)", opacity: isNewPersonalBest ? 1 : 0 }}
-      >
-        {isNewPersonalBest ? "new personal best" : ""}
       </div>
     </div>
   );

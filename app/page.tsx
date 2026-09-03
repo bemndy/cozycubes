@@ -19,9 +19,11 @@ import { Header } from "@/components/Header";
 import { CubeNet } from "@/components/CubeNet";
 import { ScrambleHint, TimerHint } from "@/components/Hints";
 import { ScrambleLine } from "@/components/ScrambleLine";
+import { SolveBadge } from "@/components/SolveBadge";
 import { SolveHistory } from "@/components/SolveHistory";
 import { StatsRow } from "@/components/StatsRow";
 import { TimerDisplay } from "@/components/TimerDisplay";
+import { PERSONAL_BEST_MESSAGE, rollCommentary } from "@/lib/solveCommentary";
 import { bestSingle, effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 import { useMouseIdle } from "@/lib/useMouseIdle";
@@ -41,6 +43,10 @@ const NEW_SCRAMBLE_KEY = "Tab";
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(false);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
+  // Rolled once per completed solve (see the effect below), not on every
+  // render — Math.random() in the render body itself would re-roll on any
+  // unrelated re-render and make the badge flicker between messages.
+  const [randomCommentary, setRandomCommentary] = useState<string | null>(null);
   const [cubeSize, setCubeSize] = useState<SupportedCubeSize>(3);
   const [scramble, setScramble] = useState<string[]>([]);
   const [solves, setSolves] = useState<Solve[]>([]);
@@ -78,6 +84,12 @@ export default function TimerPage() {
       };
       setLastSolve(solve);
       setSolves((prev) => [...prev, solve]);
+      // Rolled once per completed solve, right here rather than in an effect
+      // keyed on lastSolve — see randomCommentary's declaration above for why
+      // it can't be rolled during render. Whether it's actually shown is
+      // decided later, where isNewPersonalBest is computed: a real PB always
+      // wins over it.
+      setRandomCommentary(rollCommentary());
       void addSolve(solve);
       regenerateScramble(cubeSize);
     },
@@ -311,6 +323,10 @@ export default function TimerPage() {
     solves.length > 1 &&
     lastEffectiveMs !== null &&
     lastEffectiveMs === bestSingle(solves);
+  // A PB always wins — randomCommentary only shows up on the solves that
+  // aren't one.
+  const badgeMessage =
+    phase !== "stopped" ? null : isNewPersonalBest ? PERSONAL_BEST_MESSAGE : randomCommentary;
 
   // Focus mode: the chrome, the hints, the net, and the solve list recede when
   // the pointer is at rest, and outright while inspecting or solving — the
@@ -419,10 +435,13 @@ export default function TimerPage() {
               The max-height caps how far that push can go. Uncapped, a tall
               display drove the two apart much harder than a laptop did — the
               spread scaled with the screen. With the cap they stop growing past
-              26rem and the whole group centres instead, so the spacing looks
-              the same at 900px of viewport as at 1400px.
+              14rem and the whole group centres instead, so the spacing looks
+              the same at 900px of viewport as at 1400px. (Was 26rem — pulled
+              in to bring the scramble and stats noticeably closer to the
+              digits; still generous enough that neither block's own content
+              ever bumps the cap first.)
             */}
-            <div className="flex max-h-[26rem] w-full min-h-0 flex-1 flex-col items-center justify-start gap-3">
+            <div className="flex max-h-[14rem] w-full min-h-0 flex-1 flex-col items-center justify-start gap-3">
               <div className="scroll-thin flex max-h-[10rem] w-full justify-center overflow-y-auto">
                 <ScrambleLine
                   scramble={scramble}
@@ -433,31 +452,34 @@ export default function TimerPage() {
               <ScrambleHint hidden={dimmed} />
             </div>
 
-            {/* The click target. Spans the column at the digits' height and
-                stops there, so the scramble, hints, and stats stay clickable
-                as ordinary content. h-40 rather than the digits' own h-32:
-                TimerDisplay always reserves a line for the personal-best
-                badge under the digits, so the box has to be tall enough to
-                hold that reserved line too — otherwise the badge would
-                either get clipped or push the digits off-centre exactly
-                when it appears, which is the one thing this fixed height
-                exists to prevent. */}
+            {/* The click target. Spans the column at the digits' own height
+                and stops there, so the scramble, hints, and stats stay
+                clickable as ordinary content. */}
             <div
               onPointerDown={onTimerPointerDown}
-              className="flex h-40 w-full cursor-pointer select-none items-center justify-center"
+              className="flex h-32 w-full cursor-pointer select-none items-center justify-center"
             >
               <TimerDisplay
                 display={display}
                 phase={phase}
                 holdIntensity={holdIntensity}
                 isHolding={isHolding}
-                isNewPersonalBest={isNewPersonalBest}
               />
             </div>
 
             {/* Mirrors the block above: same height, contents pushed to the far
-                edge, so the hint hugs the stats and the gap lands by the digits. */}
-            <div className="flex max-h-[26rem] w-full min-h-0 flex-1 flex-col items-center justify-end gap-3">
+                edge, so the hint hugs the stats and the gap lands by the digits.
+
+                The badge sits in its own flex-1 slot ahead of the hint —
+                unlike TimerHint/StatsRow it isn't pinned to the far edge, it
+                centres in whatever leftover room that slot has, which is
+                exactly the gap between the digits and the hint below. That
+                slot exists whether or not there's a message to show, so nothing
+                below it moves when the badge appears or disappears. */}
+            <div className="flex max-h-[14rem] w-full min-h-0 flex-1 flex-col items-center justify-end gap-3">
+              <div className="flex flex-1 items-center justify-center">
+                <SolveBadge message={badgeMessage} isNewPersonalBest={isNewPersonalBest} />
+              </div>
               <TimerHint hidden={dimmed} />
               <StatsRow solves={solves} />
             </div>
