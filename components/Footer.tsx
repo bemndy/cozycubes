@@ -59,7 +59,12 @@ export function Footer({ cubeSize, solveCount, onClearSession, dimmed }: FooterP
       <footer
         // See Header: inert keeps hidden controls out of the tab order.
         inert={dimmed}
-        className="fixed inset-x-0 bottom-0 z-30 flex h-24 items-center transition-opacity duration-500"
+        // Not fixed, unlike Header — this is the actual last element in the
+        // document, sitting below the solve history rather than floating
+        // over it. Header stays pinned since the timer needs it reachable
+        // without scrolling back up; the footer's links are read-once and
+        // fine to scroll to.
+        className="flex h-24 items-center transition-opacity duration-500"
         // Back to 400 from the body's inherited 300 — see Header.
         style={{ opacity: dimmed ? 0 : 1, fontWeight: 400 }}
       >

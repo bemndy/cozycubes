@@ -63,18 +63,27 @@ export function IconButton({
 
       {/* The default UI face here, not mono — these are footer/tooltip prose
           labels, not the data-shaped values (Dropdown, ThemePicker) that
-          earn mono. */}
-      {showText ? (
-        <span className="text-[13px] tracking-tight lg:text-[15px]">{label}</span>
-      ) : (
-        <span
-          role="tooltip"
-          className="overlay-panel pointer-events-none absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2 -translate-y-1 whitespace-nowrap px-2 py-1 text-[11px] tracking-wide opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100"
-          style={{ color: "var(--tooltip-ink)" }}
-        >
+          earn mono.
+
+          `showText` only shows the inline label from lg up — below that
+          (the footer's own mobile width) it drops back to icon-only, same
+          as the header, so the tooltip has to stay in the DOM either way as
+          the accessible fallback. It's just hidden at lg once the inline
+          label is there to say the same thing. */}
+      {showText && (
+        <span className="hidden text-[13px] tracking-tight lg:inline lg:text-[15px]">
           {label}
         </span>
       )}
+      <span
+        role="tooltip"
+        className={`overlay-panel pointer-events-none absolute left-1/2 top-[calc(100%+10px)] -translate-x-1/2 -translate-y-1 whitespace-nowrap px-2 py-1 text-[11px] tracking-wide opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100 ${
+          showText ? "lg:hidden" : ""
+        }`}
+        style={{ color: "var(--tooltip-ink)" }}
+      >
+        {label}
+      </span>
     </button>
   );
 }

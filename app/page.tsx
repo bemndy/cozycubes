@@ -422,30 +422,46 @@ export default function TimerPage() {
           own box. Below lg it stacks to one column, timer block first.
         */}
         <main className="page-grid min-h-screen items-stretch gap-y-12 py-24">
-          {/* min-w-0: a grid item's default min-width is its content's
-              min-content size, not 0, even though the track itself is
-              minmax(0, 1fr) — without this override the item refuses to
-              shrink below the net's natural width and pushes the page wider
-              than the viewport on the desktop widths where the flank is
-              narrowest.
+          {/*
+            Below lg this wrapper is a real box: a generously padded column
+            holding the net and the scramble/timer/stats block together, sized
+            to the viewport so the two stay on screen as a pair without the
+            solve history creeping up into view alongside them — that's what
+            forces the scroll down to reach it (solve history is its own
+            page eventually; for now, scrolling is the placeholder). The
+            padding here is fixed by breakpoint alone, never by
+            `netVisibleOnIdle` — the net's opacity-only hide already leaves
+            its box (and this wrapper's height) untouched either way.
 
-              The translate is capped at 1.25rem/20px, not the 2.5rem it used
-              to be: .page-grid only ever has 1.5rem/24px of padding outside
-              the grid itself, so anything past ~24px pushes the aside past
-              the true viewport edge and forces a horizontal scrollbar on
-              exactly the desktop widths (1024–1503px) where the flank is
-              tight. 20px leaves a hair of margin rather than sitting flush
-              on the boundary. */}
-          <aside
-            className="order-2 grid h-52 min-w-0 place-items-center self-center transition-opacity duration-500 lg:order-1 lg:-translate-x-5"
-            style={{ opacity: netDimmed ? 0 : 1 }}
-            inert={netDimmed}
-          >
-            <CubeNet cubeSize={cubeSize} scramble={scramble} />
-          </aside>
+            At lg and up it turns into `contents` — no box of its own — so
+            the net and the center block rejoin .page-grid as direct items
+            again and the original 3-column layout takes over unchanged.
+          */}
+          <div className="flex min-h-[calc(100svh-9rem)] flex-col gap-12 py-8 lg:contents lg:min-h-0 lg:gap-0 lg:py-0">
+            {/* min-w-0: a grid item's default min-width is its content's
+                min-content size, not 0, even though the track itself is
+                minmax(0, 1fr) — without this override the item refuses to
+                shrink below the net's natural width and pushes the page wider
+                than the viewport on the desktop widths where the flank is
+                narrowest.
 
-          <div className="order-1 flex h-full flex-col items-center justify-center lg:order-2">
-            {/*
+                The translate is capped at 1.25rem/20px, not the 2.5rem it used
+                to be: .page-grid only ever has 1.5rem/24px of padding outside
+                the grid itself, so anything past ~24px pushes the aside past
+                the true viewport edge and forces a horizontal scrollbar on
+                exactly the desktop widths (1024–1503px) where the flank is
+                tight. 20px leaves a hair of margin rather than sitting flush
+                on the boundary. */}
+            <aside
+              className="order-2 grid h-52 min-w-0 shrink-0 place-items-center self-center transition-opacity duration-500 lg:order-1 lg:-translate-x-5"
+              style={{ opacity: netDimmed ? 0 : 1 }}
+              inert={netDimmed}
+            >
+              <CubeNet cubeSize={cubeSize} scramble={scramble} />
+            </aside>
+
+            <div className="order-1 flex h-full flex-1 flex-col items-center justify-center lg:order-2">
+              {/*
               This block and its mirror below the digits both take flex-1, so
               they always split whatever height the digits leave, equally. Two
               things fall out of that: the scramble and the stats push toward
@@ -503,6 +519,7 @@ export default function TimerPage() {
               </div>
               <TimerHint hidden={dimmed} />
               <StatsRow solves={solves} />
+            </div>
             </div>
           </div>
 
