@@ -230,10 +230,26 @@ export default function TimerPage() {
     // Tab moves between controls.
     if (!booted || overlayOpen) return;
 
+    // Starting is Space or the pointer (see handlePress/onTimerPointerDown).
+    // Stopping is not tied to a specific binding though: once a solve is
+    // running, any key ends it — same as the click-anywhere-to-stop pointer
+    // handler below — checked first so it takes priority over Space's own
+    // start binding and Tab's reroll.
     function onKeyDown(e: KeyboardEvent) {
-      if (e.code === TIMER_KEY) {
-        if (e.repeat) return;
+      if (phase === "solving") {
+        // preventDefault before the repeat bail-out: browsers keep firing
+        // keydown (with repeat: true) for as long as the key stays down, and
+        // skipping preventDefault on those left Space's default page-scroll
+        // running for every repeat after the first — exactly while a hold is
+        // held, which is the worst possible moment for the page to move.
         e.preventDefault();
+        if (e.repeat) return;
+        keyDown();
+        return;
+      }
+      if (e.code === TIMER_KEY) {
+        e.preventDefault();
+        if (e.repeat) return;
         handlePress();
         return;
       }
@@ -274,7 +290,7 @@ export default function TimerPage() {
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
     };
-  }, [booted, overlayOpen, handlePress, newScramble, keyUp, phase]);
+  }, [booted, overlayOpen, handlePress, newScramble, keyUp, keyDown, phase]);
 
   /**
    * Starting is restricted to the timer's own surface; stopping is not.
