@@ -23,7 +23,7 @@ import { SolveBadge } from "@/components/SolveBadge";
 import { SolveHistory } from "@/components/SolveHistory";
 import { StatsRow } from "@/components/StatsRow";
 import { TimerDisplay } from "@/components/TimerDisplay";
-import { PERSONAL_BEST_MESSAGE, rollCommentary } from "@/lib/solveCommentary";
+import { PERSONAL_BEST_MESSAGE } from "@/lib/solveCommentary";
 import { bestSingle, effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 import { useMouseIdle } from "@/lib/useMouseIdle";
@@ -84,12 +84,8 @@ export default function TimerPage() {
       };
       setLastSolve(solve);
       setSolves((prev) => [...prev, solve]);
-      // Rolled once per completed solve, right here rather than in an effect
-      // keyed on lastSolve — see randomCommentary's declaration above for why
-      // it can't be rolled during render. Whether it's actually shown is
-      // decided later, where isNewPersonalBest is computed: a real PB always
-      // wins over it.
-      setRandomCommentary(rollCommentary());
+      // Random commentary disabled for now — PB message still fires below.
+      setRandomCommentary(null);
       void addSolve(solve);
       regenerateScramble(cubeSize);
     },
