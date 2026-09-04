@@ -7,6 +7,7 @@ import {
   bestOfN,
   bestSingle,
   effectiveTimeMs,
+  worstSingle,
   type Solve,
 } from "./stats-engine";
 
@@ -51,6 +52,23 @@ describe("bestSingle", () => {
   });
   it("returns null for an empty list", () => {
     expect(bestSingle([])).toBeNull();
+  });
+});
+
+describe("worstSingle", () => {
+  it("picks the highest effective time", () => {
+    const solves = [solve(15000), solve(9000), solve(20000, "+2")]; // 15000, 9000, 22000
+    expect(worstSingle(solves)).toBe(22000);
+  });
+  it("ignores DNFs", () => {
+    const solves = [solve(9000, "DNF"), solve(11000)];
+    expect(worstSingle(solves)).toBe(11000);
+  });
+  it("returns null when every solve is DNF", () => {
+    expect(worstSingle([solve(9000, "DNF")])).toBeNull();
+  });
+  it("returns null for an empty list", () => {
+    expect(worstSingle([])).toBeNull();
   });
 });
 

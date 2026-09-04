@@ -27,6 +27,16 @@ export function bestSingle(solves: Solve[]): number | null {
   return best;
 }
 
+/** Highest effective time across all solves. null if every solve is DNF (or list is empty). */
+export function worstSingle(solves: Solve[]): number | null {
+  let worst: number | null = null;
+  for (const solve of solves) {
+    const t = effectiveTimeMs(solve);
+    if (t !== null && (worst === null || t > worst)) worst = t;
+  }
+  return worst;
+}
+
 /**
  * "Bo5" = best single time achieved within a window of `n` (default 5)
  * most recent solves — distinct from Ao5, which averages the window

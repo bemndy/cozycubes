@@ -1,14 +1,23 @@
 import { formatTimeMs } from "@/lib/format";
-import { allTimeMean, ao100, ao12, ao5, bestSingle, type Solve } from "@/lib/stats-engine";
+import {
+  allTimeMean,
+  ao100,
+  ao12,
+  ao5,
+  bestSingle,
+  worstSingle,
+  type Solve,
+} from "@/lib/stats-engine";
 
 function formatStat(ms: number | null): string {
   return ms === null ? "—" : formatTimeMs(ms);
 }
 
-/** Best / Ao5 / Ao12 / Ao100 / mean / count, sitting below the hero digits. */
+/** Best / worst / Ao5 / Ao12 / Ao100 / mean / count, sitting below the hero digits. */
 export function StatsRow({ solves }: { solves: Solve[] }) {
   const stats = [
     { label: "BEST", value: formatStat(bestSingle(solves)) },
+    { label: "WORST", value: formatStat(worstSingle(solves)) },
     { label: "AO5", value: formatStat(ao5(solves)) },
     { label: "AO12", value: formatStat(ao12(solves)) },
     { label: "AO100", value: formatStat(ao100(solves)) },
