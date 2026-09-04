@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dropdown, type DropdownOption } from "./ui/Dropdown";
 import { IconButton } from "./ui/IconButton";
-import { InspectionGlyph } from "./ui/Glyphs";
+import { InspectionGlyph, ShaderGlyph } from "./ui/Glyphs";
 import { ThemePicker } from "./ThemePicker";
 import { useTheme } from "@/lib/useTheme";
 import { THEME_LABELS } from "@/lib/theme";
@@ -25,6 +25,9 @@ interface HeaderProps {
   onCubeSizeChange: (size: SupportedCubeSize) => void;
   inspectionEnabled: boolean;
   onToggleInspection: () => void;
+  /** Ambient background field — the shader loads in after a pointer-idle cooldown. */
+  shaderEnabled: boolean;
+  onToggleShader: () => void;
   /** Focus mode — the chrome recedes while the pointer is at rest. */
   dimmed: boolean;
 }
@@ -48,6 +51,8 @@ export function Header({
   onCubeSizeChange,
   inspectionEnabled,
   onToggleInspection,
+  shaderEnabled,
+  onToggleShader,
   dimmed,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
@@ -128,6 +133,15 @@ export function Header({
               pressed={inspectionEnabled}
             >
               <InspectionGlyph />
+            </IconButton>
+
+            <IconButton
+              label={`background ${shaderEnabled ? "on" : "off"}`}
+              onClick={onToggleShader}
+              active={shaderEnabled}
+              pressed={shaderEnabled}
+            >
+              <ShaderGlyph />
             </IconButton>
 
             {/* Twenty themes is too many for the small listbox the cube-size

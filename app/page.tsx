@@ -42,6 +42,7 @@ const NEW_SCRAMBLE_KEY = "Tab";
  */
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(false);
+  const [shaderEnabled, setShaderEnabled] = useState(true);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   // Rolled once per completed solve (see the effect below), not on every
   // render — Math.random() in the render body itself would re-roll on any
@@ -343,7 +344,7 @@ export default function TimerPage() {
         keeps the UI legible over it. Active only once booted, while the pointer
         is idle, and never during inspection or a solve.
       */}
-      <ShaderBackdrop active={booted && pointerIdle && !cubeSizeLocked} />
+      <ShaderBackdrop active={booted && pointerIdle && !cubeSizeLocked && shaderEnabled} />
       <Backdrop />
 
       {bootMounted && (
@@ -377,6 +378,8 @@ export default function TimerPage() {
           onCubeSizeChange={handleCubeSizeChange}
           inspectionEnabled={inspectionEnabled}
           onToggleInspection={() => setInspectionEnabled((v) => !v)}
+          shaderEnabled={shaderEnabled}
+          onToggleShader={() => setShaderEnabled((v) => !v)}
           dimmed={dimmed}
         />
 

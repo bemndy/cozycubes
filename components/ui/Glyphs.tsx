@@ -105,6 +105,16 @@ export function SecurityGlyph(props: GlyphProps) {
   );
 }
 
+/** Concentric waves — ambient shader toggle. */
+export function ShaderGlyph(props: GlyphProps) {
+  return (
+    <Svg {...props}>
+      <path d="M1.75 5.5c1.25-1.25 2.75-1.25 4 0s2.75 1.25 4 0 2.75-1.25 4 0" />
+      <path d="M1.75 9.5c1.25-1.25 2.75-1.25 4 0s2.75 1.25 4 0 2.75-1.25 4 0" />
+    </Svg>
+  );
+}
+
 /** Trash can — clear session. */
 export function ClearGlyph(props: GlyphProps) {
   return (
