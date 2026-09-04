@@ -115,6 +115,17 @@ export function ShaderGlyph(props: GlyphProps) {
   );
 }
 
+/** Framed landscape — scramble-image (net) visibility toggle. */
+export function ImageGlyph(props: GlyphProps) {
+  return (
+    <Svg {...props}>
+      <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5" />
+      <circle cx="5.5" cy="6" r="1.15" />
+      <path d="M2.5 11.25 6.25 8l2 2 2.5-3 2.75 3.25" />
+    </Svg>
+  );
+}
+
 /** Trash can — clear session. */
 export function ClearGlyph(props: GlyphProps) {
   return (

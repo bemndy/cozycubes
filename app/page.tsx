@@ -43,6 +43,7 @@ const NEW_SCRAMBLE_KEY = "Tab";
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(false);
   const [shaderEnabled, setShaderEnabled] = useState(true);
+  const [netVisibleOnIdle, setNetVisibleOnIdle] = useState(false);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   // Rolled once per completed solve (see the effect below), not on every
   // render — Math.random() in the render body itself would re-roll on any
@@ -333,6 +334,9 @@ export default function TimerPage() {
   // An open overlay always wins: fading the footer out from under a dialog the
   // user just opened would strand it.
   const dimmed = !overlayOpen && (pointerIdle || cubeSizeLocked);
+  // The net still hides during inspection/solving no matter what — only the
+  // idle-driven half of `dimmed` is what the toggle overrides.
+  const netDimmed = !overlayOpen && (cubeSizeLocked || (pointerIdle && !netVisibleOnIdle));
 
   return (
     // Everything the overlays sit on top of lives inside .app-content, which is
@@ -380,6 +384,8 @@ export default function TimerPage() {
           onToggleInspection={() => setInspectionEnabled((v) => !v)}
           shaderEnabled={shaderEnabled}
           onToggleShader={() => setShaderEnabled((v) => !v)}
+          netVisibleOnIdle={netVisibleOnIdle}
+          onToggleNetVisibleOnIdle={() => setNetVisibleOnIdle((v) => !v)}
           dimmed={dimmed}
         />
 
@@ -416,8 +422,8 @@ export default function TimerPage() {
               on the boundary. */}
           <aside
             className="order-2 grid h-52 min-w-0 place-items-center self-center transition-opacity duration-500 lg:order-1 lg:-translate-x-5"
-            style={{ opacity: dimmed ? 0 : 1 }}
-            inert={dimmed}
+            style={{ opacity: netDimmed ? 0 : 1 }}
+            inert={netDimmed}
           >
             <CubeNet cubeSize={cubeSize} scramble={scramble} />
           </aside>

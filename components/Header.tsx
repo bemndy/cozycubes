@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dropdown, type DropdownOption } from "./ui/Dropdown";
 import { IconButton } from "./ui/IconButton";
-import { InspectionGlyph, ShaderGlyph } from "./ui/Glyphs";
+import { ImageGlyph, InspectionGlyph, ShaderGlyph } from "./ui/Glyphs";
 import { ThemePicker } from "./ThemePicker";
 import { useTheme } from "@/lib/useTheme";
 import { THEME_LABELS } from "@/lib/theme";
@@ -28,6 +28,9 @@ interface HeaderProps {
   /** Ambient background field — the shader loads in after a pointer-idle cooldown. */
   shaderEnabled: boolean;
   onToggleShader: () => void;
+  /** Keeps the scramble net on screen through the pointer-idle fade instead of hiding with it. */
+  netVisibleOnIdle: boolean;
+  onToggleNetVisibleOnIdle: () => void;
   /** Focus mode — the chrome recedes while the pointer is at rest. */
   dimmed: boolean;
 }
@@ -53,6 +56,8 @@ export function Header({
   onToggleInspection,
   shaderEnabled,
   onToggleShader,
+  netVisibleOnIdle,
+  onToggleNetVisibleOnIdle,
   dimmed,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
@@ -142,6 +147,15 @@ export function Header({
               pressed={shaderEnabled}
             >
               <ShaderGlyph />
+            </IconButton>
+
+            <IconButton
+              label={`scramble image ${netVisibleOnIdle ? "visible" : "hidden"} while idle`}
+              onClick={onToggleNetVisibleOnIdle}
+              active={netVisibleOnIdle}
+              pressed={netVisibleOnIdle}
+            >
+              <ImageGlyph />
             </IconButton>
 
             {/* Twenty themes is too many for the small listbox the cube-size
