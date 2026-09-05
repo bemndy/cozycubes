@@ -8,22 +8,22 @@
 
 # About
 
-A colorful, sound-rich Rubik's Cube speedsolving timer. Customize this elegant UI for casual cubing sessions. 
+The most customizable, colorful, sound-rich Rubik's Cube speedsolving timer. Customize this elegant UI for casual cubing sessions. 
 
 **MUSIC MODE COMING SOON**
 
 # Features
 
-- millisecond-precision timer driven by `performance.now()`, hold to ready and
+- millisecond-precision timer, hold to ready and
   release to start
 - WCA-style inspection mode (off by default) with automatic +2 and DNF
   penalties at the 15s and 17s marks
 - scrambles for 2×2 through 7×7 in WCA notation, including wide moves to the
-  full legal layer depth
-- live Ao5, Ao12, best single, and all-time mean, following WCA trimmed-mean
-  and DNF rules
+  full legal layer depth (more puzzles coming soon)
+- live Ao5, Ao12, Ao100, best single, and all-time mean, following WCA trimmed-mean
+  and DNF rules 
 - per-solve +2, DNF, and delete controls that recalculate stats immediately
-- stats stored per cube size, so 4×4 times never mix into your 3×3 averages
+- stats stored per cube size, so 4×4 times never mix into your 3×3 averages (scrambles embedded)
 - persisted locally in IndexedDB — no login, no sync, nothing leaves the device
 
 # Stack
@@ -31,7 +31,7 @@ A colorful, sound-rich Rubik's Cube speedsolving timer. Customize this elegant U
 - Next.js (App Router) + TypeScript — one app, UI and any API routes together
 - Tailwind CSS + CSS variables for theming
 - IndexedDB via `idb` for solve history
-- Vitest for the scramble and stats engines, where correctness actually matters
+- Vitest for the scramble and stats engines
 
 Not yet wired up: there's no CI workflow and no deploy target configured — the
 app runs locally only for now.
@@ -50,8 +50,7 @@ initial_spec.md # original project spec and milestone plan
 ```
 
 `lib/scramble-gen.ts` and `lib/stats-engine.ts` are kept as pure, dependency-free
-modules and tested in isolation — a wrong Ao5 or an illegal scramble is the kind
-of bug users notice, so those are the two places tests are non-negotiable.
+modules and tested in isolation
 
 # Dev
 
