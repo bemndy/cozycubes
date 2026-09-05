@@ -1,7 +1,7 @@
 /**
  * Theme identity and persistence key.
  *
- * Twenty-five themes. Every visual value lives in CSS custom properties under
+ * Thirty themes. Every visual value lives in CSS custom properties under
  * `[data-theme="…"]` in globals.css — this module only knows the *names*.
  * Components read tokens and never branch on the active theme, which is what
  * lets the mono pair carry borders nothing else has without a single component
@@ -18,6 +18,8 @@
  */
 
 export const THEME_IDS = [
+  // Special — first, so it's also the top-left swatch in the picker
+  "loader",
   // Dark
   "ember",
   "nocturne",
@@ -30,29 +32,35 @@ export const THEME_IDS = [
   "royale",
   "flamingo",
   "vesper",
+  // Dark, full-strength solid colour — the same treatment as royale/flamingo
+  "emerald",
+  "crimson",
+  "violet",
+  "teal",
   // Light
-  "linen",
-  "seaglass",
   "blossom",
   "glacier",
   "orchid",
-  "citrus",
   "coral",
   "sprout",
   "peach",
-  // Light, but deliberately not white
-  "light",
-  "terra",
+  "dawn",
+  "mist",
+  "honey",
+  "lagoon",
+  // Light, full-strength solid colour — the light-mode counterpart to the
+  // dark solid quartet above
+  "gold",
+  "mint",
   // Special
-  "loader",
   "mono-dark",
   "mono-light",
 ] as const;
 
 export type ThemeId = (typeof THEME_IDS)[number];
 
-/** Kept as the default because it's the palette the app was designed against. */
-export const DEFAULT_THEME: ThemeId = "ember";
+/** The first thing a first-time visitor sees, before any preference exists. */
+export const DEFAULT_THEME: ThemeId = "loader";
 
 export const THEME_STORAGE_KEY = "cozycubes:theme";
 
@@ -69,17 +77,22 @@ export const THEME_LABELS: Record<ThemeId, string> = {
   royale: "royale",
   flamingo: "flamingo",
   vesper: "vesper",
-  linen: "linen",
-  seaglass: "seaglass",
+  emerald: "emerald",
+  crimson: "crimson",
+  violet: "violet",
+  teal: "teal",
   blossom: "blossom",
   glacier: "glacier",
   orchid: "orchid",
-  citrus: "citrus",
   coral: "coral",
   sprout: "sprout",
   peach: "peach",
-  light: "light",
-  terra: "terra",
+  dawn: "dawn",
+  mist: "mist",
+  honey: "honey",
+  lagoon: "lagoon",
+  gold: "gold",
+  mint: "mint",
   loader: "loader",
   "mono-dark": "mono dark",
   "mono-light": "mono light",

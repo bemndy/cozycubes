@@ -23,7 +23,7 @@ import { SolveBadge } from "@/components/SolveBadge";
 import { SolveHistory } from "@/components/SolveHistory";
 import { StatsRow } from "@/components/StatsRow";
 import { TimerDisplay } from "@/components/TimerDisplay";
-import { PERSONAL_BEST_MESSAGE, rollCommentary } from "@/lib/solveCommentary";
+import { PERSONAL_BEST_MESSAGE } from "@/lib/solveCommentary";
 import { bestSingle, effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 import { useMouseIdle } from "@/lib/useMouseIdle";
@@ -42,6 +42,8 @@ const NEW_SCRAMBLE_KEY = "Tab";
  */
 export default function TimerPage() {
   const [inspectionEnabled, setInspectionEnabled] = useState(false);
+  const [shaderEnabled, setShaderEnabled] = useState(true);
+  const [netVisibleOnIdle, setNetVisibleOnIdle] = useState(false);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   // Rolled once per completed solve (see the effect below), not on every
   // render — Math.random() in the render body itself would re-roll on any
@@ -84,12 +86,8 @@ export default function TimerPage() {
       };
       setLastSolve(solve);
       setSolves((prev) => [...prev, solve]);
-      // Rolled once per completed solve, right here rather than in an effect
-      // keyed on lastSolve — see randomCommentary's declaration above for why
-      // it can't be rolled during render. Whether it's actually shown is
-      // decided later, where isNewPersonalBest is computed: a real PB always
-      // wins over it.
-      setRandomCommentary(rollCommentary());
+      // Random commentary disabled for now — PB message still fires below.
+      setRandomCommentary(null);
       void addSolve(solve);
       regenerateScramble(cubeSize);
     },
@@ -232,10 +230,26 @@ export default function TimerPage() {
     // Tab moves between controls.
     if (!booted || overlayOpen) return;
 
+    // Starting is Space or the pointer (see handlePress/onTimerPointerDown).
+    // Stopping is not tied to a specific binding though: once a solve is
+    // running, any key ends it — same as the click-anywhere-to-stop pointer
+    // handler below — checked first so it takes priority over Space's own
+    // start binding and Tab's reroll.
     function onKeyDown(e: KeyboardEvent) {
-      if (e.code === TIMER_KEY) {
-        if (e.repeat) return;
+      if (phase === "solving") {
+        // preventDefault before the repeat bail-out: browsers keep firing
+        // keydown (with repeat: true) for as long as the key stays down, and
+        // skipping preventDefault on those left Space's default page-scroll
+        // running for every repeat after the first — exactly while a hold is
+        // held, which is the worst possible moment for the page to move.
         e.preventDefault();
+        if (e.repeat) return;
+        keyDown();
+        return;
+      }
+      if (e.code === TIMER_KEY) {
+        e.preventDefault();
+        if (e.repeat) return;
         handlePress();
         return;
       }
@@ -276,7 +290,7 @@ export default function TimerPage() {
       window.removeEventListener("pointerdown", onPointerDown);
       window.removeEventListener("pointerup", onPointerUp);
     };
-  }, [booted, overlayOpen, handlePress, newScramble, keyUp, phase]);
+  }, [booted, overlayOpen, handlePress, newScramble, keyUp, keyDown, phase]);
 
   /**
    * Starting is restricted to the timer's own surface; stopping is not.
@@ -336,6 +350,9 @@ export default function TimerPage() {
   // An open overlay always wins: fading the footer out from under a dialog the
   // user just opened would strand it.
   const dimmed = !overlayOpen && (pointerIdle || cubeSizeLocked);
+  // The net still hides during inspection/solving no matter what — only the
+  // idle-driven half of `dimmed` is what the toggle overrides.
+  const netDimmed = !overlayOpen && (cubeSizeLocked || (pointerIdle && !netVisibleOnIdle));
 
   return (
     // Everything the overlays sit on top of lives inside .app-content, which is
@@ -347,7 +364,7 @@ export default function TimerPage() {
         keeps the UI legible over it. Active only once booted, while the pointer
         is idle, and never during inspection or a solve.
       */}
-      <ShaderBackdrop active={booted && pointerIdle && !cubeSizeLocked} />
+      <ShaderBackdrop active={booted && pointerIdle && !cubeSizeLocked && shaderEnabled} />
       <Backdrop />
 
       {bootMounted && (
@@ -381,6 +398,10 @@ export default function TimerPage() {
           onCubeSizeChange={handleCubeSizeChange}
           inspectionEnabled={inspectionEnabled}
           onToggleInspection={() => setInspectionEnabled((v) => !v)}
+          shaderEnabled={shaderEnabled}
+          onToggleShader={() => setShaderEnabled((v) => !v)}
+          netVisibleOnIdle={netVisibleOnIdle}
+          onToggleNetVisibleOnIdle={() => setNetVisibleOnIdle((v) => !v)}
           dimmed={dimmed}
         />
 
@@ -401,30 +422,46 @@ export default function TimerPage() {
           own box. Below lg it stacks to one column, timer block first.
         */}
         <main className="page-grid min-h-screen items-stretch gap-y-12 py-24">
-          {/* min-w-0: a grid item's default min-width is its content's
-              min-content size, not 0, even though the track itself is
-              minmax(0, 1fr) — without this override the item refuses to
-              shrink below the net's natural width and pushes the page wider
-              than the viewport on the desktop widths where the flank is
-              narrowest.
+          {/*
+            Below lg this wrapper is a real box: a generously padded column
+            holding the net and the scramble/timer/stats block together, sized
+            to the viewport so the two stay on screen as a pair without the
+            solve history creeping up into view alongside them — that's what
+            forces the scroll down to reach it (solve history is its own
+            page eventually; for now, scrolling is the placeholder). The
+            padding here is fixed by breakpoint alone, never by
+            `netVisibleOnIdle` — the net's opacity-only hide already leaves
+            its box (and this wrapper's height) untouched either way.
 
-              The translate is capped at 1.25rem/20px, not the 2.5rem it used
-              to be: .page-grid only ever has 1.5rem/24px of padding outside
-              the grid itself, so anything past ~24px pushes the aside past
-              the true viewport edge and forces a horizontal scrollbar on
-              exactly the desktop widths (1024–1503px) where the flank is
-              tight. 20px leaves a hair of margin rather than sitting flush
-              on the boundary. */}
-          <aside
-            className="order-2 grid h-52 min-w-0 place-items-center self-center transition-opacity duration-500 lg:order-1 lg:-translate-x-5"
-            style={{ opacity: dimmed ? 0 : 1 }}
-            inert={dimmed}
-          >
-            <CubeNet cubeSize={cubeSize} scramble={scramble} />
-          </aside>
+            At lg and up it turns into `contents` — no box of its own — so
+            the net and the center block rejoin .page-grid as direct items
+            again and the original 3-column layout takes over unchanged.
+          */}
+          <div className="flex min-h-[calc(100svh-9rem)] flex-col gap-12 py-8 lg:contents lg:min-h-0 lg:gap-0 lg:py-0">
+            {/* min-w-0: a grid item's default min-width is its content's
+                min-content size, not 0, even though the track itself is
+                minmax(0, 1fr) — without this override the item refuses to
+                shrink below the net's natural width and pushes the page wider
+                than the viewport on the desktop widths where the flank is
+                narrowest.
 
-          <div className="order-1 flex h-full flex-col items-center justify-center lg:order-2">
-            {/*
+                The translate is capped at 1.25rem/20px, not the 2.5rem it used
+                to be: .page-grid only ever has 1.5rem/24px of padding outside
+                the grid itself, so anything past ~24px pushes the aside past
+                the true viewport edge and forces a horizontal scrollbar on
+                exactly the desktop widths (1024–1503px) where the flank is
+                tight. 20px leaves a hair of margin rather than sitting flush
+                on the boundary. */}
+            <aside
+              className="order-2 grid h-52 min-w-0 shrink-0 place-items-center self-center transition-opacity duration-500 lg:order-1 lg:-translate-x-5"
+              style={{ opacity: netDimmed ? 0 : 1 }}
+              inert={netDimmed}
+            >
+              <CubeNet cubeSize={cubeSize} scramble={scramble} />
+            </aside>
+
+            <div className="order-1 flex h-full flex-1 flex-col items-center justify-center lg:order-2">
+              {/*
               This block and its mirror below the digits both take flex-1, so
               they always split whatever height the digits leave, equally. Two
               things fall out of that: the scramble and the stats push toward
@@ -482,6 +519,7 @@ export default function TimerPage() {
               </div>
               <TimerHint hidden={dimmed} />
               <StatsRow solves={solves} />
+            </div>
             </div>
           </div>
 

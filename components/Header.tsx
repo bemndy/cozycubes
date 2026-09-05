@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dropdown, type DropdownOption } from "./ui/Dropdown";
 import { IconButton } from "./ui/IconButton";
-import { InspectionGlyph } from "./ui/Glyphs";
+import { ImageGlyph, InspectionGlyph, ShaderGlyph } from "./ui/Glyphs";
 import { ThemePicker } from "./ThemePicker";
 import { useTheme } from "@/lib/useTheme";
 import { THEME_LABELS } from "@/lib/theme";
@@ -25,6 +25,12 @@ interface HeaderProps {
   onCubeSizeChange: (size: SupportedCubeSize) => void;
   inspectionEnabled: boolean;
   onToggleInspection: () => void;
+  /** Ambient background field — the shader loads in after a pointer-idle cooldown. */
+  shaderEnabled: boolean;
+  onToggleShader: () => void;
+  /** Keeps the scramble net on screen through the pointer-idle fade instead of hiding with it. */
+  netVisibleOnIdle: boolean;
+  onToggleNetVisibleOnIdle: () => void;
   /** Focus mode — the chrome recedes while the pointer is at rest. */
   dimmed: boolean;
 }
@@ -48,6 +54,10 @@ export function Header({
   onCubeSizeChange,
   inspectionEnabled,
   onToggleInspection,
+  shaderEnabled,
+  onToggleShader,
+  netVisibleOnIdle,
+  onToggleNetVisibleOnIdle,
   dimmed,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
@@ -73,7 +83,7 @@ export function Header({
           {/* Not a link. The timer is the only page, so a wordmark pointing at
               "/" would navigate to itself, remounting the tree and discarding
               the session's in-memory solves and timer phase. */}
-          <div className="group flex items-center gap-3 text-[23px] tracking-tight opacity-85 transition-opacity duration-200 hover:opacity-100">
+          <div className="group flex items-center gap-3 text-[22px] tracking-tight opacity-85 transition-opacity duration-200 hover:opacity-100">
             {/*
               Both marks are always in the DOM; CSS shows whichever suits the
               active theme's background (see globals.css). Plain <img> rather
@@ -87,7 +97,7 @@ export function Header({
               alt=""
               width={40}
               height={40}
-              className="logo-for-dark size-10 transition-transform duration-300 group-hover:-translate-y-0.5"
+              className="logo-for-dark size-9 transition-transform duration-300 group-hover:-translate-y-0.5"
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -95,17 +105,17 @@ export function Header({
               alt=""
               width={40}
               height={40}
-              className="logo-for-light size-10 transition-transform duration-300 group-hover:-translate-y-0.5"
+              className="logo-for-light size-9 transition-transform duration-300 group-hover:-translate-y-0.5"
             />
             {/* A text line-box is taller than its glyphs and, depending on the
                 font's own vertical metrics, not evenly split above/below the
                 cap-height — so items-center'ing a span next to a fixed-height
                 image doesn't actually line up their visible content, only
                 their boxes. Giving the span the same fixed height as the logo
-                (size-10 = 2.5rem) and centering *within* that box makes both
-                center against the same 40px reference instead. */}
+                (size-9 = 2.25rem) and centering *within* that box makes both
+                center against the same 36px reference instead. */}
             <span
-              className="flex h-10 items-center leading-none"
+              className="flex h-9 items-center leading-none"
               style={{ color: "var(--ink)" }}
             >
               CozyCubes
@@ -130,6 +140,24 @@ export function Header({
               <InspectionGlyph />
             </IconButton>
 
+            <IconButton
+              label={`background ${shaderEnabled ? "on" : "off"}`}
+              onClick={onToggleShader}
+              active={shaderEnabled}
+              pressed={shaderEnabled}
+            >
+              <ShaderGlyph />
+            </IconButton>
+
+            <IconButton
+              label={`scramble image ${netVisibleOnIdle ? "visible" : "hidden"} while idle`}
+              onClick={onToggleNetVisibleOnIdle}
+              active={netVisibleOnIdle}
+              pressed={netVisibleOnIdle}
+            >
+              <ImageGlyph />
+            </IconButton>
+
             {/* Twenty themes is too many for the small listbox the cube-size
                 control uses — a fullscreen grid with a live-colour swatch per
                 theme (ThemePicker) makes picking one a glance instead of a
@@ -139,14 +167,14 @@ export function Header({
               onClick={() => setThemePickerOpen(true)}
               aria-haspopup="dialog"
               aria-expanded={themePickerOpen}
-              className="flex items-center gap-1.5 py-1 font-mono text-[16px] opacity-80 transition-opacity hover:opacity-100"
+              className="flex items-center gap-1.5 py-1 font-mono text-[15px] opacity-80 transition-opacity hover:opacity-100"
               style={{ color: "var(--ink)" }}
             >
               {THEME_LABELS[theme]}
               <svg
                 aria-hidden="true"
                 viewBox="0 0 10 6"
-                className="size-2.5"
+                className="size-2"
                 style={{ color: "var(--ink-dimmer)" }}
               >
                 <path

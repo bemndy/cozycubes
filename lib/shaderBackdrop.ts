@@ -67,6 +67,9 @@ uniform vec3 u_bg;
 uniform vec3 u_a;
 uniform vec3 u_b;
 uniform vec3 u_c;
+uniform float u_falloffInner;
+uniform float u_falloffOuter;
+uniform float u_intensity;
 
 varying vec2 v_uv;
 
@@ -88,28 +91,49 @@ void main() {
   float n2 = snoise(p * 1.9 - u_time * 0.045 + 11.7);
   float n3 = snoise(p * 0.5 + u_time * 0.022 - 5.3);
 
-  // Three octaves, three palette colours. The third runs at the lowest
-  // frequency so it reads as a slow wash under the other two rather than as a
-  // third competing band.
+  // Three octaves, three palette colours, each scaled by u_intensity (see
+  // --shader-intensity). The third runs at the lowest frequency so it reads
+  // as a slow wash under the other two rather than as a third competing band.
   vec3 color = u_bg;
-  color = mix(color, u_a, smoothstep(-0.6, 0.9, n1) * 0.55);
-  color = mix(color, u_b, smoothstep(-0.4, 1.0, n2) * 0.40);
-  color = mix(color, u_c, smoothstep(-0.2, 1.1, n3) * 0.30);
+  color = mix(color, u_a, smoothstep(-0.6, 0.9, n1) * 0.55 * u_intensity);
+  color = mix(color, u_b, smoothstep(-0.4, 1.0, n2) * 0.40 * u_intensity);
+  color = mix(color, u_c, smoothstep(-0.2, 1.1, n3) * 0.30 * u_intensity);
 
   // Radial falloff to the base colour, so the field reads as a glow sitting on
-  // the surface rather than as a textured rectangle.
+  // the surface rather than as a textured rectangle. Both this window and
+  // u_intensity are per-theme (see --shader-falloff-inner/-outer and
+  // --shader-intensity): a palette whose three mix colours all sit close in
+  // value and close to the UI's own ink colour — the mono pair's greys,
+  // dark-on-light or light-on-dark same as the text sitting on top of it —
+  // reads as a single dim blob under the default window, and turning
+  // intensity down is what keeps a wider, more spread-out window from
+  // fighting the text's own legibility once it's covering more of the screen.
   float d = distance(v_uv, vec2(0.5, 0.45));
-  color = mix(color, u_bg, smoothstep(0.25, 0.85, d));
+  color = mix(color, u_bg, smoothstep(u_falloffInner, u_falloffOuter, d));
 
   gl_FragColor = vec4(color, 1.0);
 }
 `;
 
-/** "#rrggbb" -> [r, g, b] in 0..1. Falls back to black on anything unexpected. */
+/**
+ * "#rrggbb" or "#rgb" -> [r, g, b] in 0..1. Falls back to black on anything
+ * unexpected.
+ *
+ * The 3-digit form isn't just a hypothetical input to guard against: reading
+ * a theme's own "#ffffff"/"#000000" back via getComputedStyle, Chromium
+ * serializes it to the shortest equivalent form, "#fff"/"#000", whenever
+ * every channel's two digits repeat — which is exactly the mono pair's
+ * --shader-bg and one of --p1..--p3. A 6-digit-only regex silently failed to
+ * match those, fell back to black, and for mono-light's white background
+ * that fallback was the *wrong* colour — the shader's base colour and its
+ * fade-to-background were both black instead of white, which is what actually
+ * made the effect read as a dark blob rather than a glow fading to the page.
+ */
 export function hexToRgb(hex: string): [number, number, number] {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
   if (!m) return [0, 0, 0];
-  const n = parseInt(m[1], 16);
+  const digits = m[1].length === 3 ? [...m[1]].map((c) => c + c).join("") : m[1];
+  const n = parseInt(digits, 16);
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
@@ -129,7 +153,11 @@ function compile(gl: WebGLRenderingContext, type: number, src: string) {
 export interface ShaderHandle {
   render: (
     timeSec: number,
-    colors: { bg: string; a: string; b: string; c: string }
+    colors: { bg: string; a: string; b: string; c: string },
+    /** Per-theme; see --shader-falloff-inner/-outer. */
+    falloff: { inner: number; outer: number },
+    /** Per-theme; see --shader-intensity. */
+    intensity: number
   ) => void;
   resize: (cssWidth: number, cssHeight: number) => void;
   dispose: () => void;
@@ -177,6 +205,9 @@ export function createShaderBackdrop(canvas: HTMLCanvasElement): ShaderHandle | 
   const uA = gl.getUniformLocation(program, "u_a");
   const uB = gl.getUniformLocation(program, "u_b");
   const uC = gl.getUniformLocation(program, "u_c");
+  const uFalloffInner = gl.getUniformLocation(program, "u_falloffInner");
+  const uFalloffOuter = gl.getUniformLocation(program, "u_falloffOuter");
+  const uIntensity = gl.getUniformLocation(program, "u_intensity");
 
   /**
    * Rendered at half resolution. The field is smooth noise with no fine detail,
@@ -190,7 +221,7 @@ export function createShaderBackdrop(canvas: HTMLCanvasElement): ShaderHandle | 
       canvas.height = Math.max(1, Math.floor(cssHeight * SCALE));
       gl.viewport(0, 0, canvas.width, canvas.height);
     },
-    render(timeSec, colors) {
+    render(timeSec, colors, falloff, intensity) {
       gl.useProgram(program);
       gl.uniform1f(uTime, timeSec);
       gl.uniform2f(uRes, canvas.width, canvas.height);
@@ -198,6 +229,9 @@ export function createShaderBackdrop(canvas: HTMLCanvasElement): ShaderHandle | 
       gl.uniform3fv(uA, hexToRgb(colors.a));
       gl.uniform3fv(uB, hexToRgb(colors.b));
       gl.uniform3fv(uC, hexToRgb(colors.c));
+      gl.uniform1f(uFalloffInner, falloff.inner);
+      gl.uniform1f(uFalloffOuter, falloff.outer);
+      gl.uniform1f(uIntensity, intensity);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     },
     dispose() {

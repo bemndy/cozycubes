@@ -5,7 +5,7 @@
  * read like someone half-watching over your shoulder, not a coaching tool.
  */
 
-export const PERSONAL_BEST_MESSAGE = "🏆 NEW PERSONAL BEST!";
+export const PERSONAL_BEST_MESSAGE = "NEW PERSONAL BEST!";
 
 /**
  * Deliberately not all about the result — half of these don't even mention

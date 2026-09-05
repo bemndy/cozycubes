@@ -142,10 +142,10 @@ function SessionReadout({ solveCount }: { solveCount: number }) {
   const ss = String(elapsedSec % 60).padStart(2, "0");
 
   return (
-    <div className="flex shrink-0 items-center gap-3 font-mono text-[13px] lg:text-[15px]">
+    <div className="flex shrink-0 items-center gap-3 font-mono text-[12px] lg:text-[14px]">
       <span
         aria-hidden="true"
-        className="size-1.5 shrink-0 rounded-full"
+        className="size-1 shrink-0 rounded-full"
         style={{ background: "var(--accent)" }}
       />
       {/* tabular-nums keeps the counter from reflowing as digits change. */}

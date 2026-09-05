@@ -19,7 +19,7 @@ function Svg({ children, className = "" }: GlyphProps & { children: React.ReactN
       strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={`size-[19px] shrink-0 ${className}`}
+      className={`size-[17px] shrink-0 ${className}`}
     >
       {children}
     </svg>
@@ -101,6 +101,27 @@ export function SecurityGlyph(props: GlyphProps) {
     <Svg {...props}>
       <path d="M8 1.75 13.25 4v4c0 3.25-2.25 5.5-5.25 6.25C5 13.5 2.75 11.25 2.75 8V4z" />
       <path d="M5.75 8 7.25 9.5l3-3" />
+    </Svg>
+  );
+}
+
+/** Concentric waves — ambient shader toggle. */
+export function ShaderGlyph(props: GlyphProps) {
+  return (
+    <Svg {...props}>
+      <path d="M1.75 5.5c1.25-1.25 2.75-1.25 4 0s2.75 1.25 4 0 2.75-1.25 4 0" />
+      <path d="M1.75 9.5c1.25-1.25 2.75-1.25 4 0s2.75 1.25 4 0 2.75-1.25 4 0" />
+    </Svg>
+  );
+}
+
+/** Framed landscape — scramble-image (net) visibility toggle. */
+export function ImageGlyph(props: GlyphProps) {
+  return (
+    <Svg {...props}>
+      <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5" />
+      <circle cx="5.5" cy="6" r="1.15" />
+      <path d="M2.5 11.25 6.25 8l2 2 2.5-3 2.75 3.25" />
     </Svg>
   );
 }
