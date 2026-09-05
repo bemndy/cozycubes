@@ -166,7 +166,7 @@ export function Dropdown<T extends string | number>({
             openList();
           }
         }}
-        className={`flex items-center gap-1.5 py-1 font-mono text-[16px] transition-opacity ${
+        className={`flex items-center gap-1.5 py-1 font-mono text-[15px] transition-opacity ${
           disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer opacity-80 hover:opacity-100"
         }`}
         style={{ color: "var(--ink)" }}
@@ -175,7 +175,7 @@ export function Dropdown<T extends string | number>({
         <svg
           aria-hidden="true"
           viewBox="0 0 10 6"
-          className="size-2.5 transition-transform duration-200"
+          className="size-2 transition-transform duration-200"
           style={{
             color: "var(--ink-dimmer)",
             transform: open ? "rotate(180deg)" : undefined,
@@ -218,7 +218,7 @@ export function Dropdown<T extends string | number>({
                     aria-selected={isSelected}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => commit(index)}
-                    className="flex cursor-pointer items-center justify-between gap-3 rounded-[6px] px-3 py-2 font-mono text-[16px]"
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-[6px] px-3 py-2 font-mono text-[15px]"
                     style={{
                       background: isActive ? "var(--hover-tint)" : "transparent",
                       color: isSelected ? "var(--ink)" : "var(--ink-dim)",

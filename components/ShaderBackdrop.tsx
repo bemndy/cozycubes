@@ -67,18 +67,34 @@ export function ShaderBackdrop({ active }: { active: boolean }) {
       b: styles.getPropertyValue("--p2"),
       c: styles.getPropertyValue("--p3"),
     };
+    // Per-theme radial-fade window (see globals.css) — most themes don't set
+    // one, so the fallback lives here in JS rather than as a "default" rule
+    // in globals.css's DERIVED block: that block's `:root, [data-theme]`
+    // selector has the same specificity as every per-theme `[data-theme="…"]`
+    // rule, and being later in the file, a hard default there would win the
+    // cascade and silently clobber a theme's own override (which is exactly
+    // what happened to the mono pair's --edge, fixed alongside this).
+    const rawInner = styles.getPropertyValue("--shader-falloff-inner");
+    const rawOuter = styles.getPropertyValue("--shader-falloff-outer");
+    const falloff = {
+      inner: rawInner ? parseFloat(rawInner) : 0.25,
+      outer: rawOuter ? parseFloat(rawOuter) : 0.85,
+    };
+    // Same reasoning, same fallback location — see --shader-intensity.
+    const rawIntensity = styles.getPropertyValue("--shader-intensity");
+    const intensity = rawIntensity ? parseFloat(rawIntensity) : 1;
 
     // Reduced motion still gets the field, held on one frame — the colour is
     // the point, the drift is the flourish.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      handle.render(0, palette);
+      handle.render(0, palette, falloff, intensity);
       return;
     }
 
     let frame = 0;
     const start = performance.now();
     const loop = (now: number) => {
-      handle.render((now - start) / 1000, palette);
+      handle.render((now - start) / 1000, palette, falloff, intensity);
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
