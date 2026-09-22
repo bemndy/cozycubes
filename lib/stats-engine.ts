@@ -8,6 +8,14 @@ export interface Solve {
   penalty: Penalty;
   timestamp: number;
   comment?: string;
+  /**
+   * The scramble this time was set on, space-separated.
+   *
+   * Optional because solves recorded before scrambles were stored have no
+   * scramble to recover — the moves were regenerated and discarded. Anything
+   * reading this has to handle the gap rather than assume it is populated.
+   */
+  scramble?: string;
 }
 
 /** Time after penalty is applied. DNF has no numeric time. */
