@@ -61,8 +61,15 @@ const MAX_RENDERED = 250;
  */
 export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistoryProps) {
   const [expanded, setExpanded] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const baseline = useMemo(() => tierBaselineMs(solves), [solves]);
+
+  function handleCopy(id: string, label: string) {
+    navigator.clipboard.writeText(label).catch(() => {});
+    setCopiedId(id);
+    setTimeout(() => setCopiedId((current) => (current === id ? null : current)), 1200);
+  }
 
   // Newest first, bounded, then grouped into rows of PER_ROW.
   const rows = useMemo(() => {
@@ -172,9 +179,23 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                       </button>
                       <button
                         type="button"
+                        onClick={() =>
+                          handleCopy(
+                            solve.id,
+                            effective === null ? "DNF" : formatTimeMs(effective)
+                          )
+                        }
+                        aria-label={`Copy solve ${index} time`}
+                        className="text-left transition-opacity hover:opacity-100"
+                        style={{ color: "var(--ink-dimmer)" }}
+                      >
+                        {copiedId === solve.id ? "copied" : "copy"}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => onDelete(solve.id)}
                         aria-label={`Delete solve ${index}`}
-                        className="col-span-2 text-left transition-opacity hover:opacity-100"
+                        className="text-left transition-opacity hover:opacity-100"
                         style={{ color: "var(--ink-dimmer)" }}
                       >
                         del

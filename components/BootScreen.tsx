@@ -41,7 +41,13 @@ export function BootScreen({ ready, booted, onBoot }: BootScreenProps) {
 
   useEffect(() => {
     if (!ready || booted) return;
-    const onKeyDown = () => onBoot();
+    // "press any key" is exactly the reflex a speedcuber has for Space, and an
+    // unprevented Space here scrolls the page by its default amount right as
+    // the timer appears — preventDefault regardless of which key it was.
+    const onKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      onBoot();
+    };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [ready, booted, onBoot]);

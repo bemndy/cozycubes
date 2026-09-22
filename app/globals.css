@@ -18,7 +18,7 @@
 /* ---------------------------------------------------------------------------
    Themes
    ---------------------------------------------------------------------------
-   Twenty-five of them. Each defines only what is genuinely its own: a surface, an ink
+   Thirty of them. Each defines only what is genuinely its own: a surface, an ink
    colour, and a five-colour palette (--p1..--p5). Everything else — the ink
    ramp, hover tints, solve-quality colours, the shader's mixing colours, the
    scrim and vignette — is derived from those once, in the DERIVED block below.
@@ -95,80 +95,24 @@
   --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
-/* Warm white with terracotta and peach. */
-[data-theme="linen"] {
-  color-scheme: light;
-
-  --surface: #fdf8f4;
-  --ink-rgb: 38, 30, 26;
-
-  --p1: #e08d6f;
-  --p2: #f0b49a;
-  --p3: #d9a05b;
-  --p4: #c96f7a;
-  --p5: #a8836b;
-
-  --shader-bg: #fdf8f4;
-  --logo-on-light: block;
-  --cube-ink: #c9765a;
-  --overlay-shadow: 0 12px 32px -12px rgba(60, 40, 30, 0.22);
-}
-
-/* Cool white with mint, aqua and a deeper sea green. */
-[data-theme="seaglass"] {
-  color-scheme: light;
-
-  --surface: #f4faf8;
-  --ink-rgb: 20, 38, 36;
-
-  --p1: #5fb8a6;
-  --p2: #92d5c4;
-  --p3: #7fc3d9;
-  --p4: #b6dfc9;
-  --p5: #4a8f92;
-
-  --shader-bg: #f4faf8;
-  --logo-on-light: block;
-  --cube-ink: #3f9b89;
-  --overlay-shadow: 0 12px 32px -12px rgba(20, 50, 48, 0.2);
-}
-
-/* White with a pink cast — rose, lilac and a warm apricot. */
+/* Vivid pink, not just a white with a cast — rose, lilac and a warm apricot
+   pop against a genuinely pink surface rather than tinting a near-white one. */
 [data-theme="blossom"] {
   color-scheme: light;
 
-  --surface: #fdf5f9;
-  --ink-rgb: 42, 26, 38;
+  --surface: #f5a8c9;
+  --ink-rgb: 46, 15, 32;
 
-  --p1: #e58bb0;
-  --p2: #f3b6cf;
-  --p3: #bfa3e8;
-  --p4: #f7cfa0;
-  --p5: #b0688f;
+  --p1: #d94f85;
+  --p2: #ffd166;
+  --p3: #9b6bd9;
+  --p4: #ff8fc7;
+  --p5: #7a2f52;
 
-  --shader-bg: #fdf5f9;
+  --shader-bg: #f5a8c9;
   --logo-on-light: block;
-  --cube-ink: #d1699a;
-  --overlay-shadow: 0 12px 32px -12px rgba(60, 30, 50, 0.2);
-}
-
-/* The light theme that isn't white: parchment, clay, ochre and olive. */
-[data-theme="light"] {
-  color-scheme: light;
-
-  --surface: #f2e9d8;
-  --ink-rgb: 48, 38, 28;
-
-  --p1: #c4703f;
-  --p2: #d9a05b;
-  --p3: #8a9a5b;
-  --p4: #b5523f;
-  --p5: #6b5b45;
-
-  --shader-bg: #f2e9d8;
-  --logo-on-light: block;
-  --cube-ink: #8a5a3c;
-  --overlay-shadow: 0 12px 32px -12px rgba(70, 55, 35, 0.24);
+  --cube-ink: #d94f85;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 10, 40, 0.28);
 }
 
 /* The wordmark's pinks and peaches over the loader's hot pink. */
@@ -237,6 +181,17 @@
 
   --edge: #000000;
   --edge-width: 2px;
+
+  /* Modestly wider than the default 0.25/0.85 (see the shader's own comment)
+     so the grain spreads further across the screen instead of sitting in one
+     tight spot, plus a much lower --shader-intensity: this is the one theme
+     where the shader's own colours (black/grey) and the UI's ink colour
+     (also black) are the same family, so anything past a light touch reads
+     as the noise fighting the timer digits for the same dark pixels rather
+     than sitting behind them. */
+  --shader-falloff-inner: 0.35;
+  --shader-falloff-outer: 1.05;
+  --shader-intensity: 0.35;
 }
 
 /* Near-black violet with lilac, orchid pink and cool sky blue. */
@@ -277,61 +232,43 @@
   --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
-/* Icy pale teal-white — a light theme that leans blue rather than warm cream. */
+/* A genuinely icy blue, not a white with a cast — leans much further into the
+   cold teal-blue than the pale version this replaced. */
 [data-theme="glacier"] {
   color-scheme: light;
 
-  --surface: #eef5f7;
-  --ink-rgb: 20, 35, 40;
+  --surface: #6fc9e0;
+  --ink-rgb: 8, 28, 40;
 
-  --p1: #4fb0c9;
-  --p2: #8fd3e8;
-  --p3: #b8e0d2;
-  --p4: #2f7a94;
-  --p5: #6f9cae;
+  --p1: #1f7a94;
+  --p2: #bdf0fa;
+  --p3: #2f9cae;
+  --p4: #0d4a5c;
+  --p5: #8fd3e8;
 
-  --shader-bg: #eef5f7;
+  --shader-bg: #6fc9e0;
   --logo-on-light: block;
-  --cube-ink: #2f95b3;
-  --overlay-shadow: 0 12px 32px -12px rgba(15, 45, 55, 0.2);
+  --cube-ink: #1f7a94;
+  --overlay-shadow: 0 12px 32px -12px rgba(5, 35, 45, 0.3);
 }
 
-/* Warm clay and sand — a light theme with a dusty terracotta background. */
-[data-theme="terra"] {
-  color-scheme: light;
-
-  --surface: #f0e3d3;
-  --ink-rgb: 45, 32, 20;
-
-  --p1: #b5651d;
-  --p2: #d98c4a;
-  --p3: #8a9a5b;
-  --p4: #c96f4a;
-  --p5: #6b4a2f;
-
-  --shader-bg: #f0e3d3;
-  --logo-on-light: block;
-  --cube-ink: #b5651d;
-  --overlay-shadow: 0 12px 32px -12px rgba(70, 45, 25, 0.24);
-}
-
-/* Pale lavender background — a light theme that leans cool purple. */
+/* A genuinely lavender-purple background, not a white with a cast. */
 [data-theme="orchid"] {
   color-scheme: light;
 
-  --surface: #f5eefc;
-  --ink-rgb: 40, 28, 50;
+  --surface: #b98cf0;
+  --ink-rgb: 26, 12, 42;
 
-  --p1: #9b6bd9;
-  --p2: #c9a0ec;
-  --p3: #e8a8d8;
-  --p4: #7a4fb0;
-  --p5: #a887c9;
+  --p1: #6b2fa8;
+  --p2: #f0d9ff;
+  --p3: #d94fc4;
+  --p4: #3d1863;
+  --p5: #e0b8fc;
 
-  --shader-bg: #f5eefc;
+  --shader-bg: #b98cf0;
   --logo-on-light: block;
-  --cube-ink: #9b6bd9;
-  --overlay-shadow: 0 12px 32px -12px rgba(50, 30, 70, 0.2);
+  --cube-ink: #6b2fa8;
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 5, 40, 0.32);
 }
 
 /* Near-black forest green under moss, sage and lichen. */
@@ -353,25 +290,6 @@
   --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
-/* Pale butter-yellow background — a light theme with citrus and olive. */
-[data-theme="citrus"] {
-  color-scheme: light;
-
-  --surface: #fbf6e3;
-  --ink-rgb: 45, 38, 10;
-
-  --p1: #e0a832;
-  --p2: #f0c95f;
-  --p3: #8a9a3f;
-  --p4: #d9862f;
-  --p5: #a88a2f;
-
-  --shader-bg: #fbf6e3;
-  --logo-on-light: block;
-  --cube-ink: #d9862f;
-  --overlay-shadow: 0 12px 32px -12px rgba(60, 50, 15, 0.2);
-}
-
 /* Near-black blue-grey — a cooler, desaturated counterpart to nocturne. */
 [data-theme="slate"] {
   color-scheme: dark;
@@ -391,23 +309,24 @@
   --overlay-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.85);
 }
 
-/* Pale coral-pink background — a light theme distinct from blossom's cooler pink. */
+/* A genuinely saturated coral background, not a white with a cast — distinct
+   from blossom's cooler, more purple-leaning pink. */
 [data-theme="coral"] {
   color-scheme: light;
 
-  --surface: #fdece6;
-  --ink-rgb: 50, 25, 20;
+  --surface: #f4795a;
+  --ink-rgb: 40, 10, 5;
 
-  --p1: #e8735a;
-  --p2: #f2a08a;
-  --p3: #d9917a;
-  --p4: #c9553f;
-  --p5: #a8654f;
+  --p1: #b8331a;
+  --p2: #ffd9c2;
+  --p3: #ff9d7a;
+  --p4: #6b1a0a;
+  --p5: #ffb89c;
 
-  --shader-bg: #fdece6;
+  --shader-bg: #f4795a;
   --logo-on-light: block;
-  --cube-ink: #e8735a;
-  --overlay-shadow: 0 12px 32px -12px rgba(60, 25, 15, 0.22);
+  --cube-ink: #b8331a;
+  --overlay-shadow: 0 12px 32px -12px rgba(50, 10, 0, 0.3);
 }
 
 /* Near-black plum and wine under muted rose. */
@@ -528,6 +447,205 @@
   --overlay-shadow: 0 12px 32px -12px rgba(70, 40, 10, 0.22);
 }
 
+/* Pale sunrise — coral, gold, lavender and a sliver of early sky-blue. */
+[data-theme="dawn"] {
+  color-scheme: light;
+
+  --surface: #fde8dc;
+  --ink-rgb: 50, 30, 25;
+
+  --p1: #f2836b;
+  --p2: #f7c873;
+  --p3: #a78bd9;
+  --p4: #6b9ac4;
+  --p5: #c2694f;
+
+  --shader-bg: #fde8dc;
+  --logo-on-light: block;
+  --cube-ink: #f2836b;
+  --overlay-shadow: 0 12px 32px -12px rgba(70, 40, 30, 0.22);
+}
+
+/* Pale fog — desaturated blue-grey with a muted sage undertone, the one
+   light theme that leans neutral rather than a saturated hue. */
+[data-theme="mist"] {
+  color-scheme: light;
+
+  --surface: #e6edf0;
+  --ink-rgb: 28, 38, 42;
+
+  --p1: #7fa3b0;
+  --p2: #a8c2c9;
+  --p3: #8fae8f;
+  --p4: #5f7d8a;
+  --p5: #c9d4d6;
+
+  --shader-bg: #e6edf0;
+  --logo-on-light: block;
+  --cube-ink: #5f7d8a;
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 35, 40, 0.18);
+}
+
+/* Warm cream — honey gold, amber and caramel over a cream, not orange, base. */
+[data-theme="honey"] {
+  color-scheme: light;
+
+  --surface: #f7ecd2;
+  --ink-rgb: 55, 40, 15;
+
+  --p1: #d9a441;
+  --p2: #b5762f;
+  --p3: #e8c76f;
+  --p4: #8a5a2a;
+  --p5: #c98a4f;
+
+  --shader-bg: #f7ecd2;
+  --logo-on-light: block;
+  --cube-ink: #d9a441;
+  --overlay-shadow: 0 12px 32px -12px rgba(60, 40, 10, 0.22);
+}
+
+/* Pale seafoam — turquoise and mint with a sandy coral accent, the one
+   spot of warmth breaking up an otherwise cool palette. */
+[data-theme="lagoon"] {
+  color-scheme: light;
+
+  --surface: #dff5ee;
+  --ink-rgb: 15, 45, 40;
+
+  --p1: #3fae9e;
+  --p2: #7fd9c4;
+  --p3: #f2a878;
+  --p4: #2a7a6e;
+  --p5: #b8e8d9;
+
+  --shader-bg: #dff5ee;
+  --logo-on-light: block;
+  --cube-ink: #3fae9e;
+  --overlay-shadow: 0 12px 32px -12px rgba(10, 40, 35, 0.2);
+}
+
+/* ---------------------------------------------------------------------------
+   The solid set — same treatment as royale and flamingo: one saturated hue
+   worn as the whole surface, not a background it sits on. Aggressive by
+   design, aimed at a jewel-tone, high-end feel rather than a soft pastel one.
+   Four dark, then gold and mint carry the same idea into a light surface.
+--------------------------------------------------------------------------- */
+
+/* Deep emerald, full strength. */
+[data-theme="emerald"] {
+  color-scheme: dark;
+
+  --surface: #046a38;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #6ee7b7;
+  --p2: #a7f3d0;
+  --p3: #10b981;
+  --p4: #d1fae5;
+  --p5: #013d20;
+
+  --shader-bg: #046a38;
+  --logo-on-dark: block;
+  --cube-ink: #6ee7b7;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 20, 10, 0.85);
+}
+
+/* Deep crimson, full strength. */
+[data-theme="crimson"] {
+  color-scheme: dark;
+
+  --surface: #a6192e;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #ff9caa;
+  --p2: #ffd2d9;
+  --p3: #ff5567;
+  --p4: #ffc0cb;
+  --p5: #5c0f1a;
+
+  --shader-bg: #a6192e;
+  --logo-on-dark: block;
+  --cube-ink: #ff9caa;
+  --overlay-shadow: 0 12px 32px -12px rgba(20, 0, 5, 0.85);
+}
+
+/* Deep violet, full strength. */
+[data-theme="violet"] {
+  color-scheme: dark;
+
+  --surface: #7c3aed;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #d8b4fe;
+  --p2: #f3e8ff;
+  --p3: #c026d3;
+  --p4: #e9d5ff;
+  --p5: #4c1d95;
+
+  --shader-bg: #7c3aed;
+  --logo-on-dark: block;
+  --cube-ink: #d8b4fe;
+  --overlay-shadow: 0 12px 32px -12px rgba(15, 0, 30, 0.85);
+}
+
+/* Deep teal, full strength. */
+[data-theme="teal"] {
+  color-scheme: dark;
+
+  --surface: #0e7490;
+  --ink-rgb: 255, 255, 255;
+
+  --p1: #67e8f9;
+  --p2: #cffafe;
+  --p3: #06b6d4;
+  --p4: #a5f3fc;
+  --p5: #164e63;
+
+  --shader-bg: #0e7490;
+  --logo-on-dark: block;
+  --cube-ink: #67e8f9;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 15, 20, 0.85);
+}
+
+/* Vivid gold, full strength. */
+[data-theme="gold"] {
+  color-scheme: light;
+
+  --surface: #f5c400;
+  --ink-rgb: 35, 25, 0;
+
+  --p1: #a86b00;
+  --p2: #fff2b8;
+  --p3: #ff8f00;
+  --p4: #7a4a00;
+  --p5: #ffe066;
+
+  --shader-bg: #f5c400;
+  --logo-on-light: block;
+  --cube-ink: #a86b00;
+  --overlay-shadow: 0 12px 32px -12px rgba(40, 25, 0, 0.28);
+}
+
+/* Vivid mint, full strength. */
+[data-theme="mint"] {
+  color-scheme: light;
+
+  --surface: #00e08f;
+  --ink-rgb: 0, 30, 20;
+
+  --p1: #00875a;
+  --p2: #d9fff0;
+  --p3: #00c2ff;
+  --p4: #004d33;
+  --p5: #7dffce;
+
+  --shader-bg: #00e08f;
+  --logo-on-light: block;
+  --cube-ink: #00875a;
+  --overlay-shadow: 0 12px 32px -12px rgba(0, 30, 20, 0.28);
+}
+
 /* ---------------------------------------------------------------------------
    DERIVED — written once, resolved per theme.
 
@@ -573,9 +691,13 @@
   --vignette: color-mix(in srgb, var(--surface) 78%, transparent);
   --scrim: color-mix(in srgb, var(--surface) 55%, transparent);
 
-  /* Borders exist only in the mono pair; everywhere else this is a no-op. */
-  --edge: transparent;
-  --edge-width: 0px;
+  /* Borders exist only in the mono pair — deliberately not defaulted here.
+     `[data-theme="mono-dark"]` and this rule's own `[data-theme]` selector
+     are equal specificity, so a hard default here would win the cascade
+     purely by coming later in the file and silently clobber the mono pair's
+     own --edge/--edge-width. The two `border: var(--edge-width, 0px) solid
+     var(--edge, transparent)` call sites carry the fallback instead, which
+     only applies where nothing else set the property at all. */
 }
 
 /* Expose tokens to Tailwind as utilities. `inline` keeps the utility
@@ -783,7 +905,7 @@ body {
   padding: 0.3rem 0.6rem;
   border-radius: 5px;
   /* Zero-width and transparent in every theme but the mono pair. */
-  border: var(--edge-width) solid var(--edge);
+  border: var(--edge-width, 0px) solid var(--edge, transparent);
   /* Went fully opaque at one point, then back down past var(--ink)'s usual
      0.92 alpha to noticeably more transparent than that — 0.65, chosen
      directly rather than derived from --ink. */
@@ -850,7 +972,7 @@ body {
 .overlay-panel {
   background: var(--surface);
   border-radius: 10px;
-  border: var(--edge-width) solid var(--edge);
+  border: var(--edge-width, 0px) solid var(--edge, transparent);
   box-shadow: var(--overlay-shadow);
 }
 
