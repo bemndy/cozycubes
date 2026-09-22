@@ -65,6 +65,19 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
 
   const baseline = useMemo(() => tierBaselineMs(solves), [solves]);
 
+  /**
+   * Hover text for a solve cell.
+   *
+   * The scramble rides the existing tooltip rather than becoming a fifth hover
+   * control: the control grid is a full 2x2, and the cell is only a few
+   * characters wide, so a fifth button would have to either shrink the four
+   * that are there or grow the cell and reopen the row spacing this component
+   * is already standing in for.
+   */
+  function cellTitle(solve: Solve, index: number) {
+    return solve.scramble ? `Solve ${index}\n${solve.scramble}` : `Solve ${index}`;
+  }
+
   function handleCopy(id: string, label: string) {
     navigator.clipboard.writeText(label).catch(() => {});
     setCopiedId(id);
@@ -139,7 +152,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                     <span
                       className="flex h-full items-center overflow-hidden whitespace-nowrap font-mono text-[13px] tabular-nums group-hover:opacity-0"
                       style={{ color: "var(--ink-dim)" }}
-                      title={`Solve ${index}`}
+                      title={cellTitle(solve, index)}
                     >
                       {effective === null ? "DNF" : formatTimeMs(effective)}
                       {solve.penalty === "+2" ? " +2" : ""}

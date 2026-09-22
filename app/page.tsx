@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   addSolve,
   clearSolvesByCubeSize,
@@ -64,6 +64,22 @@ export default function TimerPage() {
     setScramble(generateScrambleForSize(size));
   }, []);
 
+  /**
+   * The on-screen scramble, readable from onSolveComplete without making it a
+   * dependency.
+   *
+   * Depending on `scramble` directly would change onSolveComplete's identity
+   * every time a scramble is rolled, which cascades into keyDown and then into
+   * the window key listeners — re-registering them in the window between the
+   * keypress that stops the timer and the release of that same key, whose
+   * cleanup calls keyUp. Reading through a ref keeps every one of those
+   * identities exactly as stable as it was.
+   */
+  const scrambleRef = useRef<string[]>([]);
+  useEffect(() => {
+    scrambleRef.current = scramble;
+  }, [scramble]);
+
   // Reload the persisted solve history whenever the active cube size changes.
   useEffect(() => {
     let cancelled = false;
@@ -83,6 +99,9 @@ export default function TimerPage() {
         timeMs: rawTimeMs,
         penalty,
         timestamp: Date.now(),
+        // Read before regenerateScramble below swaps it out — this is the
+        // scramble the solve was actually set on, not the next one.
+        scramble: scrambleRef.current.join(" "),
       };
       setLastSolve(solve);
       setSolves((prev) => [...prev, solve]);
