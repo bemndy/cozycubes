@@ -25,6 +25,15 @@ import { StatsRow } from "@/components/StatsRow";
 import { TimerDisplay } from "@/components/TimerDisplay";
 import { PERSONAL_BEST_MESSAGE } from "@/lib/solveCommentary";
 import { bestSingle, effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
+import {
+  CUBE_SIZE_STORAGE_KEY,
+  INSPECTION_STORAGE_KEY,
+  NET_ON_IDLE_STORAGE_KEY,
+  SHADER_STORAGE_KEY,
+  decodeBoolean,
+  decodeCubeSize,
+} from "@/lib/settings";
+import { usePersistedSetting } from "@/lib/usePersistedSetting";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 import { useMouseIdle } from "@/lib/useMouseIdle";
 import { useAnyOverlayOpen } from "@/lib/overlayState";
@@ -41,15 +50,33 @@ const NEW_SCRAMBLE_KEY = "Tab";
  * and so change the timer's behaviour.
  */
 export default function TimerPage() {
-  const [inspectionEnabled, setInspectionEnabled] = useState(false);
-  const [shaderEnabled, setShaderEnabled] = useState(true);
-  const [netVisibleOnIdle, setNetVisibleOnIdle] = useState(false);
+  // The header's settings persist per browser — see usePersistedSetting for
+  // why they land after mount rather than on the first render.
+  const [inspectionEnabled, setInspectionEnabled] = usePersistedSetting(
+    INSPECTION_STORAGE_KEY,
+    false,
+    decodeBoolean
+  );
+  const [shaderEnabled, setShaderEnabled] = usePersistedSetting(
+    SHADER_STORAGE_KEY,
+    true,
+    decodeBoolean
+  );
+  const [netVisibleOnIdle, setNetVisibleOnIdle] = usePersistedSetting(
+    NET_ON_IDLE_STORAGE_KEY,
+    false,
+    decodeBoolean
+  );
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   // Rolled once per completed solve (see the effect below), not on every
   // render — Math.random() in the render body itself would re-roll on any
   // unrelated re-render and make the badge flicker between messages.
   const [randomCommentary, setRandomCommentary] = useState<string | null>(null);
-  const [cubeSize, setCubeSize] = useState<SupportedCubeSize>(3);
+  const [cubeSize, setCubeSize] = usePersistedSetting<SupportedCubeSize>(
+    CUBE_SIZE_STORAGE_KEY,
+    3,
+    decodeCubeSize
+  );
   const [scramble, setScramble] = useState<string[]>([]);
   const [solves, setSolves] = useState<Solve[]>([]);
   const [scramblerReady, setScramblerReady] = useState(false);
