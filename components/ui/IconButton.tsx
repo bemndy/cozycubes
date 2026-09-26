@@ -20,6 +20,12 @@ interface IconButtonProps {
   expanded?: boolean;
   /** Nothing to do yet — clear-session with an empty history, say. */
   disabled?: boolean;
+  /**
+   * Marks the control as having something unread behind it. Draws an accent
+   * dot on the glyph and folds the state into the accessible name, so it
+   * isn't carried by colour alone.
+   */
+  badge?: boolean;
 }
 
 /**
@@ -40,13 +46,14 @@ export function IconButton({
   pressed,
   expanded,
   disabled = false,
+  badge = false,
 }: IconButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={label}
+      aria-label={badge ? `${label} (new)` : label}
       aria-pressed={pressed}
       aria-expanded={expanded}
       className={`icon-btn group relative flex items-center gap-2 ${
@@ -59,7 +66,26 @@ export function IconButton({
         } as CSSProperties
       }
     >
-      {children}
+      {/* Unbadged buttons render the glyph bare — the wrapper only exists to
+          anchor the dot, and adding it unconditionally would put an extra
+          flex item in every control in the header and footer for nothing.
+
+          Absolutely positioned, and a dot rather than a fill or a box: the
+          design rule for this control is colour and opacity only, and a dot
+          that took layout space would shunt the label sideways the moment a
+          release shipped. Same accent dot the footer's session readout uses. */}
+      {badge ? (
+        <span className="relative flex items-center">
+          {children}
+          <span
+            aria-hidden="true"
+            className="absolute -right-1 -top-1 size-1 shrink-0 rounded-full"
+            style={{ background: "var(--accent)" }}
+          />
+        </span>
+      ) : (
+        children
+      )}
 
       {/* The default UI face here, not mono — these are footer/tooltip prose
           labels, not the data-shaped values (Dropdown, ThemePicker) that

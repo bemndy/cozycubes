@@ -96,6 +96,37 @@ export async function getReleases(): Promise<Release[]> {
   return PLACEHOLDER_RELEASES;
 }
 
+/**
+ * The newest release this build ships notes for.
+ *
+ * Read synchronously, unlike `getReleases()`, because the footer's unread dot
+ * has to decide whether to light up on every page load — paying for the
+ * eventual network call just to draw a 4px dot would undo the laziness the
+ * dialog is deliberately built around. When releases do move over the wire,
+ * this stays the build-time tag: the dot marks "newer than the release you
+ * last read about", and a build that knows about nothing newer has nothing to
+ * announce.
+ */
+export const LATEST_RELEASE_TAG = PLACEHOLDER_RELEASES[0].tag;
+
+/** localStorage key holding the last release tag the visitor opened. */
+export const CHANGELOG_SEEN_KEY = "cozycubes:changelog-seen";
+
+/**
+ * Whether the changelog has something the visitor hasn't read.
+ *
+ * A first-time visitor (`seenTag === null`) gets nothing: "new" only means
+ * anything relative to a previous visit, and badging the footer on a first
+ * load would be announcing the whole app to someone who just arrived. Any
+ * stored tag that isn't the current one counts as unread — comparing for
+ * equality rather than ordering means a rollback also shows the dot, which is
+ * the honest answer to "is this different from what you read?" and avoids
+ * parsing version strings that are only conventionally ordered.
+ */
+export function hasUnseenRelease(seenTag: string | null, latestTag: string): boolean {
+  return seenTag !== null && seenTag !== latestTag;
+}
+
 /** Formats a release's ISO timestamp for display. */
 export function formatReleaseDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
