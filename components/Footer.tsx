@@ -15,6 +15,7 @@ import { ClearSessionConfirm } from "./ClearSessionConfirm";
 import { InfoDialog, type InfoTopic } from "./InfoDialog";
 import type { ComponentType } from "react";
 import type { SupportedCubeSize } from "@/lib/scramble-gen";
+import { useUnseenRelease } from "@/lib/useUnseenRelease";
 
 interface FooterProps {
   cubeSize: SupportedCubeSize;
@@ -53,6 +54,15 @@ const INFO_ITEMS: {
 export function Footer({ cubeSize, solveCount, onClearSession, dimmed }: FooterProps) {
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
   const close = () => setOpenPanel(null);
+  const { unseen: unseenRelease, markSeen: markReleaseSeen } = useUnseenRelease();
+
+  // Marked on open, not on close: the dialog leads with the latest release
+  // expanded, so it has been shown by the time the user is looking at it, and
+  // clearing on close would leave the dot lit through the whole read.
+  function openChangelog() {
+    markReleaseSeen();
+    setOpenPanel("changelog");
+  }
 
   return (
     <>
@@ -71,8 +81,9 @@ export function Footer({ cubeSize, solveCount, onClearSession, dimmed }: FooterP
               <IconButton
                 label="changelog"
                 showText
-                onClick={() => setOpenPanel("changelog")}
+                onClick={openChangelog}
                 expanded={openPanel === "changelog"}
+                badge={unseenRelease}
               >
                 <GitGlyph />
               </IconButton>
