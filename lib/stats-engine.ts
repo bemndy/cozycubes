@@ -81,3 +81,19 @@ export function allTimeMean(solves: Solve[]): number | null {
   if (times.length === 0) return null;
   return times.reduce((acc, t) => acc + t, 0) / times.length;
 }
+
+/**
+ * Put a solve back into a chronologically ordered list.
+ *
+ * Every average here reads `solves` as oldest-first, so a restored solve has
+ * to land where its timestamp says it belongs rather than on the end — undoing
+ * a delete two rows up would otherwise re-enter it as the newest solve and
+ * quietly move the Ao5 window. Restoring a solve that is already present is a
+ * no-op, so a repeated undo can't duplicate it.
+ */
+export function insertSolveByTimestamp(solves: Solve[], solve: Solve): Solve[] {
+  if (solves.some((s) => s.id === solve.id)) return solves;
+  const at = solves.findIndex((s) => s.timestamp > solve.timestamp);
+  if (at === -1) return [...solves, solve];
+  return [...solves.slice(0, at), solve, ...solves.slice(at)];
+}

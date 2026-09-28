@@ -24,7 +24,13 @@ import { SolveHistory } from "@/components/SolveHistory";
 import { StatsRow } from "@/components/StatsRow";
 import { TimerDisplay } from "@/components/TimerDisplay";
 import { PERSONAL_BEST_MESSAGE } from "@/lib/solveCommentary";
-import { bestSingle, effectiveTimeMs, type Penalty, type Solve } from "@/lib/stats-engine";
+import {
+  bestSingle,
+  effectiveTimeMs,
+  insertSolveByTimestamp,
+  type Penalty,
+  type Solve,
+} from "@/lib/stats-engine";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 import { useMouseIdle } from "@/lib/useMouseIdle";
 import { useAnyOverlayOpen } from "@/lib/overlayState";
@@ -45,6 +51,10 @@ export default function TimerPage() {
   const [shaderEnabled, setShaderEnabled] = useState(true);
   const [netVisibleOnIdle, setNetVisibleOnIdle] = useState(false);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
+  // Most recently deleted solve, held only so it can be put back. Deleting is
+  // a one-click action on a hover control sitting next to +2 and DNF, so a
+  // mis-click there costs a real solve with nothing else to recover it from.
+  const [deletedSolve, setDeletedSolve] = useState<Solve | null>(null);
   // Rolled once per completed solve (see the effect below), not on every
   // render — Math.random() in the render body itself would re-roll on any
   // unrelated re-render and make the badge flicker between messages.
@@ -86,6 +96,9 @@ export default function TimerPage() {
       };
       setLastSolve(solve);
       setSolves((prev) => [...prev, solve]);
+      // The undo offer belongs to the delete the user just made, not to the
+      // session — solving again means they have moved on from it.
+      setDeletedSolve(null);
       // Random commentary disabled for now — PB message still fires below.
       setRandomCommentary(null);
       void addSolve(solve);
@@ -106,16 +119,30 @@ export default function TimerPage() {
     [solves]
   );
 
-  const removeSolve = useCallback((id: string) => {
-    setSolves((prev) => prev.filter((s) => s.id !== id));
-    void deleteSolve(id);
-  }, []);
+  const removeSolve = useCallback(
+    (id: string) => {
+      setDeletedSolve(solves.find((s) => s.id === id) ?? null);
+      setSolves((prev) => prev.filter((s) => s.id !== id));
+      void deleteSolve(id);
+    },
+    [solves]
+  );
+
+  // One level of undo: the solve goes back into both the list and the store,
+  // at its original position, and the offer is spent.
+  const restoreDeletedSolve = useCallback(() => {
+    if (!deletedSolve) return;
+    setSolves((prev) => insertSolveByTimestamp(prev, deletedSolve));
+    setDeletedSolve(null);
+    void addSolve(deletedSolve);
+  }, [deletedSolve]);
 
   // Confirmation lives in the footer's ClearSessionConfirm dialog, not here —
   // by the time this runs the user has already agreed.
   const clearSession = useCallback(() => {
     setSolves([]);
     setLastSolve(null);
+    setDeletedSolve(null);
     void clearSolvesByCubeSize(cubeSize);
   }, [cubeSize]);
 
@@ -193,6 +220,9 @@ export default function TimerPage() {
     // closes over cubeSize), silently corrupting which cube size's stats the
     // solve lands in.
     if (cubeSizeLocked) return;
+    // The pending undo belongs to the size it was deleted from; restoring it
+    // into another size's list would file the solve under the wrong cube.
+    setDeletedSolve(null);
     setCubeSize(size);
     regenerateScramble(size);
   }
@@ -538,6 +568,8 @@ export default function TimerPage() {
                 solves={solves}
                 onTogglePenalty={togglePenalty}
                 onDelete={removeSolve}
+                canUndoDelete={deletedSolve !== null}
+                onUndoDelete={restoreDeletedSolve}
               />
             </div>
           </aside>

@@ -7,6 +7,7 @@ import {
   bestOfN,
   bestSingle,
   effectiveTimeMs,
+  insertSolveByTimestamp,
   type Solve,
 } from "./stats-engine";
 
@@ -161,5 +162,36 @@ describe("allTimeMean", () => {
 
   it("returns null when there are no valid solves", () => {
     expect(allTimeMean([solve(1, "DNF")])).toBeNull();
+  });
+});
+
+describe("insertSolveByTimestamp", () => {
+  const at = (timestamp: number) => solve(10000, "none", { timestamp });
+
+  it("appends a solve newer than every solve in the list", () => {
+    const list = [at(1), at(2)];
+    const restored = at(3);
+    expect(insertSolveByTimestamp(list, restored)).toEqual([...list, restored]);
+  });
+
+  it("places a solve back in the middle by timestamp", () => {
+    const first = at(1);
+    const last = at(3);
+    const restored = at(2);
+    expect(insertSolveByTimestamp([first, last], restored)).toEqual([
+      first,
+      restored,
+      last,
+    ]);
+  });
+
+  it("returns the list untouched when the solve is already present", () => {
+    const list = [at(1), at(2)];
+    expect(insertSolveByTimestamp(list, list[0])).toBe(list);
+  });
+
+  it("restores into an empty list", () => {
+    const restored = at(1);
+    expect(insertSolveByTimestamp([], restored)).toEqual([restored]);
   });
 });
