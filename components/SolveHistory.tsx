@@ -9,6 +9,9 @@ interface SolveHistoryProps {
   solves: Solve[];
   onTogglePenalty: (id: string, target: "+2" | "DNF") => void;
   onDelete: (id: string) => void;
+  /** True while the most recent delete can still be taken back. */
+  canUndoDelete: boolean;
+  onUndoDelete: () => void;
 }
 
 /**
@@ -47,6 +50,10 @@ const EXPANDED_MAX_HEIGHT = "20rem";
  */
 const MAX_RENDERED = 250;
 
+/** Shared by the expand toggle and the undo control so the footer reads as one row. */
+const FOOTER_BUTTON =
+  "font-mono text-[11px] tracking-[.14em] opacity-40 transition-opacity hover:opacity-100";
+
 /**
  * All-time solves, PER_ROW to a row, newest first.
  *
@@ -59,7 +66,13 @@ const MAX_RENDERED = 250;
  * not. Revealing them on hover without reserved space would either overlap the
  * neighbouring solve or reflow the whole grid under the pointer.
  */
-export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistoryProps) {
+export function SolveHistory({
+  solves,
+  onTogglePenalty,
+  onDelete,
+  canUndoDelete,
+  onUndoDelete,
+}: SolveHistoryProps) {
   const [expanded, setExpanded] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -86,11 +99,22 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
     return grouped;
   }, [solves]);
 
+  // Reachable from the empty state too: deleting your only solve empties the
+  // list, and the undo has to survive that to be worth offering at all.
+  const undoButton = canUndoDelete ? (
+    <button type="button" onClick={onUndoDelete} className={FOOTER_BUTTON} style={{ color: "var(--accent)" }}>
+      UNDO DELETE
+    </button>
+  ) : null;
+
   if (rows.length === 0) {
     return (
-      <p className="font-mono text-[13px]" style={{ color: "var(--ink-faint)" }}>
-        no solves yet
-      </p>
+      <section aria-label="All-time solves" className="flex w-full flex-col items-center gap-3">
+        <p className="font-mono text-[13px]" style={{ color: "var(--ink-faint)" }}>
+          no solves yet
+        </p>
+        {undoButton}
+      </section>
     );
   }
 
@@ -209,17 +233,20 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
         </div>
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            className="font-mono text-[11px] tracking-[.14em] opacity-40 transition-opacity hover:opacity-100"
-            style={{ color: "var(--ink)" }}
-          >
-            {expanded ? "COLLAPSE" : "EXPAND"}
-          </button>
+      {(hasMore || undoButton) && (
+        <div className="flex justify-center gap-4">
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              className={FOOTER_BUTTON}
+              style={{ color: "var(--ink)" }}
+            >
+              {expanded ? "COLLAPSE" : "EXPAND"}
+            </button>
+          )}
+          {undoButton}
         </div>
       )}
     </section>
