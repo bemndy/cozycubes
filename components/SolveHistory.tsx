@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { formatTimeMs } from "@/lib/format";
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { formatSolveWhen, formatTimeMs } from "@/lib/format";
 import { solveTier, tierBaselineMs, TIER_COLOR_VAR } from "@/lib/solveTier";
 import { effectiveTimeMs, type Solve } from "@/lib/stats-engine";
 
@@ -48,6 +48,43 @@ const EXPANDED_MAX_HEIGHT = "20rem";
 const MAX_RENDERED = 250;
 
 /**
+ * How often the "Xm ago" in each solve's tooltip is recomputed. A minute is the
+ * smallest unit formatRelativeAge reports, so re-rendering faster than this
+ * could not change what any tooltip says.
+ */
+const AGE_REFRESH_MS = 60_000;
+
+/**
+ * The wall clock, as an external store the tooltips subscribe to.
+ *
+ * Read this way rather than from state set in an effect for two reasons: the
+ * server render gets null from getServerSnapshot, so the initial HTML carries
+ * no date (Date.now() and the viewer's locale both differ across the boundary,
+ * and a dated tooltip in that first paint would hydrate mismatched); and the
+ * interval lives in subscribe, so it only runs while a history is mounted.
+ */
+const clockStore = {
+  subscribe(onChange: () => void) {
+    const id = setInterval(onChange, AGE_REFRESH_MS);
+    return () => clearInterval(id);
+  },
+
+  /**
+   * Truncated to the refresh interval, not raw. useSyncExternalStore re-renders
+   * whenever the snapshot differs from the last one, and a raw Date.now() is a
+   * new value on every read — including the reads React makes during an
+   * unrelated render.
+   */
+  getSnapshot(): number | null {
+    return Math.floor(Date.now() / AGE_REFRESH_MS) * AGE_REFRESH_MS;
+  },
+
+  getServerSnapshot(): number | null {
+    return null;
+  },
+};
+
+/**
  * All-time solves, PER_ROW to a row, newest first.
  *
  * Each row opens with a colour column carrying one square per solve in that
@@ -62,6 +99,14 @@ const MAX_RENDERED = 250;
 export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistoryProps) {
   const [expanded, setExpanded] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // Null through the server render and hydration, a real reading after. See
+  // clockStore.
+  const now = useSyncExternalStore(
+    clockStore.subscribe,
+    clockStore.getSnapshot,
+    clockStore.getServerSnapshot
+  );
 
   const baseline = useMemo(() => tierBaselineMs(solves), [solves]);
 
@@ -139,7 +184,11 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                     <span
                       className="flex h-full items-center overflow-hidden whitespace-nowrap font-mono text-[13px] tabular-nums group-hover:opacity-0"
                       style={{ color: "var(--ink-dim)" }}
-                      title={`Solve ${index}`}
+                      title={
+                        now === null
+                          ? `Solve ${index}`
+                          : formatSolveWhen(index, solve.timestamp, now)
+                      }
                     >
                       {effective === null ? "DNF" : formatTimeMs(effective)}
                       {solve.penalty === "+2" ? " +2" : ""}
