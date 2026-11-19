@@ -126,6 +126,24 @@ export function ImageGlyph(props: GlyphProps) {
   );
 }
 
+/**
+ * Speaker with two waves — the timer's sound toggle.
+ *
+ * Deliberately not a speaker/muted-speaker pair. Every other control in the
+ * header keeps one fixed shape and says on-or-off through colour and opacity
+ * alone, and a glyph that swaps outline mid-state would be the only one here
+ * reading as a different control depending on its value.
+ */
+export function SoundGlyph(props: GlyphProps) {
+  return (
+    <Svg {...props}>
+      <path d="M7.75 2.75 4.5 5.5H2.25v5H4.5l3.25 2.75z" />
+      <path d="M10.5 6.25a2.5 2.5 0 0 1 0 3.5" />
+      <path d="M12.5 4.25a5.25 5.25 0 0 1 0 7.5" />
+    </Svg>
+  );
+}
+
 /** Trash can — clear session. */
 export function ClearGlyph(props: GlyphProps) {
   return (

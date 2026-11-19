@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Dropdown, type DropdownOption } from "./ui/Dropdown";
 import { IconButton } from "./ui/IconButton";
-import { ImageGlyph, InspectionGlyph, ShaderGlyph } from "./ui/Glyphs";
+import { ImageGlyph, InspectionGlyph, ShaderGlyph, SoundGlyph } from "./ui/Glyphs";
 import { ThemePicker } from "./ThemePicker";
 import { useTheme } from "@/lib/useTheme";
 import { THEME_LABELS } from "@/lib/theme";
@@ -31,18 +31,21 @@ interface HeaderProps {
   /** Keeps the scramble net on screen through the pointer-idle fade instead of hiding with it. */
   netVisibleOnIdle: boolean;
   onToggleNetVisibleOnIdle: () => void;
+  /** Tones on timer start and stop. */
+  soundEnabled: boolean;
+  onToggleSound: () => void;
   /** Focus mode — the chrome recedes while the pointer is at rest. */
   dimmed: boolean;
 }
 
 /**
  * Top bar: wordmark, then the controls that change how a solve behaves —
- * cube size, inspection, theme.
+ * cube size, inspection, backdrop, net visibility, sound, theme.
  *
  * Controls here are glyph-only with hover tooltips, against the footer's
- * icon-and-text treatment. The split is intentional: these three get reached
- * for mid-session and benefit from being small and quiet, while the footer's
- * are read-once links that need naming.
+ * icon-and-text treatment. The split is intentional: these get reached for
+ * mid-session and benefit from being small and quiet, while the footer's are
+ * read-once links that need naming.
  *
  * The cube-size control keeps its value visible rather than going glyph-only.
  * A selector that doesn't show what's selected isn't a selector, and which cube
@@ -58,6 +61,8 @@ export function Header({
   onToggleShader,
   netVisibleOnIdle,
   onToggleNetVisibleOnIdle,
+  soundEnabled,
+  onToggleSound,
   dimmed,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
@@ -156,6 +161,15 @@ export function Header({
               pressed={netVisibleOnIdle}
             >
               <ImageGlyph />
+            </IconButton>
+
+            <IconButton
+              label={`sound ${soundEnabled ? "on" : "off"}`}
+              onClick={onToggleSound}
+              active={soundEnabled}
+              pressed={soundEnabled}
+            >
+              <SoundGlyph />
             </IconButton>
 
             {/* Twenty themes is too many for the small listbox the cube-size

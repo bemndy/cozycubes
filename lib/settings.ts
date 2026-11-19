@@ -1,6 +1,7 @@
 /**
  * Persistence for the session settings in the header — inspection mode, the
- * shader backdrop, the idle-visible net, and the active cube size.
+ * shader backdrop, the idle-visible net, the timer's sound, and the active
+ * cube size.
  *
  * Until now these reset on every reload: a cuber who works on 4x4 with
  * inspection on had to set both again on each visit, which the app otherwise
@@ -22,6 +23,7 @@ export const INSPECTION_STORAGE_KEY = "cozycubes:inspection-enabled";
 export const SHADER_STORAGE_KEY = "cozycubes:shader-enabled";
 export const NET_ON_IDLE_STORAGE_KEY = "cozycubes:net-visible-on-idle";
 export const CUBE_SIZE_STORAGE_KEY = "cozycubes:cube-size";
+export const SOUND_STORAGE_KEY = "cozycubes:sound-enabled";
 
 /**
  * The slice of the Storage interface this module uses, so the functions can be

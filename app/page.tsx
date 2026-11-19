@@ -30,9 +30,11 @@ import {
   INSPECTION_STORAGE_KEY,
   NET_ON_IDLE_STORAGE_KEY,
   SHADER_STORAGE_KEY,
+  SOUND_STORAGE_KEY,
   decodeBoolean,
   decodeCubeSize,
 } from "@/lib/settings";
+import { playTimerStart, playTimerStop } from "@/lib/sounds";
 import { usePersistedSetting } from "@/lib/usePersistedSetting";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 import { useMouseIdle } from "@/lib/useMouseIdle";
@@ -65,6 +67,15 @@ export default function TimerPage() {
   const [netVisibleOnIdle, setNetVisibleOnIdle] = usePersistedSetting(
     NET_ON_IDLE_STORAGE_KEY,
     false,
+    decodeBoolean
+  );
+  // On by default: the app has described itself as sound-rich since v1.0, and
+  // a feature that every user has to discover before it does anything may as
+  // well not be there. The toggle sits in the header beside the other three,
+  // so silencing it is one click and survives the reload.
+  const [soundEnabled, setSoundEnabled] = usePersistedSetting(
+    SOUND_STORAGE_KEY,
+    true,
     decodeBoolean
   );
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
@@ -102,8 +113,13 @@ export default function TimerPage() {
     };
   }, [cubeSize]);
 
+  const onSolveStart = useCallback(() => {
+    if (soundEnabled) playTimerStart();
+  }, [soundEnabled]);
+
   const onSolveComplete = useCallback(
     (rawTimeMs: number, penalty: Penalty) => {
+      if (soundEnabled) playTimerStop();
       const solve: Solve = {
         id: crypto.randomUUID(),
         cubeSize,
@@ -118,7 +134,7 @@ export default function TimerPage() {
       void addSolve(solve);
       regenerateScramble(cubeSize);
     },
-    [regenerateScramble, cubeSize]
+    [regenerateScramble, cubeSize, soundEnabled]
   );
 
   const togglePenalty = useCallback(
@@ -157,6 +173,7 @@ export default function TimerPage() {
     keyUp,
   } = useHoldReadyState({
     mode: inspectionEnabled ? "inspection" : "standard",
+    onSolveStart,
     onSolveComplete,
   });
 
@@ -427,6 +444,8 @@ export default function TimerPage() {
           onToggleInspection={() => setInspectionEnabled((v) => !v)}
           shaderEnabled={shaderEnabled}
           onToggleShader={() => setShaderEnabled((v) => !v)}
+          soundEnabled={soundEnabled}
+          onToggleSound={() => setSoundEnabled((on) => !on)}
           netVisibleOnIdle={netVisibleOnIdle}
           onToggleNetVisibleOnIdle={() => setNetVisibleOnIdle((v) => !v)}
           dimmed={dimmed}

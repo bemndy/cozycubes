@@ -12,6 +12,14 @@ export interface UseHoldReadyStateOptions {
   inspectionDurationMs?: number;
   /** Mode B only. Default 400ms hold-to-ready threshold. */
   standardReadyThresholdMs?: number;
+  /**
+   * The instant timing begins, however it was reached: a release in either
+   * mode, or inspection running out under a held key. Separate from the phase
+   * the hook returns because a caller that only wants the transition would
+   * otherwise have to diff `phase` in an effect, which lands a frame or more
+   * after the clock actually started.
+   */
+  onSolveStart?: () => void;
   onSolveComplete?: (rawTimeMs: number, penalty: Penalty) => void;
 }
 
@@ -54,7 +62,7 @@ function canHoldFrom(phase: TimerPhase): boolean {
 }
 
 export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyState {
-  const { mode, onSolveComplete } = options;
+  const { mode, onSolveStart, onSolveComplete } = options;
   const inspectionDurationMs = options.inspectionDurationMs ?? DEFAULT_INSPECTION_MS;
   const standardReadyThresholdMs =
     options.standardReadyThresholdMs ?? DEFAULT_STANDARD_THRESHOLD_MS;
@@ -116,8 +124,9 @@ export function useHoldReadyState(options: UseHoldReadyStateOptions): HoldReadyS
       setSolvingElapsedMs(0);
       commitPhase("solving");
       runTick();
+      onSolveStart?.();
     },
-    [commitPhase, runTick]
+    [commitPhase, runTick, onSolveStart]
   );
 
   // Rebuilt every render so the rAF loop always sees fresh options/closures
