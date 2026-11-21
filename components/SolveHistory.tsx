@@ -19,11 +19,27 @@ interface SolveHistoryProps {
 const PER_ROW = 3;
 
 /**
- * Width of the leading colour column. Still sized for the 5-wide layout
- * PER_ROW was reduced from — wider than 3 squares actually need, which is
- * part of the spacing this is standing in for until that pass happens.
+ * Side of one solve's colour square, and the gap between two of them, in rem.
+ * These are the numbers behind the `size-2.5` and `gap-1` the squares render
+ * with — named here because COLOR_COLUMN is derived from them below, and a
+ * silent drift between the two would reopen exactly the misalignment this
+ * replaced.
  */
-const COLOR_COLUMN = "5rem";
+const SQUARE_REM = 0.625;
+const SQUARE_GAP_REM = 0.25;
+
+/**
+ * Width of the leading colour column, derived from the squares it actually
+ * holds rather than hardcoded.
+ *
+ * It used to be a flat 5rem left over from a 5-wide layout PER_ROW has since
+ * been reduced from, which left ~2.6rem of dead gutter at the head of every
+ * row and pushed all three time cells in off the panel's measure. Computing it
+ * means the column is exactly its squares wide at any PER_ROW — the grid's own
+ * `gap-x-2` supplies the breathing room to the first time — so revisiting
+ * PER_ROW no longer drags a stale width along with it.
+ */
+const COLOR_COLUMN = `${PER_ROW * SQUARE_REM + (PER_ROW - 1) * SQUARE_GAP_REM}rem`;
 
 /** Shared by the colour column and the time cells so the two line up. */
 const ROW_HEIGHT = "h-9";
