@@ -32,7 +32,7 @@ export function ScrambleLine({ scramble, onRefresh, locked }: ScrambleLineProps)
     // line by half the button's width.
     <div className="flex w-full justify-center">
       <div className="relative max-w-[26rem]">
-        <p className="text-center font-mono text-[17px] leading-[2.15] tracking-wide sm:text-[19px]">
+        <p className="text-center font-mono text-lead leading-[2.15] tracking-wide sm:text-display">
           <span
             aria-hidden="true"
             style={{ color: "var(--accent-soft)", marginRight: 10 }}

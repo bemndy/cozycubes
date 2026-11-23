@@ -121,11 +121,11 @@ export function Dialog({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-0.5">
-            <h2 className="text-[15px] tracking-tight" style={{ color: "var(--ink)" }}>
+            <h2 className="text-body tracking-tight" style={{ color: "var(--ink)" }}>
               {title}
             </h2>
             {subtitle && (
-              <p className="font-mono text-[10px]" style={{ color: "var(--ink-dimmer)" }}>
+              <p className="font-mono text-micro" style={{ color: "var(--ink-dimmer)" }}>
                 {subtitle}
               </p>
             )}
@@ -134,14 +134,14 @@ export function Dialog({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="shrink-0 text-[16px] leading-none opacity-40 transition-opacity hover:opacity-100"
+            className="shrink-0 text-body leading-none opacity-40 transition-opacity hover:opacity-100"
             style={{ color: "var(--ink)" }}
           >
             ×
           </button>
         </div>
 
-        <div className="scroll-thin min-h-0 flex-1 overflow-y-auto text-[13px] leading-relaxed">
+        <div className="scroll-thin min-h-0 flex-1 overflow-y-auto text-small leading-relaxed">
           {children}
         </div>
       </div>

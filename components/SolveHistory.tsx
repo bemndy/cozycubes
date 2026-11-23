@@ -104,7 +104,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
 
   if (rows.length === 0) {
     return (
-      <p className="font-mono text-[13px]" style={{ color: "var(--ink-faint)" }}>
+      <p className="font-mono text-small" style={{ color: "var(--ink-faint)" }}>
         no solves yet
       </p>
     );
@@ -153,7 +153,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                         with a +2 is wider than a fifth of the column, and
                         letting it spill would run it into the next solve. */}
                     <span
-                      className="flex h-full items-center overflow-hidden whitespace-nowrap font-mono text-[13px] tabular-nums group-hover:opacity-0"
+                      className="flex h-full items-center overflow-hidden whitespace-nowrap font-mono text-small tabular-nums group-hover:opacity-0"
                       style={{ color: "var(--ink-dim)" }}
                       title={`Solve ${index}`}
                     >
@@ -168,7 +168,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
                       it outright buys enough room to make them hittable.
                       Absolute, so revealing them can't reflow the grid.
                     */}
-                    <div className="invisible absolute inset-0 grid grid-cols-2 grid-rows-2 items-center gap-x-1 font-mono text-[11px] uppercase group-hover:visible">
+                    <div className="invisible absolute inset-0 grid grid-cols-2 grid-rows-2 items-center gap-x-1 font-mono text-mini uppercase group-hover:visible">
                       <button
                         type="button"
                         onClick={() => onTogglePenalty(solve.id, "+2")}
@@ -231,7 +231,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
             type="button"
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
-            className="font-mono text-[11px] tracking-[.14em] opacity-40 transition-opacity hover:opacity-100"
+            className="font-mono text-mini tracking-label opacity-40 transition-opacity hover:opacity-100"
             style={{ color: "var(--ink)" }}
           >
             {expanded ? "COLLAPSE" : "EXPAND"}

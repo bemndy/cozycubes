@@ -25,7 +25,7 @@ export function SolveBadge({ message, isNewPersonalBest }: SolveBadgeProps) {
     <div
       role="status"
       aria-live="polite"
-      className="font-sans text-[13px] transition-opacity duration-300"
+      className="font-sans text-small transition-opacity duration-300"
       style={{
         color: isNewPersonalBest ? "var(--accent)" : "var(--ink-dim)",
         opacity: message ? 1 : 0,
