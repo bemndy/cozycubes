@@ -53,7 +53,7 @@ export function ChangelogDialog({ open, onClose }: { open: boolean; onClose: () 
           {earlier.length > 0 && (
             <div className="flex flex-col gap-4">
               <h3
-                className="font-mono text-[10px] tracking-[.18em]"
+                className="font-mono text-micro tracking-caps"
                 style={{ color: "var(--ink-dimmer)" }}
               >
                 EARLIER
@@ -61,15 +61,15 @@ export function ChangelogDialog({ open, onClose }: { open: boolean; onClose: () 
               {earlier.map((release) => (
                 <details key={release.tag} className="group">
                   <summary
-                    className="flex cursor-pointer items-baseline gap-2 text-[13px] marker:content-none"
+                    className="flex cursor-pointer items-baseline gap-2 text-small marker:content-none"
                     style={{ color: "var(--ink-dim)" }}
                   >
-                    <span className="font-mono text-[11px]" style={{ color: "var(--accent)" }}>
+                    <span className="font-mono text-mini" style={{ color: "var(--accent)" }}>
                       {release.tag}
                     </span>
                     {release.title}
                     <span
-                      className="ml-auto font-mono text-[10px]"
+                      className="ml-auto font-mono text-micro"
                       style={{ color: "var(--ink-faint)" }}
                     >
                       {formatReleaseDate(release.publishedAt)}
@@ -100,7 +100,7 @@ function ReleaseBody({ release }: { release: Release }) {
         return (
           <section key={kind} className="flex flex-col gap-1.5">
             <h4
-              className="font-mono text-[10px] tracking-[.14em]"
+              className="font-mono text-micro tracking-label"
               style={{ color: "var(--ink-dimmer)" }}
             >
               {KIND_LABELS[kind].toUpperCase()}

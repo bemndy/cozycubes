@@ -36,7 +36,7 @@ export function ClearSessionConfirm({
           <button
             type="button"
             onClick={onClose}
-            className="font-mono text-[11px] uppercase tracking-[.14em] opacity-60 transition-opacity hover:opacity-100"
+            className="font-mono text-mini uppercase tracking-label opacity-60 transition-opacity hover:opacity-100"
             style={{ color: "var(--ink)" }}
           >
             Cancel
@@ -47,7 +47,7 @@ export function ClearSessionConfirm({
               onConfirm();
               onClose();
             }}
-            className="font-mono text-[11px] uppercase tracking-[.14em] transition-opacity hover:opacity-80"
+            className="font-mono text-mini uppercase tracking-label transition-opacity hover:opacity-80"
             style={{ color: "var(--quality-warn)" }}
           >
             Clear

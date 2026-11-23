@@ -83,7 +83,7 @@ export function Header({
           {/* Not a link. The timer is the only page, so a wordmark pointing at
               "/" would navigate to itself, remounting the tree and discarding
               the session's in-memory solves and timer phase. */}
-          <div className="group flex items-center gap-3 text-[22px] tracking-tight opacity-85 transition-opacity duration-200 hover:opacity-100">
+          <div className="group flex items-center gap-3 text-hero tracking-tight opacity-85 transition-opacity duration-200 hover:opacity-100">
             {/*
               Both marks are always in the DOM; CSS shows whichever suits the
               active theme's background (see globals.css). Plain <img> rather
@@ -167,7 +167,7 @@ export function Header({
               onClick={() => setThemePickerOpen(true)}
               aria-haspopup="dialog"
               aria-expanded={themePickerOpen}
-              className="flex items-center gap-1.5 py-1 font-mono text-[15px] opacity-80 transition-opacity hover:opacity-100"
+              className="flex items-center gap-1.5 py-1 font-mono text-body opacity-80 transition-opacity hover:opacity-100"
               style={{ color: "var(--ink)" }}
             >
               {THEME_LABELS[theme]}

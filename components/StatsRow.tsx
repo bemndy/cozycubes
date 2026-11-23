@@ -21,12 +21,12 @@ export function StatsRow({ solves }: { solves: Solve[] }) {
       {stats.map(({ label, value }) => (
         <div key={label} className="flex flex-col items-center gap-1">
           <span
-            className="text-[10px] tracking-[.12em]"
+            className="text-micro tracking-label"
             style={{ color: "var(--ink-dimmer)" }}
           >
             {label}
           </span>
-          <span className="font-mono text-[17px]" style={{ color: "var(--ink-dim)" }}>
+          <span className="font-mono text-lead" style={{ color: "var(--ink-dim)" }}>
             {value}
           </span>
         </div>

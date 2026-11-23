@@ -89,7 +89,7 @@ export function BootScreen({ ready, booted, onBoot }: BootScreenProps) {
         >
           <AsciiCube />
           <div
-            className="animate-soft-flash font-mono text-[13px] tracking-[.02em]"
+            className="animate-soft-flash font-mono text-small tracking-text"
             style={{ color: "var(--ink-dimmer)" }}
             role="status"
             aria-live="polite"
@@ -114,7 +114,7 @@ export function BootScreen({ ready, booted, onBoot }: BootScreenProps) {
               <ColorfulLoader fullScreen={false} label="Warming up scrambler" />
             </div>
             <span
-              className="font-mono text-[13px] tracking-[.02em]"
+              className="font-mono text-small tracking-text"
               style={{ color: "var(--ink-dimmer)" }}
             >
               warming up

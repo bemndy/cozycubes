@@ -726,6 +726,44 @@
      digits are meant to read as a distinct, pixel-flavoured display face.
      Falls back to --font-sans (not a bare generic) if it fails to load. */
   --font-pixel: "Chonky Bits", var(--font-sans), sans-serif;
+
+  /* ---------------------------------------------------------------------
+     Type scale
+     ---------------------------------------------------------------------
+     Seven steps, same idea as the theme block above: the app used to carry
+     ten different arbitrary sizes (10/11/12/13/14/15/16/17/19/22px) chosen a
+     component at a time, which is how a UI ends up almost-consistent — two
+     labels a pixel apart for no reason anyone could state. These are the
+     sizes that actually earn a step of their own, and every piece of text in
+     the themed app now names one of them rather than inventing a number.
+
+     The three sizes that did not survive were each within a pixel of a
+     neighbour and had no job the neighbour could not do: 12px folded into
+     --text-mini, 14px and 16px into --text-body.
+
+     Only font-size, deliberately: the arbitrary values these replace set
+     font-size alone too, so pairing a line-height here would silently
+     restyle every one of them. Components that need a specific leading
+     (ScrambleLine, AsciiCube) still say so themselves.
+
+     The ASCII cube is the one text in the app that does NOT use the scale.
+     Its size is a drawing dimension, locked to its own line-height to keep
+     the net square — tying it to a body-text token would redraw the art the
+     first time body text was tuned. */
+  --text-micro: 10px;   /* overlines, timestamps, the smallest caps labels */
+  --text-mini: 11px;    /* dense controls: solve-row actions, confirm buttons */
+  --text-small: 13px;   /* mono data: solve times, boot lines, dialog body */
+  --text-body: 15px;    /* UI chrome and prose — the default reading size */
+  --text-lead: 17px;    /* stat values, the scramble below sm */
+  --text-display: 19px; /* the scramble at sm and up */
+  --text-hero: 22px;    /* the wordmark */
+
+  /* Three tracking steps, for the same reason. .12em and .14em were both
+     uppercase micro-labels and are now one value; .02em and .18em are the
+     two genuine outliers (mono prose, and the changelog's caps heading). */
+  --tracking-text: 0.02em;
+  --tracking-label: 0.14em;
+  --tracking-caps: 0.18em;
 }
 
 body {
