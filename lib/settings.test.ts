@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   decodeBoolean,
   decodeCubeSize,
+  decodeVolume,
   readSetting,
   writeSetting,
   type SettingsStorage,
@@ -54,6 +55,28 @@ describe("decodeCubeSize", () => {
     expect(decodeCubeSize("8")).toBeUndefined();
     expect(decodeCubeSize("3.5")).toBeUndefined();
     expect(decodeCubeSize("three")).toBeUndefined();
+  });
+});
+
+describe("decodeVolume", () => {
+  it("accepts whole percentages across the range", () => {
+    expect(decodeVolume("0")).toBe(0);
+    expect(decodeVolume("55")).toBe(55);
+    expect(decodeVolume("100")).toBe(100);
+  });
+
+  it("rejects values outside 0-100", () => {
+    expect(decodeVolume("-1")).toBeUndefined();
+    expect(decodeVolume("101")).toBeUndefined();
+  });
+
+  it("rejects anything that isn't a whole number", () => {
+    expect(decodeVolume("")).toBeUndefined();
+    expect(decodeVolume(" 70")).toBeUndefined();
+    expect(decodeVolume("0.7")).toBeUndefined();
+    expect(decodeVolume("loud")).toBeUndefined();
+    expect(decodeVolume("NaN")).toBeUndefined();
+    expect(decodeVolume("Infinity")).toBeUndefined();
   });
 });
 

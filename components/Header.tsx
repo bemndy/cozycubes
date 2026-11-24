@@ -5,6 +5,7 @@ import { Dropdown, type DropdownOption } from "./ui/Dropdown";
 import { IconButton } from "./ui/IconButton";
 import { ImageGlyph, InspectionGlyph, ShaderGlyph, SoundGlyph } from "./ui/Glyphs";
 import { ThemePicker } from "./ThemePicker";
+import { SoundSettings } from "./SoundSettings";
 import { useTheme } from "@/lib/useTheme";
 import { THEME_LABELS } from "@/lib/theme";
 import type { SupportedCubeSize } from "@/lib/scramble-gen";
@@ -34,6 +35,9 @@ interface HeaderProps {
   /** Tones on timer start and stop. */
   soundEnabled: boolean;
   onToggleSound: () => void;
+  /** Master level for those tones, 0-100. */
+  soundVolume: number;
+  onSoundVolumeChange: (volume: number) => void;
   /** Focus mode — the chrome recedes while the pointer is at rest. */
   dimmed: boolean;
 }
@@ -63,10 +67,13 @@ export function Header({
   onToggleNetVisibleOnIdle,
   soundEnabled,
   onToggleSound,
+  soundVolume,
+  onSoundVolumeChange,
   dimmed,
 }: HeaderProps) {
   const { theme, setTheme } = useTheme();
   const [themePickerOpen, setThemePickerOpen] = useState(false);
+  const [soundSettingsOpen, setSoundSettingsOpen] = useState(false);
 
   return (
     <header
@@ -163,11 +170,16 @@ export function Header({
               <ImageGlyph />
             </IconButton>
 
+            {/* Opens the settings overlay rather than toggling in place. The
+                glyph still lights with `active`, so whether sound is on is
+                readable from the bar without opening anything, and the
+                on/off switch is the first control inside. The other three
+                controls here are one-state-each and stay plain toggles. */}
             <IconButton
-              label={`sound ${soundEnabled ? "on" : "off"}`}
-              onClick={onToggleSound}
+              label={`sound settings (${soundEnabled ? "on" : "off"})`}
+              onClick={() => setSoundSettingsOpen(true)}
               active={soundEnabled}
-              pressed={soundEnabled}
+              expanded={soundSettingsOpen}
             >
               <SoundGlyph />
             </IconButton>
@@ -204,6 +216,15 @@ export function Header({
           </div>
         </div>
       </div>
+
+      <SoundSettings
+        open={soundSettingsOpen}
+        onClose={() => setSoundSettingsOpen(false)}
+        enabled={soundEnabled}
+        onToggleEnabled={onToggleSound}
+        volume={soundVolume}
+        onVolumeChange={onSoundVolumeChange}
+      />
 
       <ThemePicker
         open={themePickerOpen}
