@@ -13,7 +13,8 @@
  * wants. There is nothing to download, so the first solve of a session never
  * waits on a fetch to make its noise. And a tone described as numbers is a
  * tone the next sound pack can vary by changing those numbers, which is where
- * this is going (selectable packs, volume) rather than by adding more files.
+ * this is going (selectable packs) rather than by adding more files. The
+ * master volume below is the first of those numbers to become a setting.
  *
  * Every entry point is a no-op when the browser has no WebAudio, so a caller
  * never has to guard.
@@ -53,6 +54,27 @@ function context(): AudioContext | null {
 }
 
 /**
+ * Master level, 0-1, applied on top of each tone's own tuned peak gain. 1 is
+ * the level the tones were designed at, so the default is a no-op and nothing
+ * sounds different until the user moves the slider.
+ *
+ * Module state rather than a parameter on every play function: the volume is a
+ * property of the app's audio, not of a single tone, and threading it through
+ * every call site would mean every future sound has to remember to read it.
+ */
+let masterVolume = 1;
+
+/**
+ * Set the master level. Values outside 0-1 are clamped rather than rejected —
+ * this is the audio graph's edge of the seam, and a caller that computed 1.2
+ * should get full volume, not an exception mid-solve. Validation of *stored*
+ * values belongs in `settings.decodeVolume`, which runs before this.
+ */
+export function setMasterVolume(level: number): void {
+  masterVolume = Math.min(1, Math.max(0, level));
+}
+
+/**
  * One soft blip.
  *
  * A sine, because the harmonics of a square or saw read as a UI error sound at
@@ -64,6 +86,12 @@ function context(): AudioContext | null {
  * Exponential ramps cannot reach zero, hence the small floor before the stop.
  */
 function blip(frequencyHz: number, durationSeconds: number, peakGain: number): void {
+  // Nothing to play, and more than an optimisation: the gain envelope below
+  // is built from exponential ramps, which are undefined for a target of zero
+  // and throw on a non-finite one. Silence has to short-circuit, not scale.
+  const gainTarget = peakGain * masterVolume;
+  if (gainTarget <= 0) return;
+
   const audio = context();
   if (!audio) return;
 
@@ -79,7 +107,7 @@ function blip(frequencyHz: number, durationSeconds: number, peakGain: number): v
   oscillator.frequency.setValueAtTime(frequencyHz, now);
 
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(peakGain, now + 0.008);
+  gain.gain.exponentialRampToValueAtTime(gainTarget, now + 0.008);
   gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSeconds);
 
   oscillator.connect(gain).connect(audio.destination);
@@ -111,4 +139,5 @@ export function playTimerStop(): void {
 export function resetAudioContextForTests(): void {
   ctx = null;
   unavailable = false;
+  masterVolume = 1;
 }

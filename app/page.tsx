@@ -31,10 +31,12 @@ import {
   NET_ON_IDLE_STORAGE_KEY,
   SHADER_STORAGE_KEY,
   SOUND_STORAGE_KEY,
+  SOUND_VOLUME_STORAGE_KEY,
   decodeBoolean,
   decodeCubeSize,
+  decodeVolume,
 } from "@/lib/settings";
-import { playTimerStart, playTimerStop } from "@/lib/sounds";
+import { playTimerStart, playTimerStop, setMasterVolume } from "@/lib/sounds";
 import { usePersistedSetting } from "@/lib/usePersistedSetting";
 import { useHoldReadyState } from "@/lib/useHoldReadyState";
 import { useMouseIdle } from "@/lib/useMouseIdle";
@@ -78,6 +80,20 @@ export default function TimerPage() {
     true,
     decodeBoolean
   );
+  // 100 is the level the tones were tuned at, so the default changes nothing
+  // for anyone who never opens the overlay.
+  const [soundVolume, setSoundVolume] = usePersistedSetting(
+    SOUND_VOLUME_STORAGE_KEY,
+    100,
+    decodeVolume
+  );
+  // The audio module keeps the level as module state rather than reading it
+  // per tone, so push it across on every change. An effect, not a render-time
+  // call: this mutates something outside React, and during SSR there is no
+  // audio graph to mutate at all.
+  useEffect(() => {
+    setMasterVolume(soundVolume / 100);
+  }, [soundVolume]);
   const [lastSolve, setLastSolve] = useState<Solve | null>(null);
   // Rolled once per completed solve (see the effect below), not on every
   // render — Math.random() in the render body itself would re-roll on any
@@ -446,6 +462,8 @@ export default function TimerPage() {
           onToggleShader={() => setShaderEnabled((v) => !v)}
           soundEnabled={soundEnabled}
           onToggleSound={() => setSoundEnabled((on) => !on)}
+          soundVolume={soundVolume}
+          onSoundVolumeChange={setSoundVolume}
           netVisibleOnIdle={netVisibleOnIdle}
           onToggleNetVisibleOnIdle={() => setNetVisibleOnIdle((v) => !v)}
           dimmed={dimmed}

@@ -1156,3 +1156,80 @@ body {
     opacity: 0.85;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Volume slider
+   ---------------------------------------------------------------------------
+   The native control, restyled rather than rebuilt: it already handles drag,
+   arrow keys, Home/End, touch and the disabled state, none of which is worth
+   reimplementing out of divs to change a colour.
+
+   Deliberately quiet. `accent-color` alone paints a chunky filled track that
+   reads as a second progress bar beside the ASCII meter that sits above it —
+   two bars saying the same number. Here the track is a hairline and only the
+   thumb carries the accent, so the meter states the level and the slider is
+   just the handle you move. Each engine needs its own thumb rule; there is no
+   shared selector, and grouping them would drop the whole block in both.
+--------------------------------------------------------------------------- */
+
+.volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.volume-slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.volume-slider::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--ink-faint);
+}
+
+.volume-slider::-moz-range-track {
+  height: 1px;
+  background: var(--ink-faint);
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  /* Half the thumb above the 1px track, so it rides centred on the hairline
+     rather than hanging off the bottom of it. */
+  margin-top: -4px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* The UA's own focus ring is a rounded rectangle around the whole control,
+   which against a 1px track reads as a stray box rather than as focus. Dropped
+   in favour of the ring on the thumb below — the part that actually moves, and
+   the part the arrow keys act on. Only ever dropped together with that
+   replacement: a slider you can tab to and not see is worse than an ugly box. */
+.volume-slider:focus-visible {
+  outline: none;
+}
+
+.volume-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.volume-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
