@@ -64,6 +64,50 @@ const EXPANDED_MAX_HEIGHT = "20rem";
 const MAX_RENDERED = 250;
 
 /**
+ * The list before it has anything in it: one row's worth of colour squares,
+ * drawn as outlines, with the label where the first time would sit.
+ *
+ * Deliberately a ghost of a real row rather than a centred message. The panel
+ * holds the page's right column at session start, and a bare line of text left
+ * it reading as unused space; the same squares, gap and row height the real
+ * rows use make it read as a list waiting for its first entry, and they say
+ * where the first solve will land before one exists.
+ *
+ * Sized from the same four constants the real rows derive from (PER_ROW,
+ * SQUARE_REM, SQUARE_GAP_REM, ROW_HEIGHT) rather than its own copies, so
+ * revisiting PER_ROW redraws this alongside the rows it imitates instead of
+ * leaving a three-square ghost above five-square rows.
+ */
+function EmptyList() {
+  return (
+    <section aria-label="All-time solves" className="flex w-full flex-col gap-3">
+      <div
+        className="grid gap-x-2"
+        style={{ gridTemplateColumns: `${COLOR_COLUMN} minmax(0, 1fr)` }}
+      >
+        {/* aria-hidden: the squares are the label's illustration, and the
+            label below already says what the panel is. */}
+        <div className={`flex ${ROW_HEIGHT} items-center gap-1`} aria-hidden="true">
+          {Array.from({ length: PER_ROW }, (_, i) => (
+            <span
+              key={i}
+              className="block size-2.5 border border-dashed"
+              style={{ borderColor: "var(--ink-faint)" }}
+            />
+          ))}
+        </div>
+        <span
+          className="flex h-full items-center whitespace-nowrap font-mono text-small"
+          style={{ color: "var(--ink-faint)" }}
+        >
+          no solves yet
+        </span>
+      </div>
+    </section>
+  );
+}
+
+/**
  * All-time solves, PER_ROW to a row, newest first.
  *
  * Each row opens with a colour column carrying one square per solve in that
@@ -103,11 +147,7 @@ export function SolveHistory({ solves, onTogglePenalty, onDelete }: SolveHistory
   }, [solves]);
 
   if (rows.length === 0) {
-    return (
-      <p className="font-mono text-small" style={{ color: "var(--ink-faint)" }}>
-        no solves yet
-      </p>
-    );
+    return <EmptyList />;
   }
 
   const hasMore = rows.length > COLLAPSED_ROWS;
