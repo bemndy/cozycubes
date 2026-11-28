@@ -700,6 +700,40 @@
      only applies where nothing else set the property at all. */
 }
 
+/* ---------------------------------------------------------------------------
+   CORNERS
+   ---------------------------------------------------------------------------
+   One radius scale, doing for border-radius what the type scale below does for
+   font-size, and for the same reason: the themed app carried four different
+   corner radii (5px, 6px, 10px, 999px) picked a component at a time, which is
+   how a UI ends up with two small chips a pixel apart for no reason anyone
+   could state.
+
+   Three steps survive. 5px and 6px folded into one: both were small inset
+   controls — the keybind chip and a dropdown option row — a single pixel apart,
+   and neither had a job the other could not do.
+
+   These sit in :root rather than in the @theme block below because `@theme
+   inline` does not emit its variables as custom properties, and the plain-CSS
+   rules further down (.hint-chip, .overlay-panel, .scroll-thin) have to name
+   them. So the tokens live here and @theme maps them, exactly as the colours
+   already do (--ink -> --color-ink).
+
+   Theme-independent, unlike everything in the derived block above: a corner is
+   a dimension, not a colour, and no theme has a reason to round differently.
+
+   Two deliberate non-members. `rounded-full` stays Tailwind's own — the footer
+   status dot and the theme swatches are circles, not a step on this scale. And
+   app/loader-preview keeps its bare `rounded-lg`: it is a dev-only page that
+   sits outside the themed app with its own slate palette, and pulling it onto
+   the app's scale would imply it shares the app's styling.
+--------------------------------------------------------------------------- */
+:root {
+  --corner-chip: 6px;   /* small inset controls: keybind chips, dropdown rows */
+  --corner-panel: 10px; /* surfaces that float: dialogs, dropdowns, tiles */
+  --corner-pill: 999px; /* fully rounded ends: the scrollbar thumb */
+}
+
 /* Expose tokens to Tailwind as utilities. `inline` keeps the utility
    referencing the var, so it re-resolves when data-theme changes rather than
    baking in the default theme's value. */
@@ -764,6 +798,15 @@
   --tracking-text: 0.02em;
   --tracking-label: 0.14em;
   --tracking-caps: 0.18em;
+
+  /* The corner scale, so a component can say `rounded-chip` instead of
+     inventing `rounded-[6px]` again. Mapped from :root above (see the CORNERS
+     block there for the three steps); --radius-pill has no utility call site
+     today and is exposed anyway, so the next pill-shaped thing has a step to
+     reach for rather than a number to pick. */
+  --radius-chip: var(--corner-chip);
+  --radius-panel: var(--corner-panel);
+  --radius-pill: var(--corner-pill);
 }
 
 body {
@@ -941,7 +984,7 @@ body {
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.6rem;
-  border-radius: 5px;
+  border-radius: var(--corner-chip);
   /* Zero-width and transparent in every theme but the mono pair. */
   border: var(--edge-width, 0px) solid var(--edge, transparent);
   /* Went fully opaque at one point, then back down past var(--ink)'s usual
@@ -1009,7 +1052,7 @@ body {
    trigger, and baking `position` in here would break the former. */
 .overlay-panel {
   background: var(--surface);
-  border-radius: 10px;
+  border-radius: var(--corner-panel);
   border: var(--edge-width, 0px) solid var(--edge, transparent);
   box-shadow: var(--overlay-shadow);
 }
@@ -1114,7 +1157,7 @@ body {
 
 .scroll-thin::-webkit-scrollbar-thumb {
   background: var(--ink-faint);
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
 }
 
 .scroll-thin:hover::-webkit-scrollbar-thumb {
