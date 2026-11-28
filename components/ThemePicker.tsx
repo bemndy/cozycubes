@@ -35,7 +35,7 @@ export function ThemePicker({ open, onClose, value, onChange }: ThemePickerProps
                 onChange(id);
                 onClose();
               }}
-              className="group flex flex-col items-center justify-center gap-3 rounded-[10px] p-4 font-mono text-body tracking-tight opacity-80 transition-opacity duration-200 hover:opacity-100"
+              className="group flex flex-col items-center justify-center gap-3 rounded-panel p-4 font-mono text-body tracking-tight opacity-80 transition-opacity duration-200 hover:opacity-100"
               style={{
                 background: "var(--surface)",
                 color: "var(--ink)",
